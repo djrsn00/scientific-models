@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#03060c">
+  <meta name="description" content="A holographic observatory exploring entanglement, two-sided black holes, RT surfaces, and model-dependent traversable-wormhole protocols.">
+  <title>ER = EPR · Holographic Entanglement</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body class="is-loading" data-view="combined" data-phase="uncoupled">
+  <a class="skip-link" href="#sidebar-content">
+    Skip to instrument controls
+  </a>
+
+  <main id="observatory" aria-label="Holographic entanglement observatory">
+    <div
+      id="canvas-container"
+      tabindex="0"
+      role="region"
+      aria-label="Interactive holographic geometry"
+      aria-describedby="navigation-help"
+    ></div>
+
+    <div class="scene-vignette" aria-hidden="true"></div>
+    <div class="frame-corner corner-tl" aria-hidden="true"></div>
+    <div class="frame-corner corner-br" aria-hidden="true"></div>
+
+    <p id="navigation-help" class="sr-only">
+      Drag to orbit, scroll or pinch to zoom, and use the secondary mouse
+      button to pan. Manual navigation interrupts the drone. Space pauses
+      or plays. R resumes the drone. H hides or shows the interface.
+      The camera is an explanatory viewpoint, not a physical signal.
+    </p>
+
+    <aside
+      id="sidebar-ui"
+      class="instrument-panel hud-region"
+      aria-labelledby="project-title"
+    >
+      <header class="panel-header">
+        <div class="project-line">
+          <svg
+            class="project-mark"
+            viewBox="0 0 40 40"
+            fill="none"
+            aria-hidden="true"
+          >
+            <ellipse
+              cx="8" cy="20" rx="4" ry="14"
+              stroke="currentColor" stroke-width="1"
+            />
+            <ellipse
+              cx="32" cy="20" rx="4" ry="14"
+              stroke="currentColor" stroke-width="1"
+            />
+            <path
+              d="M8 6C15 6 16 15 20 15S25 6 32 6M8 34C15 34 16 25 20 25S25 34 32 34M8 20H32"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+            <circle
+              cx="20" cy="20" r="3"
+              stroke="currentColor"
+              opacity=".6"
+            />
+          </svg>
+
+          <span>RAW CODE<br>VISUALIZING NATURE</span>
+          <span class="edition-tag">GRAVITY / INFORMATION</span>
+        </div>
+
+        <h1 id="project-title">
+          <span>ER <i>=</i> EPR</span>
+        </h1>
+
+        <p class="subtitle">
+          Holographic Entanglement &amp;<br>
+          Traversable Wormhole Geometry
+        </p>
+
+        <div class="badge-row">
+          <span class="theory-badge">
+            HOLOGRAPHIC QUANTUM GRAVITY
+          </span>
+          <span class="status-badge">
+            THEORETICAL / CONJECTURAL
+          </span>
+        </div>
+
+        <div class="mode-row">
+          <span class="dimension-badge">AdS₃ / CFT₂</span>
+          <span id="flight-mode" class="mode-badge">
+            INITIALIZING
+          </span>
+        </div>
+      </header>
+
+      <div id="sidebar-content" class="panel-scroll" tabindex="-1">
+        <section
+          class="instrument-section causal-status-section"
+          aria-labelledby="causal-heading"
+        >
+          <div class="section-heading">
+            <h2 id="causal-heading">Causal accessibility</h2>
+            <span id="narrative-status">ENTANGLED BOUNDARIES</span>
+          </div>
+
+          <div id="causal-status" class="causal-status">
+            NONTRAVERSABLE
+          </div>
+
+          <p id="causal-description" class="micro-note">
+            The ordinary two-sided bridge is spatially connected.
+            A signal cannot travel from one exterior to the other through it.
+          </p>
+
+          <p class="principle-note">
+            Entanglement alone cannot transmit usable information.
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="view-heading"
+        >
+          <div class="section-heading">
+            <h2 id="view-heading">One system, two descriptions</h2>
+            <span>VIEW LAYERS</span>
+          </div>
+
+          <label for="view-select" class="sr-only">
+            Choose the visible description
+          </label>
+
+          <select id="view-select" data-engine-control disabled>
+            <option value="combined">
+              Combined · information + geometry
+            </option>
+            <option value="information">
+              Quantum information view
+            </option>
+            <option value="bulk">
+              Bulk geometry view
+            </option>
+          </select>
+
+          <div class="layer-controls">
+            <button
+              id="wedge-toggle"
+              type="button"
+              aria-pressed="true"
+              data-engine-control
+              disabled
+            >
+              Entanglement wedge
+            </button>
+
+            <button
+              id="correlation-toggle"
+              type="button"
+              aria-pressed="true"
+              data-engine-control
+              disabled
+            >
+              Boundary correlations
+            </button>
+          </div>
+
+          <p class="micro-note">
+            Boundary nodes and correlation links are schematic.
+            The curved bulk is a coordinate illustration of a spatial slice.
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="geometry-heading"
+        >
+          <div class="section-heading">
+            <h2 id="geometry-heading">Static BTZ reference</h2>
+            <span>CALCULATED GEOMETRY</span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="radius-control">
+                Horizon scale r<sub>h</sub> / L
+              </label>
+              <output id="radius-setting" for="radius-control">
+                1.50
+              </output>
+            </div>
+
+            <input
+              id="radius-control"
+              type="range"
+              min="1.2"
+              max="2.4"
+              step="0.01"
+              value="1.5"
+              aria-describedby="radius-help"
+              data-engine-control
+              disabled
+            >
+
+            <div class="range-endpoints" aria-hidden="true">
+              <span>1.20 · COOLER</span>
+              <span>HOTTER · 2.40</span>
+            </div>
+
+            <p id="radius-help" class="micro-note">
+              Explore a nonrotating BTZ equilibrium family.
+              This is not a universal rule for converting arbitrary
+              entanglement into a throat.
+            </p>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="region-control">
+                Right-boundary region A · Δφ
+              </label>
+              <output id="region-setting" for="region-control">
+                1.30 rad
+              </output>
+            </div>
+
+            <input
+              id="region-control"
+              type="range"
+              min="0.35"
+              max="2.6"
+              step="0.01"
+              value="1.3"
+              aria-describedby="region-help"
+              data-engine-control
+              disabled
+            >
+
+            <p id="region-help" class="micro-note">
+              A short interval on the right boundary.
+              Its gold geodesic and wedge slice update together.
+            </p>
+          </div>
+
+          <dl class="telemetry-grid">
+            <div>
+              <dt>Inverse temperature β / L</dt>
+              <dd id="beta-value">—</dd>
+            </div>
+            <div>
+              <dt>Throat radius r<sub>h</sub> / L</dt>
+              <dd id="throat-value">—</dd>
+            </div>
+            <div>
+              <dt>Whole left system S<sub>L</sub> / c<sub>CFT</sub></dt>
+              <dd id="left-entropy-value">—</dd>
+            </div>
+            <div>
+              <dt>RT geodesic length ℓ<sub>γ</sub> / L</dt>
+              <dd id="surface-value">—</dd>
+            </div>
+            <div>
+              <dt>Selected interval S<sub>A</sub> / c<sub>CFT</sub></dt>
+              <dd id="entropy-value">—</dd>
+            </div>
+            <div>
+              <dt>RT turning radius r<sub>*</sub> / r<sub>h</sub></dt>
+              <dd id="turning-value">—</dd>
+            </div>
+          </dl>
+
+          <p id="entropy-scope" class="micro-note">
+            Leading semiclassical entropy, normalized by the CFT central
+            charge. S<sub>L</sub> and S<sub>A</sub> describe different
+            subsystems.
+          </p>
+
+          <p id="geometry-status" class="scope-strip">
+            STATIC REFERENCE · r<sub>c</sub> / L = 12 ·
+            ℏ = c<sub>light</sub> = k<sub>B</sub> = 1
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="protocol-heading"
+        >
+          <div class="section-heading">
+            <h2 id="protocol-heading">Controlled causal protocol</h2>
+            <span>GJW-INSPIRED SCHEMATIC</span>
+          </div>
+
+          <p class="micro-note section-intro">
+            A prescribed interaction changes the causal description in
+            specific holographic models. This demonstration illustrates
+            the sequence; it does not solve gravitational backreaction.
+          </p>
+
+          <div class="protocol-actions">
+            <button
+              id="protocol-run"
+              type="button"
+              class="primary-button"
+              data-engine-control
+              disabled
+            >
+              Run coupling protocol
+            </button>
+
+            <button
+              id="signal-test"
+              type="button"
+              class="quiet-button"
+              title="Start a fresh uncoupled signal attempt"
+              data-engine-control
+              disabled
+            >
+              Test uncoupled signal
+            </button>
+
+            <button
+              id="protocol-reset"
+              type="button"
+              class="quiet-button"
+              data-engine-control
+              disabled
+            >
+              Reset protocol
+            </button>
+          </div>
+
+          <ol
+            id="protocol-timeline"
+            class="protocol-timeline"
+            aria-label="Protocol stages"
+          >
+            <li
+              data-protocol-step="prepare"
+              class="is-active"
+              aria-current="step"
+            >
+              <span>01</span>Prepare
+            </li>
+            <li data-protocol-step="inject">
+              <span>02</span>Inject
+            </li>
+            <li data-protocol-step="couple">
+              <span>03</span>Couple
+            </li>
+            <li data-protocol-step="window">
+              <span>04</span>Window
+            </li>
+            <li data-protocol-step="receive">
+              <span>05</span>Receive
+            </li>
+            <li data-protocol-step="close">
+              <span>06</span>Close
+            </li>
+          </ol>
+
+          <div class="protocol-meter">
+            <div
+              id="protocol-progress"
+              role="progressbar"
+              aria-label="Illustrative protocol progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="protocol-fill"></span>
+            </div>
+            <span id="protocol-clock">τ = 0.00</span>
+          </div>
+
+          <dl class="inline-readouts">
+            <div>
+              <dt>Protocol state</dt>
+              <dd id="protocol-state">UNCOUPLED</dd>
+            </div>
+            <div>
+              <dt>Prescribed pulse g / g<sub>ref</sub></dt>
+              <dd id="coupling-value">0.000</dd>
+            </div>
+            <div>
+              <dt>Interaction history</dt>
+              <dd id="coupling-history">NO PULSE APPLIED</dd>
+            </div>
+            <div>
+              <dt>Null-energy cue</dt>
+              <dd id="null-energy-value">NONE</dd>
+            </div>
+            <div>
+              <dt>Information signal</dt>
+              <dd id="signal-status">NOT INJECTED</dd>
+            </div>
+            <div>
+              <dt>Signal progress · schematic</dt>
+              <dd id="signal-position">—</dd>
+            </div>
+          </dl>
+
+          <p class="micro-note">
+            The pulse sign and operator choice are prescribed by the
+            construction. A post-pulse window can persist after the
+            instantaneous coupling returns to zero.
+          </p>
+
+          <p class="micro-note">
+            Changing either geometry parameter resets the protocol.
+            View changes affect visibility only.
+          </p>
+        </section>
+
+        <details
+          id="causal-panel"
+          class="instrument-section disclosure"
+          open
+        >
+          <summary>
+            Causal diagram <span>SCHEMATIC</span>
+          </summary>
+
+          <figure class="chart-frame causal-frame">
+            <figcaption>
+              <span>CAUSAL DIAGRAM — SCHEMATIC</span>
+              <span id="causal-diagram-mode">UNCOUPLED</span>
+            </figcaption>
+
+            <svg
+              id="causal-diagram"
+              viewBox="0 0 360 300"
+              role="img"
+              aria-labelledby="causal-diagram-title causal-diagram-desc"
+            >
+              <title id="causal-diagram-title">
+                Two-sided black-hole causal structure
+              </title>
+
+              <desc id="causal-diagram-desc">
+                Two exterior regions flank past and future interiors.
+                The ordinary future horizons prevent a signal from
+                crossing between the two boundaries.
+                Protocol deformations are schematic.
+              </desc>
+
+              <defs>
+                <marker
+                  id="causal-arrow"
+                  viewBox="0 0 8 8"
+                  refX="6"
+                  refY="4"
+                  markerWidth="5"
+                  markerHeight="5"
+                  orient="auto"
+                >
+                  <path d="M0 0L8 4L0 8Z" fill="#f1ce8a"/>
+                </marker>
+              </defs>
+
+              <g id="causal-reference">
+                <path
+                  class="diagram-exterior"
+                  d="M70 40L180 150L70 260Z"
+                />
+                <path
+                  class="diagram-exterior right"
+                  d="M290 40L180 150L290 260Z"
+                />
+                <path
+                  class="diagram-interior"
+                  d="M70 40H290L180 150Z"
+                />
+                <path
+                  class="diagram-past"
+                  d="M70 260H290L180 150Z"
+                />
+
+                <path
+                  class="diagram-boundary left"
+                  d="M70 40V260"
+                />
+                <path
+                  class="diagram-boundary right"
+                  d="M290 40V260"
+                />
+                <path
+                  class="diagram-horizon"
+                  d="M70 40L290 260M290 40L70 260"
+                />
+
+                <path
+                  class="diagram-singularity"
+                  d="M70 40L80 36L90 44L100 36L110 44L120 36L130 44L140 36L150 44L160 36L170 44L180 36L190 44L200 36L210 44L220 36L230 44L240 36L250 44L260 36L270 44L280 36L290 40"
+                />
+                <path
+                  class="diagram-singularity past"
+                  d="M70 260L80 256L90 264L100 256L110 264L120 256L130 264L140 256L150 264L160 256L170 264L180 256L190 264L200 256L210 264L220 256L230 264L240 256L250 264L260 256L270 264L280 256L290 260"
+                />
+
+                <text x="180" y="22" text-anchor="middle">
+                  future interior boundary
+                </text>
+                <text x="180" y="87" text-anchor="middle">
+                  FUTURE INTERIOR
+                </text>
+                <text x="180" y="222" text-anchor="middle">
+                  PAST INTERIOR
+                </text>
+
+                <text x="29" y="143" text-anchor="middle">LEFT</text>
+                <text x="29" y="158" text-anchor="middle">CFT</text>
+                <text x="332" y="143" text-anchor="middle">RIGHT</text>
+                <text x="332" y="158" text-anchor="middle">CFT</text>
+
+                <text
+                  x="113" y="155"
+                  text-anchor="middle"
+                  class="diagram-small"
+                >
+                  exterior
+                </text>
+                <text
+                  x="249" y="155"
+                  text-anchor="middle"
+                  class="diagram-small"
+                >
+                  exterior
+                </text>
+
+                <circle
+                  class="diagram-bifurcation"
+                  cx="180"
+                  cy="150"
+                  r="3"
+                />
+
+                <text x="180" y="287" text-anchor="middle">
+                  dashed diagonals · horizons
+                </text>
+              </g>
+
+              <g id="causal-dynamic"></g>
+
+              <path
+                id="causal-signal-path"
+                class="diagram-signal"
+                d="M70 190"
+                opacity="0"
+                marker-end="url(#causal-arrow)"
+              />
+
+              <circle
+                id="causal-signal-dot"
+                class="diagram-signal-dot"
+                cx="70"
+                cy="190"
+                r="3.5"
+                opacity="0"
+              />
+            </svg>
+
+            <p id="causal-diagram-summary" class="micro-note">
+              The ordinary ER bridge does not connect the two exteriors
+              by a future-directed causal path. The highlighted signal
+              and causal overlay will follow the selected demonstration.
+            </p>
+          </figure>
+        </details>
+
+        <details class="instrument-section disclosure">
+          <summary>
+            Thermofield-double laboratory
+            <span>FINITE TEACHING MODEL</span>
+          </summary>
+
+          <p>
+            Eight levels illustrate the TFD construction:
+            E<sub>n</sub>L = n/2 for n = 0…7.
+            Each reduced state is thermal; the joint state is pure.
+          </p>
+
+          <figure class="chart-frame">
+            <figcaption>
+              <span>SCHMIDT PROBABILITIES</span>
+              <span>p₀ … p₇</span>
+            </figcaption>
+
+            <canvas
+              id="spectrum-chart"
+              width="560"
+              height="230"
+              role="img"
+              aria-label="Eight-level thermofield-double probabilities"
+              aria-describedby="spectrum-summary"
+            >
+              The eight-level thermal probabilities appear here
+              after initialization.
+            </canvas>
+
+            <p id="spectrum-summary" class="sr-only">
+              The finite teaching model has not initialized.
+            </p>
+          </figure>
+
+          <dl class="inline-readouts">
+            <div>
+              <dt>Teaching-model entropy · nats</dt>
+              <dd id="toy-entropy-value">—</dd>
+            </div>
+            <div>
+              <dt>Joint teaching-model purity</dt>
+              <dd id="toy-purity-value">—</dd>
+            </div>
+          </dl>
+
+          <p>
+            This finite Hamiltonian is not the CFT spectrum and has
+            no computed gravitational dual. Its entropy is distinct
+            from both BTZ entropy readouts above.
+          </p>
+        </details>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="journey-heading"
+        >
+          <div class="section-heading">
+            <h2 id="journey-heading">Guided inspection</h2>
+            <span id="stage-counter">01 / 15</span>
+          </div>
+
+          <nav
+            id="journey-stages"
+            class="journey-stages"
+            aria-label="Guided tour chapters"
+          >
+            <button
+              type="button"
+              data-chapter="0"
+              aria-current="step"
+              data-engine-control
+              disabled
+            >
+              <span>01</span>Entangled boundaries
+            </button>
+            <button type="button" data-chapter="1" data-engine-control disabled>
+              <span>02</span>Thermofield double
+            </button>
+            <button type="button" data-chapter="2" data-engine-control disabled>
+              <span>03</span>Bulk emergence
+            </button>
+            <button type="button" data-chapter="3" data-engine-control disabled>
+              <span>04</span>Two-sided black hole
+            </button>
+            <button type="button" data-chapter="4" data-engine-control disabled>
+              <span>05</span>Nontraversable bridge
+            </button>
+            <button type="button" data-chapter="5" data-engine-control disabled>
+              <span>06</span>RT / HRT surface
+            </button>
+            <button type="button" data-chapter="6" data-engine-control disabled>
+              <span>07</span>Entanglement wedge
+            </button>
+            <button type="button" data-chapter="7" data-engine-control disabled>
+              <span>08</span>ER = EPR
+            </button>
+            <button type="button" data-chapter="8" data-engine-control disabled>
+              <span>09</span>Boundary coupling
+            </button>
+            <button type="button" data-chapter="9" data-engine-control disabled>
+              <span>10</span>Null-energy effect
+            </button>
+            <button type="button" data-chapter="10" data-engine-control disabled>
+              <span>11</span>Traversable window
+            </button>
+            <button type="button" data-chapter="11" data-engine-control disabled>
+              <span>12</span>Information exit
+            </button>
+            <button type="button" data-chapter="12" data-engine-control disabled>
+              <span>13</span>Teleportation duality
+            </button>
+            <button type="button" data-chapter="13" data-engine-control disabled>
+              <span>14</span>Entanglement geometry
+            </button>
+            <button type="button" data-chapter="14" data-engine-control disabled>
+              <span>15</span>Full system
+            </button>
+          </nav>
+
+          <div
+            id="journey-progress"
+            class="journey-progress"
+            role="progressbar"
+            aria-label="Guided tour progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="flight-progress"></span>
+          </div>
+
+          <div class="tour-meta">
+            <span>EXPLANATORY CAMERA FLIGHT</span>
+            <time id="tour-time">00:00</time>
+          </div>
+
+          <p class="micro-note">
+            Chapter selection reconstructs the demonstration’s
+            preceding steps. A traversable chapter includes its
+            required coupling history.
+          </p>
+        </section>
+
+        <details
+          id="model-scope"
+          class="instrument-section disclosure"
+        >
+          <summary>
+            Equations &amp; scientific scope <span>READ</span>
+          </summary>
+
+          <p>
+            <strong>Three distinct levels:</strong>
+            a classical BTZ reference geometry, a finite TFD teaching
+            model, and a scripted causal protocol. The protocol does
+            not numerically evolve the Einstein equations or compute
+            a dynamical HRT surface.
+          </p>
+
+          <p>
+            Quantum entropy and the TFD construction follow standard
+            quantum mechanics. BTZ is a classical gravitational
+            solution; RT/HRT belong to the semiclassical holographic
+            framework. GJW traversability is a result within specific
+            interacting models.
+          </p>
+
+          <p>
+            ER = EPR is a conjectural relationship. AdS/CFT supplies
+            a specific theoretical setting; this simple AdS geometry
+            is not known to describe our universe globally. Generic
+            entangled particles do not imply a visible classical
+            wormhole.
+          </p>
+
+          <p>
+            The nonrotating BTZ spatial slice uses
+            r = r<sub>h</sub> cosh ρ. Its two exterior ends meet
+            at one bifurcation circle. Future horizons and the
+            black-hole interior appear in the causal diagram.
+            The 3D drawing is not an isometric Euclidean embedding.
+          </p>
+
+          <div class="equation">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="Spatial line element squared equals L squared d rho squared plus r h squared cosh squared rho d phi squared"
+            >
+              <mrow>
+                <msubsup>
+                  <mrow><mi>d</mi><mi>s</mi></mrow>
+                  <mtext>slice</mtext>
+                  <mn>2</mn>
+                </msubsup>
+                <mo>=</mo>
+                <msup><mi>L</mi><mn>2</mn></msup>
+                <msup>
+                  <mrow><mi>d</mi><mi>ρ</mi></mrow>
+                  <mn>2</mn>
+                </msup>
+                <mo>+</mo>
+                <msubsup><mi>r</mi><mi>h</mi><mn>2</mn></msubsup>
+                <msup>
+                  <mi mathvariant="normal">cosh</mi>
+                  <mn>2</mn>
+                </msup>
+                <mi>ρ</mi>
+                <msup>
+                  <mrow><mi>d</mi><mi>φ</mi></mrow>
+                  <mn>2</mn>
+                </msup>
+              </mrow>
+            </math>
+          </div>
+
+          <p>
+            The gold curve is the short, nonwrapping RT geodesic
+            anchored to region A at the radial cutoff
+            r<sub>c</sub>/L = 12. In 2+1 bulk dimensions the relevant
+            “area” is a length. The entropy relation is leading
+            semiclassical RT, with a fixed regulator.
+          </p>
+
+          <p>
+            The full-left entropy uses the horizon circumference,
+            S<sub>L</sub>/c<sub>CFT</sub> = πr<sub>h</sub>/(3L).
+            The interval value is
+            S<sub>A</sub>/c<sub>CFT</sub> = ℓ<sub>γ</sub>/(6L).
+            Neither is the eight-level teaching-model entropy.
+          </p>
+
+          <p>
+            The translucent sheet is a spatial slice of the
+            entanglement wedge. Its causal domain of dependence
+            is the full wedge. It represents a reconstruction
+            region rather than material filling the bulk.
+          </p>
+
+          <p>
+            The coupling pulse, null-energy cue, causal deformation,
+            and signal timing are schematic. Their sign and causal
+            effect are prescribed to illustrate a GJW-type construction.
+            The background RT curve remains a static reference during
+            the protocol.
+          </p>
+
+          <p>
+            Traversability is not modeled by widening a physical bore.
+            The interaction changes causal accessibility in the
+            theoretical construction. A camera flight through the
+            drawing is not a possible causal trajectory.
+          </p>
+
+          <p>
+            The protocol provides no entanglement-only or arbitrary
+            faster-than-light communication. Negative averaged null
+            energy is a model-dependent quantum effect, not a
+            macroscopic resource assumed to be freely available.
+          </p>
+
+          <p>
+            The teleportation interpretation applies in certain
+            holographic models. Ordinary teleportation and
+            quantum-computer realizations do not establish the
+            creation of gravitational tunnels.
+          </p>
+
+          <div class="advanced-reference">
+            <span class="small-kicker">
+              ADVANCED REFERENCE · FIRST ORDER
+            </span>
+
+            <div class="equation">
+              <math
+                xmlns="http://www.w3.org/1998/Math/MathML"
+                display="block"
+                aria-label="The entanglement first law: delta S A equals delta expectation value of K A"
+              >
+                <mrow>
+                  <mi>δ</mi>
+                  <msub><mi>S</mi><mi>A</mi></msub>
+                  <mo>=</mo>
+                  <mi>δ</mi>
+                  <mo>⟨</mo>
+                  <msub><mi>K</mi><mi>A</mi></msub>
+                  <mo>⟩</mo>
+                </mrow>
+              </math>
+            </div>
+
+            <p>
+              K<sub>A</sub> = −ln ρ<sub>A,0</sub> is the modular
+              Hamiltonian of a fixed reference state. This first-order
+              identity is a reference, not a finite-change law driving
+              the animation.
+              <a
+                href="https://arxiv.org/abs/1308.3716"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Entanglement first-law reference ↗</a>
+            </p>
+          </div>
+
+          <div class="source-links">
+            <a
+              href="https://arxiv.org/abs/hep-th/0106112"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Maldacena · eternal AdS black holes ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/1306.0533"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Maldacena &amp; Susskind · ER = EPR conjecture ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/hep-th/0603001"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Ryu &amp; Takayanagi · holographic entropy ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/0705.0016"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Hubeny, Rangamani &amp; Takayanagi · HRT ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/1608.05687"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Gao, Jafferis &amp; Wall · controlled traversability ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/1704.05333"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Maldacena, Stanford &amp; Yang · teleportation interpretation ↗</a>
+          </div>
+        </details>
+      </div>
+
+      <footer class="panel-footer">
+        <span class="status-led" aria-hidden="true"></span>
+        <span id="model-status">Preparing reference geometry</span>
+        <span id="display-status">WEBGL</span>
+      </footer>
+    </aside>
+
+    <nav
+      id="flight-controls"
+      class="flight-controls"
+      aria-label="View and playback controls"
+    >
+      <button
+        id="hud-toggle"
+        type="button"
+        aria-controls="sidebar-ui scene-caption reference-legend"
+        aria-pressed="false"
+        title="Toggle the interface (H)"
+        data-engine-control
+        disabled
+      >
+        <span id="hud-label">Hide HUD</span>
+        <kbd>H</kbd>
+      </button>
+
+      <button
+        id="pause-toggle"
+        type="button"
+        aria-pressed="false"
+        title="Pause or play the tour and protocol (Space)"
+        data-engine-control
+        disabled
+      >
+        <span id="pause-label">Pause</span>
+        <kbd>SPACE</kbd>
+      </button>
+
+      <button
+        id="resume-flight"
+        type="button"
+        title="Smoothly return to the guided drone flight (R)"
+        data-engine-control
+        disabled
+      >
+        <span>Resume drone</span>
+        <kbd>R</kbd>
+      </button>
+    </nav>
+
+    <section
+      id="scene-caption"
+      class="scene-caption hud-region"
+      aria-labelledby="scene-title"
+    >
+      <div class="caption-eyebrow">
+        <span id="chapter-value">01 / ENTANGLED BOUNDARIES</span>
+        <span class="caption-rule" aria-hidden="true"></span>
+        <span>INFORMATION ↔ GEOMETRY</span>
+      </div>
+
+      <h2 id="scene-title">Two systems. One entangled state.</h2>
+
+      <p id="scene-description">
+        The thermofield-double construction links two thermal boundary
+        systems in a shared pure state. A two-sided black-hole geometry
+        provides its semiclassical holographic description.
+      </p>
+
+      <p id="scene-model-note" class="caption-model-note">
+        ER = EPR is conjectural. The ordinary Einstein–Rosen bridge
+        is nontraversable.
+      </p>
+    </section>
+
+    <aside
+      id="reference-legend"
+      class="reference-legend hud-region"
+      aria-label="Geometry and information display key"
+    >
+      <div class="legend-heading">
+        <span>HOLOGRAPHIC FIELD KEY</span>
+        <span id="legend-view-value">COMBINED</span>
+      </div>
+
+      <p>
+        <i class="key-left" aria-hidden="true"></i>
+        Left boundary system
+      </p>
+      <p>
+        <i class="key-right" aria-hidden="true"></i>
+        Right boundary system
+      </p>
+      <p>
+        <i class="key-rt" aria-hidden="true"></i>
+        RT geodesic / region A
+      </p>
+      <p>
+        <i class="key-wedge" aria-hidden="true"></i>
+        Entanglement wedge slice
+      </p>
+      <p>
+        <i class="key-coupling" aria-hidden="true"></i>
+        Prescribed interaction
+      </p>
+
+      <p id="legend-note" class="legend-note">
+        The camera is an explanatory viewpoint.
+        Spatial connection does not imply causal passage.
+      </p>
+    </aside>
+
+    <section
+      id="render-notice"
+      class="render-notice"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div class="notice-card">
+        <div class="notice-orbit" aria-hidden="true">
+          <span></span>
+        </div>
+
+        <p class="notice-eyebrow">RAW CODE VISUALIZING NATURE</p>
+
+        <h2 id="notice-title">
+          Preparing the holographic observatory
+        </h2>
+
+        <p id="notice-message">
+          Loading the renderer and constructing the reference geometry.
+        </p>
+
+        <p id="notice-detail">
+          An internet connection is required to load the Three.js libraries.
+        </p>
+
+        <button
+          id="notice-reload"
+          type="button"
+          class="quiet-button"
+          hidden
+        >
+          Reload visualization
+        </button>
+
+        <noscript>
+          <p class="noscript-message">
+            Enable JavaScript and reload to run this visualization.
+          </p>
+        </noscript>
+      </div>
+    </section>
+
+    <p
+      id="accessibility-status"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+  </main>
+
+  <template id="tfd-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">02 / THERMOFIELD DOUBLE</p>
+        <h3>Thermal separately. Pure together.</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The thermofield double is one over square root Z times the sum of exponential minus beta E n over two times n left and n right"
+          >
+            <mrow>
+              <mo>|</mo>
+              <mi mathvariant="normal">TFD</mi>
+              <mo>⟩</mo>
+              <mo>=</mo>
+              <mfrac>
+                <mn>1</mn>
+                <msqrt><mi>Z</mi></msqrt>
+              </mfrac>
+              <munder><mo>∑</mo><mi>n</mi></munder>
+              <msup>
+                <mi>e</mi>
+                <mrow>
+                  <mo>−</mo>
+                  <mi>β</mi>
+                  <msub><mi>E</mi><mi>n</mi></msub>
+                  <mo>/</mo><mn>2</mn>
+                </mrow>
+              </msup>
+              <msub>
+                <mrow><mo>|</mo><mi>n</mi><mo>⟩</mo></mrow>
+                <mi>L</mi>
+              </msub>
+              <msub>
+                <mrow><mo>|</mo><mi>n</mi><mo>⟩</mo></mrow>
+                <mi>R</mi>
+              </msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Tracing out either system leaves a thermal density matrix.
+          The joint TFD state is entangled and pure.
+        </p>
+
+        <p class="card-note">
+          The optional eight-level display demonstrates the
+          construction; it is not a CFT spectrum.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="duality-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">03 / BULK–BOUNDARY DICTIONARY</p>
+        <h3>Two descriptions of one state</h3>
+
+        <div class="concept-line">
+          BOUNDARY QUANTUM STATE<br>
+          <span>↕</span><br>
+          BULK GRAVITATIONAL DESCRIPTION
+        </div>
+
+        <p>
+          In the semiclassical holographic setting, a suitable
+          entangled state of two CFTs has a connected two-sided
+          black-hole description.
+        </p>
+
+        <p class="card-note">
+          The boundary drawing is a visualization convention in
+          an AdS model, not a physical shell around our universe.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="bridge-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card">
+        <p class="card-kicker">04–05 / EINSTEIN–ROSEN BRIDGE</p>
+        <h3>Connected does not mean traversable</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The radial coordinate r equals horizon radius r h times cosh rho"
+          >
+            <mrow>
+              <mi>r</mi><mo>=</mo>
+              <msub><mi>r</mi><mi>h</mi></msub>
+              <mi mathvariant="normal">cosh</mi>
+              <mi>ρ</mi>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The two exterior ends meet at the bifurcation circle on
+          this time-symmetric slice. Ordinary causal signals cannot
+          cross from one exterior to the other.
+        </p>
+
+        <p class="card-note">
+          Future horizons and the interior require the spacetime
+          diagram. Camera motion through the drawing is not a
+          physical trajectory.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="entropy-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">QUANTUM INFORMATION / SUBSYSTEM A</p>
+        <h3>Entropy belongs to a partition</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="S A equals minus trace of rho A times natural log rho A"
+          >
+            <mrow>
+              <msub><mi>S</mi><mi>A</mi></msub>
+              <mo>=</mo><mo>−</mo>
+              <mi mathvariant="normal">Tr</mi>
+              <mo>(</mo>
+              <msub><mi>ρ</mi><mi>A</mi></msub>
+              <mi mathvariant="normal">ln</mi>
+              <msub><mi>ρ</mi><mi>A</mi></msub>
+              <mo>)</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          For a globally pure state, the entropy of a reduced state
+          measures entanglement across that partition.
+        </p>
+
+        <p class="card-note">
+          The entire left CFT, the selected right-boundary interval,
+          and the finite teaching model are different subsystems
+          and models.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="rt-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">06 / RYU–TAKAYANAGI</p>
+        <h3>An extremal measure of information</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Leading holographic entropy S A equals area of gamma A divided by four G N h bar"
+          >
+            <mrow>
+              <msub><mi>S</mi><mi>A</mi></msub>
+              <mo>=</mo>
+              <mfrac>
+                <mrow>
+                  <mi mathvariant="normal">Area</mi>
+                  <mo>(</mo>
+                  <msub><mi>γ</mi><mi>A</mi></msub>
+                  <mo>)</mo>
+                </mrow>
+                <mrow>
+                  <mn>4</mn>
+                  <msub><mi>G</mi><mi>N</mi></msub>
+                  <mi>ℏ</mi>
+                </mrow>
+              </mfrac>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The gold curve is the static minimal geodesic anchored
+          to the endpoints of region A and homologous to that interval.
+        </p>
+
+        <p class="card-note">
+          In AdS₃, “area” is length. HRT is the covariant extension;
+          this scene calculates a regulated static RT reference.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="wedge-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">07 / ENTANGLEMENT WEDGE</p>
+        <h3>A region associated with reconstruction</h3>
+
+        <div class="concept-line">
+          BOUNDARY REGION A<br>
+          <span>↕</span><br>
+          BULK ENTANGLEMENT WEDGE
+        </div>
+
+        <p>
+          The highlighted sheet lies between A and its RT curve
+          on a spatial slice. Its domain of dependence defines
+          the full entanglement wedge.
+        </p>
+
+        <p class="card-note">
+          A holographic reconstruction concept. The translucent
+          sheet is not a material surface or a causal shortcut.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="conjecture-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card">
+        <p class="card-kicker">
+          08 / CONJECTURE · THEORETICAL FRAMEWORK
+        </p>
+        <h3>ER = EPR</h3>
+
+        <div class="concept-line">
+          EINSTEIN–ROSEN GEOMETRY<br>
+          <span>↔</span><br>
+          EINSTEIN–PODOLSKY–ROSEN ENTANGLEMENT
+        </div>
+
+        <p>
+          Maldacena and Susskind proposed a deep relationship
+          between quantum entanglement and geometric connection.
+        </p>
+
+        <p class="card-note">
+          This is not an experimentally established universal law.
+          An arbitrary entangled pair does not imply a macroscopic
+          classical bridge.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="coupling-card-template">
+    <div class="world-anchor" data-accent="magenta">
+      <article class="world-card">
+        <p class="card-kicker">
+          09 / PRESCRIBED BOUNDARY INTERACTION
+        </p>
+        <h3>The interaction is part of the protocol</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Schematic Hamiltonian deformation delta H of t equals g of t times O L O R"
+          >
+            <mrow>
+              <mi>δ</mi><mi>H</mi>
+              <mo>(</mo><mi>t</mi><mo>)</mo>
+              <mo>=</mo>
+              <mi>g</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+              <msub><mi>O</mi><mi>L</mi></msub>
+              <msub><mi>O</mi><mi>R</mi></msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          A controlled double-trace-type interaction couples the
+          boundary systems. The illuminated channel marks that operation.
+        </p>
+
+        <p class="card-note">
+          Schematic operator notation. The construction fixes sign,
+          operators, and timing; entanglement alone does not provide
+          the channel.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="null-energy-card-template">
+    <div class="world-anchor" data-accent="magenta">
+      <article class="world-card">
+        <p class="card-kicker">
+          10 / MODEL-DEPENDENT QUANTUM EFFECT
+        </p>
+        <h3>A change in causal accessibility</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The integral of T k k along the relevant null generator is negative"
+          >
+            <mrow>
+              <mo>∫</mo>
+              <msub>
+                <mi>T</mi>
+                <mrow><mi>k</mi><mi>k</mi></mrow>
+              </msub>
+              <mi>d</mi><mi>λ</mi>
+              <mo>&lt;</mo><mn>0</mn>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          In the appropriate holographic construction, the interaction
+          produces negative averaged null energy along the relevant
+          horizon generator.
+        </p>
+
+        <p class="card-note">
+          The colored cue illustrates the effect. No stress tensor
+          or gravitational backreaction is numerically solved here.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="signal-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">
+          11–12 / INFORMATION SIGNAL — SCHEMATIC
+        </p>
+        <h3>A conditional route through the bulk</h3>
+
+        <div class="concept-line">
+          PRESCRIBED INTERACTION<br>
+          <span>↓</span><br>
+          TEMPORARY CAUSAL WINDOW
+        </div>
+
+        <p>
+          The protocol illustrates an information packet crossing
+          only after the necessary causal modification. The uncoupled
+          attempt cannot reach the other boundary.
+        </p>
+
+        <p class="card-note">
+          Arrival is a model-dependent demonstration, not a claim of
+          macroscopic travel or arbitrary faster-than-light communication.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="teleportation-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">
+          13 / QUANTUM-INFORMATION DESCRIPTION
+        </p>
+        <h3>Entanglement plus an operation</h3>
+
+        <div class="concept-line">
+          SHARED ENTANGLEMENT<br>
+          <span>+</span><br>
+          INTERACTION / COMMUNICATION<br>
+          <span>↓</span><br>
+          INFORMATION TRANSFER
+        </div>
+
+        <p>
+          Certain holographic transfer protocols admit a teleportation
+          interpretation and a dual description as traversable passage.
+        </p>
+
+        <p class="card-note">
+          Ordinary teleportation and quantum-computer realizations
+          are not literal gravitational wormholes.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="geometry-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">14 / AN EQUILIBRIUM FAMILY</p>
+        <h3>Temperature, entropy, and geometry</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Beta over L equals two pi divided by r h over L"
+          >
+            <mrow>
+              <mfrac><mi>β</mi><mi>L</mi></mfrac>
+              <mo>=</mo>
+              <mfrac>
+                <mrow><mn>2</mn><mi>π</mi></mrow>
+                <mrow>
+                  <msub><mi>r</mi><mi>h</mi></msub>
+                  <mo>/</mo><mi>L</mi>
+                </mrow>
+              </mfrac>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Changing the BTZ horizon scale changes the thermal reference
+          state, the horizon entropy, and the selected interval’s
+          RT geodesic.
+        </p>
+
+        <p class="card-note">
+          These are neighboring equilibrium examples. They do not
+          simulate a dynamical loss of entanglement or a universal
+          bridge-pinching law.
+        </p>
+      </article>
+    </div>
+  </template>
+</body>
+</html>
