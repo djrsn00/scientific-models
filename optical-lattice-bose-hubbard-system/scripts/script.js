@@ -1,371 +1,266 @@
+/* Optical Lattice / Bose–Hubbard System
+ * Three.js r128; no build step or additional project files.
+ * Homogeneous cubic, zero-temperature single-site Gutzwiller mean field.
+ * The visible 7³ array is a bulk window, not a finite-boundary calculation.
+ * References: arxiv.org/abs/cond-mat/9805329 and cond-mat/0011108.
+ */
 (() => {
   "use strict";
 
-  const TAU = Math.PI * 2;
-  const SIGMA = 0.72;
-  const CORE = 0.14;
-  const FIELD_SCALE = 4.8;
-  const BETA = 0.35;
-  const RABI = 1;
+  const PI = Math.PI;
+  const NMAX = 12;
+  const DIM = NMAX + 1;
+  const Z = 6;
+  const SIDE = 7;
+  const NS = SIDE ** 3;
+  const SPACING = 2;
+  const CRITICAL_DEPTH = 11.11960641659203;
 
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const mix = (a, b, t) => a + (b - a) * t;
+  const ease = t => t * t * t * (t * (6 * t - 15) + 10);
+  const $ = id => document.getElementById(id);
 
-  const ease = t => {
-    t = clamp(t, 0, 1);
-    return t * t * t * (t * (t * 6 - 15) + 10);
+  const setText = (id, value) => {
+    const node = $(id);
+    if (node && node.textContent !== value) node.textContent = value;
   };
 
-  function spectrum(q, detuning) {
-    const ec = detuning + q * q;
-    const gap = Math.hypot(ec, RABI);
-    const photon = 0.5 * (1 - ec / gap);
+  const sci = x => x === 0 ? "0" : x.toExponential(2);
+
+  const clockText = t => {
+    const seconds = Math.floor(t);
+    return String(Math.floor(seconds / 60)).padStart(2, "0") + ":" +
+      String(seconds % 60).padStart(2, "0");
+  };
+
+  let app = null;
+
+  function notice(title, message, detail, reload = false) {
+    setText("notice-title", title);
+    setText("notice-message", message);
+    setText("notice-detail", detail);
+    $("render-notice").hidden = false;
+    $("notice-reload").hidden = !reload;
+  }
+
+  function gate(enabled) {
+    document.querySelectorAll("[data-engine-control]").forEach(el => {
+      el.disabled = !enabled;
+    });
+  }
+
+  function fail(error) {
+    if (app) {
+      app.failed = true;
+      app.ready = false;
+      if (app.orbit) app.orbit.enabled = false;
+    }
+
+    gate(false);
+    document.body.classList.remove("is-loading");
+    document.body.classList.add("render-failed");
+
+    notice(
+      "The visualization could not start",
+      "Reload after checking that WebGL is enabled and the Three.js libraries are reachable.",
+      String(error && error.message || error),
+      true
+    );
+
+    setText("solver-status", "Renderer unavailable");
+  }
+
+  function boundary(m) {
+    const n = Math.floor(m) + 1;
+    return {
+      n,
+      t: (n - m) * (m - n + 1) / (Z * (m + 1))
+    };
+  }
+
+  function siteGround(t, m, trial) {
+    const A = Array.from({ length: DIM }, (_, i) =>
+      Array.from({ length: DIM }, (_, j) =>
+        i === j
+          ? i * (i - 1) / 2 - m * i
+          : Math.abs(i - j) === 1
+            ? -Z * t * trial * Math.sqrt(Math.max(i, j))
+            : 0
+      )
+    );
+
+    const eigenvectors = Array.from({ length: DIM }, (_, i) =>
+      Array.from({ length: DIM }, (_, j) => Number(i === j))
+    );
+
+    // Cyclic Jacobi diagonalization of the real symmetric local Hamiltonian.
+    for (let sweep = 0; sweep < 24; sweep++) {
+      let largest = 0;
+
+      for (let p = 0; p < DIM - 1; p++) {
+        for (let q = p + 1; q < DIM; q++) {
+          const apq = A[p][q];
+          largest = Math.max(largest, Math.abs(apq));
+
+          if (Math.abs(apq) < 1e-14) continue;
+
+          const theta = (A[q][q] - A[p][p]) / (2 * apq);
+          const tangent = (theta >= 0 ? 1 : -1) /
+            (Math.abs(theta) + Math.hypot(theta, 1));
+          const c = 1 / Math.hypot(1, tangent);
+          const s = tangent * c;
+
+          A[p][p] -= tangent * apq;
+          A[q][q] += tangent * apq;
+          A[p][q] = A[q][p] = 0;
+
+          for (let k = 0; k < DIM; k++) {
+            if (k !== p && k !== q) {
+              const akp = A[k][p];
+              const akq = A[k][q];
+
+              A[k][p] = A[p][k] = c * akp - s * akq;
+              A[k][q] = A[q][k] = s * akp + c * akq;
+            }
+
+            const vkp = eigenvectors[k][p];
+            const vkq = eigenvectors[k][q];
+
+            eigenvectors[k][p] = c * vkp - s * vkq;
+            eigenvectors[k][q] = s * vkp + c * vkq;
+          }
+        }
+      }
+
+      if (largest < 1e-12) break;
+
+      if (sweep === 23) {
+        throw new Error("The local eigensolver did not converge.");
+      }
+    }
+
+    let column = 0;
+
+    for (let i = 1; i < DIM; i++) {
+      if (A[i][i] < A[column][column]) column = i;
+    }
+
+    // The ground state has nonnegative coefficients for real positive trial ψ.
+    const c = eigenvectors.map(row => Math.abs(row[column]));
+    const norm = Math.hypot(...c);
+    const probabilities = c.map(value => (value / norm) ** 2);
+
+    let mean = 0;
+    let second = 0;
+    let psi = 0;
+
+    for (let n = 0; n < DIM; n++) {
+      mean += n * probabilities[n];
+      second += n * n * probabilities[n];
+
+      if (n < NMAX) {
+        psi += Math.sqrt(n + 1) * c[n] * c[n + 1] / (norm * norm);
+      }
+    }
 
     return {
-      ec,
-      lp: (ec - gap) / 2,
-      up: (ec + gap) / 2,
-      photon,
-      exciton: 1 - photon,
-      gap
+      probabilities,
+      psi,
+      mean,
+      variance: Math.max(0, second - mean * mean),
+      pairs: Math.max(0, (second - mean) / 2),
+      tail: probabilities[NMAX],
+      residual: Math.abs(psi - trial),
+      energyOverU: A[column][column] + Z * t * trial * trial
     };
   }
 
-  class Population {
-    constructor() {
-      this.reset();
-    }
+  function solveState(s, m) {
+    const J = 4 / Math.sqrt(PI) * s ** 0.75 *
+      Math.exp(-2 * Math.sqrt(s));
+    const U = Math.sqrt(8 / PI) * PI * 0.02 * s ** 0.75;
+    const t = J / U;
+    const critical = boundary(m);
+    const isMott = t <= critical.t * (1 + 1e-12);
 
-    reset() {
-      this.z = Math.log(1e-4);
-      this.r = 0;
-      this.time = 0;
-    }
+    let local;
 
-    get n() {
-      return Math.exp(this.z);
-    }
+    if (isMott) {
+      const n = critical.n;
+      const probabilities = Array(DIM).fill(0);
+      probabilities[n] = 1;
 
-    advance(dt, pump) {
-      const steps = Math.max(1, Math.ceil(dt / 0.02));
-      const h = dt / steps;
-      const rate = (z, r) =>
-        BETA * (pump - (1 + Math.exp(z)) * r);
+      local = {
+        probabilities,
+        psi: 0,
+        mean: n,
+        variance: 0,
+        pairs: n * (n - 1) / 2,
+        tail: 0,
+        residual: 0,
+        energyOverU: n * (n - 1) / 2 - m * n
+      };
+    } else {
+      // Bracket the positive root. Starting fixed-point iteration at zero
+      // would incorrectly trap the calculation in an unstable number state.
+      let lo = 0;
+      let hi = Math.sqrt(NMAX);
 
-      for (let i = 0; i < steps; i++) {
-        const z = this.z;
-        const r = this.r;
+      for (let iteration = 0; iteration < 45; iteration++) {
+        const trial = (lo + hi) / 2;
+        const candidate = siteGround(t, m, trial);
 
-        const a = r - 1;
-        const b = rate(z, r);
-
-        const c = r + h * b / 2 - 1;
-        const d = rate(z + h * a / 2, r + h * b / 2);
-
-        const e = r + h * d / 2 - 1;
-        const f = rate(z + h * c / 2, r + h * d / 2);
-
-        const g = r + h * f - 1;
-        const j = rate(z + h * e, r + h * f);
-
-        this.z += h * (a + 2 * c + 2 * e + g) / 6;
-        this.r += h * (b + 2 * d + 2 * f + j) / 6;
-        this.time += h;
+        if (candidate.psi > trial) lo = trial;
+        else hi = trial;
       }
 
-      if (!Number.isFinite(this.z + this.r) || this.r < -1e-9) {
-        throw new Error(
-          "The population integrator left its valid domain."
-        );
-      }
+      local = siteGround(t, m, (lo + hi) / 2);
     }
+
+    return {
+      ...local,
+      s,
+      m,
+      J,
+      U,
+      t,
+      ratio: U / J,
+      ell: 1 / (PI * s ** 0.25),
+      isMott,
+      mottFilling: isMott ? critical.n : null,
+      criticalT: critical.t,
+      coherent: local.mean > 0
+        ? clamp(local.psi ** 2 / local.mean, 0, 1)
+        : 0
+    };
   }
 
-  function vortexIntegral() {
-    const count = 2048;
-    const h = 8 / count;
-    let sum = 0;
-
-    for (let i = 0; i <= count; i++) {
-      const t = i * h;
-      const s = SIGMA * SIGMA * t * t;
-      const value =
-        t * Math.exp(-t * t) * s / (s + CORE * CORE);
-
-      sum += value * (
-        i === 0 || i === count ? 1 : i % 2 ? 4 : 2
-      );
-    }
-
-    return TAU * SIGMA * SIGMA * sum * h / 3;
+  function dirichlet(q) {
+    const d = Math.sin(q * 0.5);
+    return Math.abs(d) < 1e-8
+      ? SIDE
+      : Math.sin(SIDE * q * 0.5) / d;
   }
 
-  const NORMS = [
-    Math.PI * SIGMA * SIGMA,
-    vortexIntegral()
-  ];
+  function momentum(qx, qy, state) {
+    const dx = dirichlet(qx);
+    const dy = dirichlet(qy);
+    const structure = dx * dx * dy * dy * SIDE * SIDE / NS;
 
-  function profile(x, y, ell) {
-    const r2 = x * x + y * y;
-
-    return Math.exp(-r2 / (SIGMA * SIGMA)) *
-      (ell ? r2 / (r2 + CORE * CORE) : 1) /
-      NORMS[ell ? 1 : 0];
+    return Math.exp(-(state.ell ** 2) * (qx * qx + qy * qy)) *
+      (1 - state.coherent + state.coherent * structure);
   }
-
-  const FIELD_VERTEX = `
-    uniform float uN;
-    uniform float uEll;
-    uniform float uNorm;
-    uniform float uScale;
-
-    varying vec2 vR;
-
-    void main() {
-      vR = position.xy / uScale;
-
-      float r2 = dot(vR, vR);
-      float core = mix(
-        1.0,
-        r2 / (r2 + 0.0196),
-        abs(uEll)
-      );
-
-      float rho =
-        uN * exp(-r2 / 0.5184) * core / uNorm;
-
-      vec3 p = position;
-      p.z += 0.42 * log(1.0 + 3.0 * rho);
-
-      gl_Position =
-        projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-    }
-  `;
-
-  const FIELD_FRAGMENT = `
-    precision highp float;
-
-    uniform float uN;
-    uniform float uEll;
-    uniform float uNorm;
-    uniform float uPhase;
-    uniform float uMode;
-    uniform float uOpacity;
-    uniform vec3 uTint;
-
-    varying vec2 vR;
-
-    vec3 phaseColor(float t) {
-      vec3 a = vec3(0.929, 0.502, 0.808);
-      vec3 b = vec3(0.569, 0.482, 0.957);
-      vec3 c = vec3(0.400, 0.608, 1.000);
-      vec3 d = vec3(0.400, 0.937, 0.906);
-      vec3 e = vec3(0.663, 0.871, 0.765);
-      vec3 f = vec3(0.949, 0.808, 0.529);
-
-      if (t < 0.18) return mix(a, b, t / 0.18);
-      if (t < 0.35) return mix(b, c, (t - 0.18) / 0.17);
-      if (t < 0.52) return mix(c, d, (t - 0.35) / 0.17);
-      if (t < 0.68) return mix(d, e, (t - 0.52) / 0.16);
-      if (t < 0.83) return mix(e, f, (t - 0.68) / 0.15);
-
-      return mix(f, a, (t - 0.83) / 0.17);
-    }
-
-    void main() {
-      float r2 = dot(vR, vR);
-
-      float core = mix(
-        1.0,
-        r2 / (r2 + 0.0196),
-        abs(uEll)
-      );
-
-      float rho =
-        uN * exp(-r2 / 0.5184) * core / uNorm;
-
-      float angle =
-        r2 > 1e-12 ? atan(vR.y, vR.x) : 0.0;
-
-      float phase =
-        0.55 * vR.x +
-        0.08 * vR.y +
-        uEll * angle -
-        uPhase;
-
-      float hue = fract(phase / 6.28318530718 + 0.5);
-      vec3 col = mix(phaseColor(hue), uTint, uMode);
-
-      float light = 1.0 - exp(-rho * 4.0);
-
-      float contour = pow(
-        0.5 + 0.5 * cos(log(1.0 + rho * 10.0) * 22.0),
-        18.0
-      );
-
-      float alpha = light * uOpacity;
-      if (alpha < 0.0003) discard;
-
-      gl_FragColor = vec4(
-        col * (0.42 + 2.4 * light + 0.12 * contour),
-        alpha * 0.88
-      );
-    }
-  `;
-
-  const STANDING_VERTEX = `
-    varying vec2 vUV;
-
-    void main() {
-      vUV = uv;
-
-      gl_Position =
-        projectionMatrix *
-        modelViewMatrix *
-        vec4(position, 1.0);
-    }
-  `;
-
-  const STANDING_FRAGMENT = `
-    precision highp float;
-
-    uniform float uTime;
-    uniform float uOpacity;
-    uniform float uOffset;
-    uniform vec3 uColor;
-
-    varying vec2 vUV;
-
-    void main() {
-      float x = (vUV.x - 0.5) * 2.0;
-      float mode = cos((vUV.y - 0.5) * 3.14159265359);
-      float signedField = mode * cos(uTime * 1.1 + uOffset);
-
-      float intensity =
-        signedField * signedField * exp(-2.5 * x * x);
-
-      float alpha = intensity * uOpacity;
-      if (alpha < 0.001) discard;
-
-      gl_FragColor = vec4(
-        uColor * (0.35 + intensity),
-        alpha
-      );
-    }
-  `;
-
-  const POINT_VERTEX = `
-    attribute float aSize;
-
-    uniform float uSize;
-    uniform float uPixelRatio;
-
-    varying float vFade;
-
-    void main() {
-      vec4 mv = modelViewMatrix * vec4(position, 1.0);
-
-      gl_PointSize = clamp(
-        aSize * uSize * uPixelRatio / max(1.0, -mv.z),
-        1.0,
-        24.0
-      );
-
-      vFade = clamp((-mv.z - 0.2) * 0.4, 0.0, 1.0);
-      gl_Position = projectionMatrix * mv;
-    }
-  `;
-
-  const POINT_FRAGMENT = `
-    precision highp float;
-
-    uniform vec3 uColor;
-    uniform float uOpacity;
-
-    varying float vFade;
-
-    void main() {
-      vec2 d = gl_PointCoord - 0.5;
-      float r = dot(d, d);
-
-      if (r > 0.25) discard;
-
-      float glow =
-        exp(-r * 20.0) *
-        (1.0 - smoothstep(0.12, 0.25, r));
-
-      gl_FragColor = vec4(
-        uColor,
-        glow * uOpacity * vFade
-      );
-    }
-  `;
 
   function boot() {
-    const $ = id => {
-      const el = document.getElementById(id);
-
-      if (!el) {
-        throw new Error("Missing interface element: " + id);
-      }
-
-      return el;
-    };
-
-    const body = document.body;
-    const controlsUI = [
-      ...document.querySelectorAll("[data-engine-control]")
-    ];
-
-    const notice = $("render-notice");
-    let app = null;
-
-    function announce(message) {
-      $("accessibility-status").textContent = message;
-    }
-
-    function gate(enabled) {
-      controlsUI.forEach(el => {
-        el.disabled = !enabled;
-      });
-    }
-
-    function fail(error) {
-      if (app) {
-        app.failed = true;
-        app.ready = false;
-        app.orbit.enabled = false;
-      }
-
-      gate(false);
-      body.classList.add("render-failed");
-      body.classList.remove("is-loading");
-      notice.hidden = false;
-
-      $("notice-title").textContent =
-        "The visualization could not render";
-
-      $("notice-message").textContent =
-        "Reload after checking WebGL support and the library connection.";
-
-      $("notice-detail").textContent =
-        error instanceof Error ? error.message : String(error);
-
-      $("notice-reload").hidden = false;
-      $("model-status").textContent = "Renderer unavailable";
-
-      announce(
-        "Rendering stopped. A recovery message is displayed."
-      );
-    }
-
-    $("notice-reload").addEventListener("click", () => {
-      location.reload();
-    });
+    $("notice-reload").addEventListener("click", () => location.reload());
 
     try {
-      const names = [
-        "WebGLRenderer",
+      if (!window.THREE) {
+        throw new Error("The Three.js core library did not load.");
+      }
+
+      const required = [
         "OrbitControls",
         "CSS2DRenderer",
         "CSS2DObject",
@@ -378,139 +273,125 @@
         "LuminosityHighPassShader"
       ];
 
-      if (!window.THREE || names.some(name => !THREE[name])) {
-        throw new Error(
-          "A Three.js CDN library did not load. Check your connection and reload."
-        );
-      }
+      required.forEach(name => {
+        if (!THREE[name]) {
+          throw new Error("Missing Three.js dependency: " + name);
+        }
+      });
 
-      app = createApp($, gate, announce, fail);
+      app = createApp();
       app.start();
     } catch (error) {
       fail(error);
     }
   }
 
-  function createApp($, gate, announce, fail) {
+  function createApp() {
     const T = THREE;
-    const V = (x = 0, y = 0, z = 0) =>
-      new T.Vector3(x, y, z);
-
-    const body = document.body;
-    const host = $("canvas-container");
-    const pop = new Population();
+    const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
 
     const state = {
-      detuning: -0.65,
-      q: 0,
-      pump: 1.6,
-      ell: 0,
-      wantedEll: 0,
-      fieldFade: 1,
-      field: "phase",
-      paused: matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches,
-      mode: "auto",
-      hud: true,
-      tour: 0,
-      chapter: 0,
-      inspection: null,
       ready: false,
       failed: false,
       lost: false,
-      visualTime: 0,
+      paused: false,
+      manual: false,
+      hidden: false,
+      tour: 0,
+      teaching: 0,
+      chapter: -1,
+      transition: null,
+      depth: 6.5,
+      chemical: 0.4,
+      view: "coherence",
+      site: "center",
+      inspection: "",
+      dirty: true,
+      plotsDirty: true,
+      hudClock: 0,
+      solveClock: 0,
+      last: 0,
       width: 1,
       height: 1,
-      dpr: 1,
-      viewShift: 0,
-      focusDistance: 35,
-      reveal: 1
+      dpr: 1
     };
 
-    const canvas = document.createElement("canvas");
-    canvas.setAttribute("aria-hidden", "true");
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    state.paused = reducedMotion.matches;
 
-    const attributes = {
+    const container = $("canvas-container");
+    const canvas = document.createElement("canvas");
+
+    const contextOptions = {
       alpha: false,
       antialias: false,
+      depth: true,
+      stencil: false,
       powerPreference: "high-performance"
     };
 
-    const gl =
-      canvas.getContext("webgl2", attributes) ||
-      canvas.getContext("webgl", attributes);
+    const gl = canvas.getContext("webgl2", contextOptions) ||
+      canvas.getContext("webgl", contextOptions);
 
     if (!gl) {
-      throw new Error("WebGL is unavailable in this browser.");
+      throw new Error("This browser could not create a WebGL context.");
     }
 
     const renderer = new T.WebGLRenderer({
       canvas,
       context: gl,
-      ...attributes
+      ...contextOptions
     });
 
-    renderer.setClearColor(0x03060c, 1);
+    renderer.setClearColor(0x02050b, 1);
     renderer.outputEncoding = T.LinearEncoding;
     renderer.toneMapping = T.NoToneMapping;
-    host.appendChild(canvas);
+    renderer.debug.checkShaderErrors = true;
+
+    container.appendChild(canvas);
+    canvas.setAttribute("aria-hidden", "true");
 
     const scene = new T.Scene();
-    scene.fog = new T.FogExp2(0x03060c, 0.005);
+    scene.fog = new T.FogExp2(0x030711, 0.012);
 
-    const camera = new T.PerspectiveCamera(46, 1, 0.12, 350);
+    const camera = new T.PerspectiveCamera(48, 1, 0.08, 220);
+    camera.position.set(31, 20, 36);
+    camera.lookAt(0, 0, 0);
+
+    // OrbitControls owns this clone. The render loop owns the visible camera.
     const controlCamera = camera.clone();
     const orbit = new T.OrbitControls(controlCamera, canvas);
 
+    state.orbit = orbit;
     orbit.enabled = false;
     orbit.enableDamping = true;
-    orbit.dampingFactor = 0.08;
-    orbit.minDistance = 2;
-    orbit.maxDistance = 140;
-    orbit.maxPolarAngle = Math.PI * 0.94;
-    orbit.screenSpacePanning = true;
-    orbit.rotateSpeed = 0.55;
+    orbit.dampingFactor = 0.075;
+    orbit.rotateSpeed = 0.5;
     orbit.zoomSpeed = 0.7;
+    orbit.panSpeed = 0.7;
+    orbit.minDistance = 1.3;
+    orbit.maxDistance = 115;
+    orbit.maxPolarAngle = PI * 0.96;
+    orbit.target.set(0, 0, 0);
 
-    const labels = new T.CSS2DRenderer();
-    labels.domElement.className = "label-layer";
-    $("observatory").appendChild(labels.domElement);
+    const hdr = renderer.capabilities.isWebGL2 &&
+      renderer.extensions.has("EXT_color_buffer_float");
 
-    const leaderSVG = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
-
-    leaderSVG.classList.add("world-leaders");
-    leaderSVG.setAttribute("aria-hidden", "true");
-    $("observatory").appendChild(leaderSVG);
-
-    const hdr =
-      renderer.capabilities.isWebGL2 &&
-      !!renderer.extensions.get("EXT_color_buffer_float");
-
-    const renderTarget = new T.WebGLRenderTarget(1, 1, {
+    const target = new T.WebGLRenderTarget(1, 1, {
       type: hdr ? T.HalfFloatType : T.UnsignedByteType,
       format: T.RGBAFormat,
-      minFilter: T.LinearFilter,
-      magFilter: T.LinearFilter,
       depthBuffer: true,
       stencilBuffer: false
     });
 
-    const composer = new T.EffectComposer(
-      renderer,
-      renderTarget
-    );
-
+    const composer = new T.EffectComposer(renderer, target);
     composer.addPass(new T.RenderPass(scene, camera));
 
     const bloom = new T.UnrealBloomPass(
       new T.Vector2(1, 1),
-      0.48,
+      0.5,
       0.45,
-      0.68
+      0.72
     );
 
     composer.addPass(bloom);
@@ -525,43 +406,35 @@
 
         void main() {
           vUv = uv;
-
-          gl_Position =
-            projectionMatrix *
-            modelViewMatrix *
+          gl_Position = projectionMatrix * modelViewMatrix *
             vec4(position, 1.0);
         }
       `,
 
       fragmentShader: `
-        precision highp float;
-
         uniform sampler2D tDiffuse;
         varying vec2 vUv;
 
-        void main() {
-          vec3 x = max(
-            texture2D(tDiffuse, vUv).rgb * 1.12,
-            vec3(0.0)
-          );
-
-          vec3 y = clamp(
+        vec3 aces(vec3 x) {
+          return clamp(
             (x * (2.51 * x + 0.03)) /
             (x * (2.43 * x + 0.59) + 0.14),
             0.0,
             1.0
           );
+        }
 
-          vec3 low = 12.92 * y;
-          vec3 high =
-            1.055 * pow(y, vec3(1.0 / 2.4)) - 0.055;
+        vec3 srgb(vec3 x) {
+          return mix(
+            12.92 * x,
+            1.055 * pow(x, vec3(1.0 / 2.4)) - 0.055,
+            step(vec3(0.0031308), x)
+          );
+        }
 
+        void main() {
           gl_FragColor = vec4(
-            mix(
-              low,
-              high,
-              step(vec3(0.0031308), y)
-            ),
+            srgb(aces(texture2D(tDiffuse, vUv).rgb)),
             1.0
           );
         }
@@ -573,1928 +446,1908 @@
     const fxaa = new T.ShaderPass(T.FXAAShader);
     composer.addPass(fxaa);
 
-    scene.add(new T.AmbientLight(0x6686b0, 0.5));
+    const labels = new T.CSS2DRenderer();
+    labels.domElement.className = "label-layer";
+    labels.domElement.style.pointerEvents = "none";
+    $("observatory").appendChild(labels.domElement);
 
-    const key = new T.DirectionalLight(0xbbefff, 1);
-    key.position.set(8, 20, 12);
-    scene.add(key);
+    const svgNS = "http://www.w3.org/2000/svg";
+    const leaders = document.createElementNS(svgNS, "svg");
+    leaders.classList.add("world-leaders");
+    leaders.setAttribute("aria-hidden", "true");
+    $("observatory").appendChild(leaders);
 
-    const rim = new T.DirectionalLight(0x7255e8, 0.65);
-    rim.position.set(-20, 5, -15);
-    scene.add(rim);
+    const cyan = 0x53eadc;
+    const blue = 0x548fff;
+    const violet = 0xaf76ff;
+    const gold = 0xe4bd75;
 
-    let seed = 0x4a91;
+    const dummy = new T.Object3D();
+    const up = V(0, 1, 0);
+    const scratch = V();
+    const projected = V();
+    const focus = V();
 
-    function random() {
-      seed = (
-        Math.imul(seed, 1664525) + 1013904223
-      ) >>> 0;
+    let result = solveState(state.depth, state.chemical);
 
-      return seed / 4294967296;
-    }
+    const sfReference = solveState(6.5, 0.4);
+    const mottReference = solveState(18, 0.4);
+    const resources = [];
 
-    function gaussian() {
-      return Math.sqrt(
-        -2 * Math.log(Math.max(1e-9, random()))
-      ) * Math.cos(TAU * random());
-    }
+    let cachedHUDRects = [];
 
-    const pointMaterials = [];
-    const standingMaterials = [];
-    const fieldMaterials = [];
-    const photonColor = new T.Color(0x65b5ff);
+    function line(points, color, opacity = 1, segments = false) {
+      const geometry = new T.BufferGeometry().setFromPoints(points);
 
-    function points(
-      count,
-      color,
-      size,
-      opacity,
-      fill,
-      parent = scene
-    ) {
-      const positions = new Float32Array(count * 3);
-      const sizes = new Float32Array(count);
-
-      for (let i = 0; i < count; i++) {
-        positions.set(fill(i), i * 3);
-        sizes[i] = 0.7 + random() * 0.6;
-      }
-
-      const geometry = new T.BufferGeometry();
-
-      geometry.setAttribute(
-        "position",
-        new T.BufferAttribute(positions, 3)
-      );
-
-      geometry.setAttribute(
-        "aSize",
-        new T.BufferAttribute(sizes, 1)
-      );
-
-      const material = new T.ShaderMaterial({
-        uniforms: {
-          uColor: { value: new T.Color(color) },
-          uOpacity: { value: opacity },
-          uSize: { value: size },
-          uPixelRatio: { value: 1 }
-        },
-        vertexShader: POINT_VERTEX,
-        fragmentShader: POINT_FRAGMENT,
-        transparent: true,
-        depthWrite: false,
-        blending: T.AdditiveBlending
-      });
-
-      pointMaterials.push(material);
-
-      const mesh = new T.Points(geometry, material);
-      parent.add(mesh);
-
-      return mesh;
-    }
-
-    function line(
-      vertices,
-      color,
-      opacity = 1,
-      parent = scene,
-      dashed = false
-    ) {
-      const geometry =
-        new T.BufferGeometry().setFromPoints(vertices);
-
-      const Material = dashed
-        ? T.LineDashedMaterial
-        : T.LineBasicMaterial;
-
-      const material = new Material({
+      const material = new T.LineBasicMaterial({
         color,
         transparent: true,
         opacity,
-        depthWrite: false,
-        dashSize: 0.35,
-        gapSize: 0.25
+        depthWrite: false
       });
 
-      const object = new T.Line(geometry, material);
+      return segments
+        ? new T.LineSegments(geometry, material)
+        : new T.Line(geometry, material);
+    }
 
-      if (dashed) {
-        object.computeLineDistances();
+    function ring(radius, color, opacity = 0.65) {
+      const points = [];
+
+      for (let i = 0; i <= 80; i++) {
+        const a = i / 80 * PI * 2;
+        points.push(V(
+          Math.cos(a) * radius,
+          0,
+          Math.sin(a) * radius
+        ));
       }
 
-      parent.add(object);
-      return object;
+      return line(points, color, opacity);
     }
 
-    function ring(radius, y, color, parent = scene) {
-      const vertices = [];
+    function cloudMaterial(color = cyan) {
+      return new T.ShaderMaterial({
+        uniforms: {
+          tint: { value: new T.Color(color) },
+          strength: { value: 0.65 }
+        },
 
-      for (let i = 0; i <= 128; i++) {
-        const a = i * TAU / 128;
-        vertices.push(
-          V(Math.cos(a) * radius, y, Math.sin(a) * radius)
-        );
+        transparent: true,
+        depthWrite: false,
+        blending: T.AdditiveBlending,
+
+        vertexShader: `
+          varying vec2 vUv;
+
+          void main() {
+            vUv = uv;
+
+            vec4 p = modelViewMatrix * instanceMatrix *
+              vec4(0.0, 0.0, 0.0, 1.0);
+
+            vec2 s = vec2(
+              length(instanceMatrix[0].xyz),
+              length(instanceMatrix[1].xyz)
+            );
+
+            p.xy += position.xy * s;
+            gl_Position = projectionMatrix * p;
+          }
+        `,
+
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform vec3 tint;
+          uniform float strength;
+
+          void main() {
+            vec2 p = (vUv - 0.5) * 2.0;
+            float r = dot(p, p);
+            float a = exp(-5.0 * r) *
+              (1.0 - smoothstep(0.65, 1.0, r));
+
+            if (a < 0.002) discard;
+
+            gl_FragColor = vec4(
+              tint * (0.7 + exp(-18.0 * r)),
+              a * strength
+            );
+          }
+        `
+      });
+    }
+
+    const cloudGeometry = new T.PlaneGeometry(1, 1);
+
+    function cloudArray(positions, material) {
+      const mesh = new T.InstancedMesh(
+        cloudGeometry,
+        material,
+        positions.length
+      );
+
+      mesh.frustumCulled = false;
+      mesh.userData.positions = positions;
+      mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
+      scene.add(mesh);
+
+      return mesh;
+    }
+
+    function sizeClouds(mesh, size) {
+      mesh.userData.positions.forEach((p, i) => {
+        dummy.position.copy(p);
+        dummy.quaternion.identity();
+        dummy.scale.setScalar(Array.isArray(size) ? size[i] : size);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+      });
+
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    const sites = [];
+
+    for (let x = -3; x <= 3; x++) {
+      for (let y = -3; y <= 3; y++) {
+        for (let z = -3; z <= 3; z++) {
+          sites.push(V(x, y, z).multiplyScalar(SPACING));
+        }
       }
-
-      return line(vertices, color, 0.3, parent);
     }
 
-    function field(
-      parent,
-      n = 1,
-      ell = 0,
-      scale = 1,
-      tint = 0x66efe7
-    ) {
-      const material = new T.ShaderMaterial({
-        uniforms: {
-          uN: { value: n },
-          uEll: { value: ell },
-          uNorm: { value: NORMS[ell ? 1 : 0] },
-          uScale: { value: FIELD_SCALE },
-          uPhase: { value: 0 },
-          uMode: { value: 0 },
-          uOpacity: { value: 1 },
-          uTint: { value: new T.Color(tint) }
-        },
-        vertexShader: FIELD_VERTEX,
-        fragmentShader: FIELD_FRAGMENT,
-        side: T.DoubleSide,
-        transparent: true,
-        depthWrite: false,
-        blending: T.AdditiveBlending
-      });
+    const populationMaterial = cloudMaterial(cyan);
+    const population = cloudArray(sites, populationMaterial);
+    const edges = [];
 
-      fieldMaterials.push(material);
-
-      const mesh = new T.Mesh(
-        new T.PlaneBufferGeometry(28, 28, 80, 80),
-        material
-      );
-
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.scale.setScalar(scale);
-      parent.add(mesh);
-
-      return mesh;
-    }
-
-    function standing(
-      parent,
-      width,
-      height,
-      opacity = 0.2,
-      color = 0x65b5ff
-    ) {
-      const material = new T.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uOpacity: { value: opacity },
-          uOffset: { value: 0 },
-          uColor: { value: new T.Color(color) }
-        },
-        vertexShader: STANDING_VERTEX,
-        fragmentShader: STANDING_FRAGMENT,
-        side: T.DoubleSide,
-        transparent: true,
-        depthWrite: false,
-        blending: T.AdditiveBlending
-      });
-
-      standingMaterials.push(material);
-
-      const mesh = new T.Mesh(
-        new T.PlaneBufferGeometry(width, height),
-        material
-      );
-
-      parent.add(mesh);
-      return mesh;
-    }
-
-    const sphereGeometry =
-      new T.SphereBufferGeometry(1, 20, 12);
-
-    function bead(parent, position, radius, color) {
-      const mesh = new T.Mesh(
-        sphereGeometry,
-        new T.MeshBasicMaterial({ color })
-      );
-
-      mesh.position.copy(position);
-      mesh.scale.setScalar(radius);
-      parent.add(mesh);
-
-      return mesh;
-    }
-
-    function exciton(parent, scale = 1) {
-      const group = new T.Group();
-      group.scale.setScalar(scale);
-      parent.add(group);
-
-      points(
-        240,
-        0xf18fdc,
-        38,
-        0.2,
-        () => [
-          gaussian() * 0.8,
-          gaussian() * 0.24,
-          gaussian() * 0.6
-        ],
-        group
-      );
-
-      bead(group, V(-0.47, 0, 0), 0.12, 0x65b5ff);
-
-      const hole = new T.Mesh(
-        new T.TorusBufferGeometry(0.17, 0.025, 8, 36),
-        new T.MeshBasicMaterial({ color: 0xf18fdc })
-      );
-
-      hole.position.x = 0.47;
-      group.add(hole);
-
-      line(
-        [V(-0.35, 0, 0), V(0.3, 0, 0)],
-        0xb59aff,
-        0.45,
-        group,
-        true
-      );
-
-      return group;
-    }
-
-    points(380, 0x779bc3, 100, 0.38, () => {
-      const theta = random() * TAU;
-      const y = random() * 2 - 1;
-      const r = 95 + random() * 60;
-
-      return [
-        r * Math.sqrt(1 - y * y) * Math.cos(theta),
-        r * y,
-        r * Math.sqrt(1 - y * y) * Math.sin(theta)
-      ];
+    sites.forEach(p => {
+      for (let axis = 0; axis < 3; axis++) {
+        if (p.getComponent(axis) < 3 * SPACING) {
+          const q = p.clone();
+          q.setComponent(axis, q.getComponent(axis) + SPACING);
+          edges.push([p, q]);
+        }
+      }
     });
 
-    const cavity = new T.Group();
-    scene.add(cavity);
-
-    const plateGeometry =
-      new T.BoxBufferGeometry(30, 0.1, 26);
-
-    const plateEdges = new T.EdgesGeometry(plateGeometry);
-    const mirrorMaterials = [];
-
-    for (const sign of [-1, 1]) {
-      for (let i = 0; i < 8; i++) {
-        const color = i % 2 ? 0x817ac8 : 0x578cae;
-
-        const material = new T.MeshPhongMaterial({
-          color,
-          transparent: true,
-          opacity: 0.055,
-          shininess: 75,
-          depthWrite: false,
-          side: T.DoubleSide
-        });
-
-        mirrorMaterials.push(material);
-
-        const plate = new T.Mesh(plateGeometry, material);
-        plate.position.y = sign * (3.25 + i * 0.18);
-        cavity.add(plate);
-
-        const edge = new T.LineSegments(
-          plateEdges,
-          new T.LineBasicMaterial({
-            color,
-            transparent: true,
-            opacity: i === 0 ? 0.44 : 0.16,
-            depthWrite: false
-          })
-        );
-
-        edge.position.copy(plate.position);
-        cavity.add(edge);
-      }
-    }
-
-    const well = new T.Mesh(
-      new T.PlaneBufferGeometry(28, 24),
-      new T.MeshBasicMaterial({
-        color: 0x8b55c9,
-        transparent: true,
-        opacity: 0.055,
-        side: T.DoubleSide,
-        depthWrite: false
-      })
-    );
-
-    well.rotation.x = -Math.PI / 2;
-    well.position.y = -0.08;
-    cavity.add(well);
-
-    line(
-      [
-        V(-14, -0.07, -12),
-        V(14, -0.07, -12),
-        V(14, -0.07, 12),
-        V(-14, -0.07, 12),
-        V(-14, -0.07, -12)
-      ],
-      0xb777e3,
-      0.45,
-      cavity
-    );
-
-    ring(10.8, -0.04, 0x8e6ae1, cavity);
-    ring(18, -5, 0x305e83);
-    ring(19, -5, 0x28455f);
-
-    for (let i = 0; i < 36; i++) {
-      const a = i * TAU / 36;
-      const r1 = 18.3;
-      const r2 = i % 3 === 0 ? 19.2 : 18.7;
-
-      line(
-        [
-          V(Math.cos(a) * r1, -5, Math.sin(a) * r1),
-          V(Math.cos(a) * r2, -5, Math.sin(a) * r2)
-        ],
-        0x426e91,
-        0.32
-      );
-    }
-
-    const photonSheets = [];
-
-    for (const z of [-6, 0, 6]) {
-      const sheet = standing(cavity, 25, 6.4, 0.12);
-      sheet.position.z = z;
-      photonSheets.push(sheet);
-    }
-
-    const mainExciton = exciton(cavity, 1.8);
-    mainExciton.position.set(-7, 0.5, 3);
-
-    const condensate = field(cavity, pop.n);
-    condensate.position.y = 0.12;
-
-    const reservoir = points(
-      1000,
-      0xd5a879,
-      52,
-      0,
-      () => {
-        const a = random() * TAU;
-        const r = Math.sqrt(random()) * 7.5;
-
-        return [
-          Math.cos(a) * r,
-          0.25 + Math.abs(gaussian()) * 0.45,
-          Math.sin(a) * r
-        ];
-      },
-      cavity
-    );
-
-    const pumpStart = V(-15, 17, -5);
-    const pumpEnd = V(0, 0.25, 0);
-    const pumpDirection = pumpEnd.clone().sub(pumpStart);
-
-    const beamMaterial = new T.MeshBasicMaterial({
-      color: 0xf3ce87,
+    const bridgeMaterial = new T.MeshBasicMaterial({
+      color: cyan,
       transparent: true,
-      opacity: 0.06,
-      depthWrite: false,
-      side: T.DoubleSide,
-      blending: T.AdditiveBlending
+      opacity: 0.2,
+      blending: T.AdditiveBlending,
+      depthWrite: false
     });
 
-    const beam = new T.Mesh(
-      new T.CylinderBufferGeometry(
-        0.42,
-        1.15,
-        pumpDirection.length(),
-        24,
-        1,
-        true
-      ),
-      beamMaterial
+    const bridges = new T.InstancedMesh(
+      new T.CylinderGeometry(1, 1, 1, 6, 1, true),
+      bridgeMaterial,
+      edges.length
     );
 
-    beam.position.copy(pumpStart).add(pumpEnd).multiplyScalar(0.5);
+    bridges.frustumCulled = false;
+    scene.add(bridges);
 
-    beam.quaternion.setFromUnitVectors(
-      V(0, 1, 0),
-      pumpDirection.clone().normalize()
-    );
+    function updateBridges() {
+      const radius = 0.012 + 0.075 * result.coherent *
+        Math.sqrt(result.J / sfReference.J);
 
-    scene.add(beam);
-    line([pumpStart, pumpEnd], 0xf3ce87, 0.17);
+      edges.forEach(([p, q], i) => {
+        dummy.position.copy(p).add(q).multiplyScalar(0.5);
+        scratch.subVectors(q, p);
+        dummy.quaternion.setFromUnitVectors(
+          up,
+          scratch.clone().normalize()
+        );
+        dummy.scale.set(radius, SPACING, radius);
+        dummy.updateMatrix();
+        bridges.setMatrixAt(i, dummy.matrix);
+      });
 
-    const pumpSeeds = Array.from(
-      { length: 85 },
-      () => [random(), random() * TAU, random() * 0.45]
-    );
+      bridges.instanceMatrix.needsUpdate = true;
+      bridgeMaterial.opacity = 0.36 * result.coherent;
+      bridges.visible = state.view === "coherence" &&
+        result.coherent > 1e-7;
+    }
 
-    const pumpPoints = points(
-      85,
-      0xffd591,
-      50,
-      0.6,
-      () => [0, 0, 0]
-    );
+    // Explanatory height plot of the static red-detuned potential.
+    // Minima coincide with time-averaged cos² optical-intensity maxima.
+    const potentialMaterial = new T.ShaderMaterial({
+      uniforms: {
+        depth: { value: result.s },
+        alpha: { value: 0.43 }
+      },
 
-    pumpPoints.frustumCulled = false;
+      transparent: true,
+      side: T.DoubleSide,
+      depthWrite: false,
 
-    const emissionSeeds = Array.from(
-      { length: 200 },
-      () => [gaussian() * 2, gaussian() * 2, random()]
-    );
+      vertexShader: `
+        uniform float depth;
+        varying vec2 q;
+        varying float h;
 
-    const emission = points(
-      200,
-      0x77ceff,
-      58,
-      0,
-      () => [0, 0, 0]
-    );
+        void main() {
+          q = position.xy;
+          vec2 s = sin(3.14159265359 * q / 2.0);
+          h = dot(s, s);
 
-    emission.frustumCulled = false;
+          vec3 p = vec3(
+            q.x,
+            -6.5 + 0.065 * depth * h,
+            q.y
+          );
 
-    const arrowPositions = new Float32Array(160 * 18);
-    const arrowGeometry = new T.BufferGeometry();
-
-    arrowGeometry.setAttribute(
-      "position",
-      new T.BufferAttribute(arrowPositions, 3)
-        .setUsage(T.DynamicDrawUsage)
-    );
-
-    const arrows = new T.LineSegments(
-      arrowGeometry,
-      new T.LineBasicMaterial({
-        color: 0xb9f8f6,
-        transparent: true,
-        opacity: 0.45,
-        depthWrite: false
-      })
-    );
-
-    arrows.frustumCulled = false;
-    cavity.add(arrows);
-
-    const arrowSites = [];
-
-    for (let ix = -5; ix <= 5; ix++) {
-      for (let iy = -5; iy <= 5; iy++) {
-        const x = ix * 0.27;
-        const y = iy * 0.27;
-        const r2 = x * x + y * y;
-
-        if (r2 < 2.1 && r2 > 0.04) {
-          arrowSites.push([x, y]);
+          gl_Position = projectionMatrix * modelViewMatrix *
+            vec4(p, 1.0);
         }
-      }
-    }
+      `,
 
-    const board = new T.Group();
-    board.position.set(43, 7, -10);
-    scene.add(board);
+      fragmentShader: `
+        uniform float alpha;
+        varying vec2 q;
+        varying float h;
 
-    const boardBack = new T.Mesh(
-      new T.PlaneBufferGeometry(29, 27),
-      new T.MeshBasicMaterial({
-        color: 0x071525,
-        transparent: true,
-        opacity: 0.65,
-        side: T.DoubleSide
-      })
-    );
+        void main() {
+          float contours = pow(
+            0.5 + 0.5 * cos(6.28318530718 * h * 5.0),
+            16.0
+          );
 
-    boardBack.position.set(0, 4.5, -0.3);
-    board.add(boardBack);
+          float rim = 1.0 - smoothstep(
+            6.2,
+            7.0,
+            max(abs(q.x), abs(q.y))
+          );
 
-    for (let q = -2; q <= 2.01; q += 0.5) {
-      line(
-        [V(q * 6, -8), V(q * 6, 17.5)],
-        0x315675,
-        0.16,
-        board
-      );
-    }
+          vec3 c = mix(
+            vec3(0.025, 0.12, 0.3),
+            vec3(0.28, 0.22, 0.7),
+            h * 0.5
+          );
 
-    for (let e = -2; e <= 6; e++) {
-      line(
-        [V(-12, e * 2.7), V(12, e * 2.7)],
-        0x315675,
-        0.16,
-        board
-      );
-    }
+          c += contours * vec3(0.12, 0.35, 0.6);
 
-    line([V(-13, -8), V(13, -8)], 0x7697b2, 0.7, board);
-    line([V(-13, -8), V(-13, 17.5)], 0x7697b2, 0.7, board);
-
-    const curveCount = 181;
-    const curves = {};
-
-    for (const [name, color, dashed] of [
-      ["ec", 0x65b5ff, true],
-      ["ex", 0xf18fdc, true],
-      ["up", 0xf3ce87, false],
-      ["lp", 0x66f5ed, false]
-    ]) {
-      const vertices = Array.from(
-        { length: curveCount },
-        () => V()
-      );
-
-      curves[name] = line(
-        vertices,
-        color,
-        name === "ec" || name === "ex" ? 0.45 : 1,
-        board,
-        dashed
-      );
-
-      curves[name].geometry.attributes.position
-        .setUsage(T.DynamicDrawUsage);
-
-      curves[name].frustumCulled = false;
-    }
-
-    const lpMarker = bead(board, V(), 0.2, 0x83fff4);
-    const upMarker = bead(board, V(), 0.17, 0xffdb95);
-
-    const gapLine = line(
-      [V(), V()],
-      0xd7edf9,
-      0.7,
-      board,
-      true
-    );
-
-    gapLine.frustumCulled = false;
-
-    const shelf = new T.Group();
-    scene.add(shelf);
-
-    const inspectionPositions = {};
-    const referenceFields = [];
-    const referenceWaves = [];
-
-    [
-      "photon",
-      "exciton",
-      "upper",
-      "lower",
-      "reservoir",
-      "vortex"
-    ].forEach((name, i) => {
-      const root = new T.Group();
-      root.position.set(-20 + i * 8, 0, 28);
-      shelf.add(root);
-
-      inspectionPositions[name] =
-        root.position.clone().add(V(0, 1, 0));
-
-      ring(2.7, -1.5, 0x426c92, root);
-      ring(2.5, -1.5, 0x314a65, root);
-
-      if (name === "photon") {
-        const wave = standing(root, 4.5, 3, 0.62);
-        referenceWaves.push(wave);
-
-        line(
-          [V(-2.3, -1.5), V(2.3, -1.5)],
-          0x75b6eb,
-          0.8,
-          root
-        );
-
-        line(
-          [V(-2.3, 1.5), V(2.3, 1.5)],
-          0x75b6eb,
-          0.8,
-          root
-        );
-      } else if (name === "exciton") {
-        exciton(root, 1.4);
-      } else if (name === "reservoir") {
-        points(
-          180,
-          0xf3ce87,
-          45,
-          0.6,
-          () => [
-            gaussian() * 0.9,
-            Math.abs(gaussian()),
-            gaussian() * 0.9
-          ],
-          root
-        );
-
-        line(
-          [V(-1, 3, 0), V(0, 0.1, 0)],
-          0xf3ce87,
-          0.5,
-          root
-        );
-      } else {
-        const referenceField = field(
-          root,
-          1,
-          name === "vortex" ? 1 : 0,
-          0.2,
-          name === "upper" ? 0xf3ce87 : 0x66efe7
-        );
-
-        if (name !== "vortex") {
-          referenceField.material.uniforms.uMode.value = 1;
+          gl_FragColor = vec4(
+            c,
+            alpha * rim * (0.32 + contours * 0.5)
+          );
         }
+      `
+    });
 
-        referenceFields.push({
-          name,
-          mesh: referenceField
+    const potential = new T.Mesh(
+      new T.PlaneGeometry(14, 14, 112, 112),
+      potentialMaterial
+    );
+
+    potential.frustumCulled = false;
+    scene.add(potential);
+
+    const opticalWaves = [];
+
+    for (let axis = 0; axis < 3; axis++) {
+      for (let sign = -1; sign <= 1; sign += 2) {
+        const geometry = new T.BufferGeometry();
+
+        geometry.setAttribute(
+          "position",
+          new T.BufferAttribute(new Float32Array(193 * 3), 3)
+        );
+
+        const material = new T.LineBasicMaterial({
+          color: axis === 0 ? blue : axis === 1 ? violet : cyan,
+          transparent: true,
+          opacity: 0.25,
+          depthWrite: false,
+          blending: T.AdditiveBlending
         });
 
-        if (name !== "vortex") {
-          const wave = standing(root, 3.5, 2, 0.45);
-
-          wave.material.uniforms.uOffset.value =
-            name === "lower" ? Math.PI : 0;
-
-          referenceWaves.push(wave);
-        }
+        const wave = new T.Line(geometry, material);
+        wave.frustumCulled = false;
+        scene.add(wave);
+        opticalWaves.push({ wave, axis, sign });
       }
-    });
+    }
 
-    let lastDetuning = NaN;
+    function animateOptics(time) {
+      opticalWaves.forEach(({ wave, axis, sign }) => {
+        const attribute = wave.geometry.attributes.position;
 
-    function updateSpectrum() {
-      if (state.detuning !== lastDetuning) {
-        for (let i = 0; i < curveCount; i++) {
-          const q = -2 + 4 * i / (curveCount - 1);
-          const s = spectrum(q, state.detuning);
+        for (let i = 0; i < attribute.count; i++) {
+          const q = -9 + 18 * i / (attribute.count - 1);
+          const carrier = 0.3 *
+            Math.cos(PI * q / SPACING - sign * time * 0.8);
+          const offset = sign * 0.3;
 
-          for (const name of ["ec", "ex", "up", "lp"]) {
-            curves[name].geometry.attributes.position.setXYZ(
-              i,
-              q * 6,
-              (name === "ex" ? 0 : s[name]) * 2.7,
-              0
+          if (axis === 0) {
+            attribute.setXYZ(
+              i, q, -7.25 + carrier, -7.4 + offset
+            );
+          }
+
+          if (axis === 1) {
+            attribute.setXYZ(
+              i, -7.4 + offset, q, -7.25 + carrier
+            );
+          }
+
+          if (axis === 2) {
+            attribute.setXYZ(
+              i, -7.25 + carrier, -7.4 + offset, q
             );
           }
         }
 
-        for (const object of Object.values(curves)) {
-          object.geometry.attributes.position.needsUpdate = true;
+        attribute.needsUpdate = true;
+        wave.material.opacity =
+          state.view === "potential" || state.chapter === 1
+            ? 0.8
+            : 0.25;
+      });
+    }
 
-          if (object.material.isLineDashedMaterial) {
-            object.computeLineDistances();
+    const intensityMaterial = new T.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: T.DoubleSide,
+
+      vertexShader: `
+        varying vec2 vUv;
+
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix *
+            vec4(position, 1.0);
+        }
+      `,
+
+      fragmentShader: `
+        varying vec2 vUv;
+
+        void main() {
+          float x = (vUv.x - 0.5) * 18.0;
+          float c = cos(3.14159265359 * x / 2.0);
+          float edge = pow(
+            sin(3.14159265359 * vUv.y),
+            2.0
+          );
+
+          gl_FragColor = vec4(
+            0.08,
+            0.35,
+            0.9,
+            0.6 * c * c * edge
+          );
+        }
+      `
+    });
+
+    const intensity = new T.Mesh(
+      new T.PlaneGeometry(18, 0.8),
+      intensityMaterial
+    );
+
+    intensity.rotation.x = -PI / 2;
+    intensity.position.set(0, -7.35, -6.2);
+    scene.add(intensity);
+
+    const selectedHalo = ring(0.55, gold);
+    selectedHalo.position.set(0, -0.4, 0);
+    scene.add(selectedHalo);
+
+    const uncertaintyHalo = ring(0.65, violet, 0.38);
+    scene.add(uncertaintyHalo);
+
+    const siteCoordinates = {
+      center: V(),
+      neighbor: V(2, 0, 0),
+      upper: V(0, 2, 0)
+    };
+
+    // Six independent reference objects outside the bulk lattice.
+    const referencePositions = {
+      site: V(16, -3, 4),
+      wannier: V(22, -3, 4),
+      tunneling: V(28, -3, 4),
+      interaction: V(16, -3, -4),
+      superfluid: V(22, -3, -4),
+      mott: V(28, -3, -4)
+    };
+
+    Object.entries(referencePositions).forEach((entry, index) => {
+      const position = entry[1];
+      const base = ring(1.65, index > 2 ? gold : blue, 0.45);
+      base.position.copy(position).y -= 0.45;
+      scene.add(base);
+    });
+
+    const siteRef = cloudArray(
+      [referencePositions.site],
+      cloudMaterial(cyan)
+    );
+
+    const wannierRef = cloudArray(
+      [referencePositions.wannier],
+      cloudMaterial(violet)
+    );
+
+    const dimerPositions = [
+      referencePositions.tunneling.clone().add(V(-0.9, 0, 0)),
+      referencePositions.tunneling.clone().add(V(0.9, 0, 0))
+    ];
+
+    const dimerLeft = cloudArray(
+      [dimerPositions[0]],
+      cloudMaterial(cyan)
+    );
+
+    const dimerRight = cloudArray(
+      [dimerPositions[1]],
+      cloudMaterial(violet)
+    );
+
+    sizeClouds(dimerLeft, 2.2);
+    sizeClouds(dimerRight, 2.2);
+
+    const dimerLink = line(dimerPositions, blue, 0.45);
+    scene.add(dimerLink);
+
+    const interactionRef = cloudArray(
+      [referencePositions.interaction],
+      cloudMaterial(gold)
+    );
+
+    sizeClouds(interactionRef, 2.5);
+
+    [0.65, 1.0, 1.35].forEach((r, i) => {
+      const object = ring(r, gold, 0.7 - i * 0.15);
+      object.position.copy(referencePositions.interaction).y += i * 0.3;
+      scene.add(object);
+    });
+
+    function referenceStrip(name, sample) {
+      const positions = [-1, 0, 1].map(x =>
+        referencePositions[name].clone().add(V(x * 0.85, 0, 0))
+      );
+
+      const material = cloudMaterial(name === "mott" ? gold : cyan);
+      const object = cloudArray(positions, material);
+
+      sizeClouds(object, 7.5 * SPACING * sample.ell * 0.6);
+
+      if (name === "superfluid") {
+        scene.add(line(positions, cyan, 0.55));
+      }
+
+      return object;
+    }
+
+    referenceStrip("superfluid", sfReference);
+    referenceStrip("mott", mottReference);
+
+    // Faint deterministic instrument-space background, not simulated atoms.
+    const stars = new Float32Array(480 * 3);
+    let seed = 1907;
+
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    for (let i = 0; i < 480; i++) {
+      const a = random() * 2 * PI;
+      const z = random() * 2 - 1;
+      const r = 65 + random() * 30;
+      const d = Math.sqrt(1 - z * z);
+
+      stars[i * 3] = r * d * Math.cos(a);
+      stars[i * 3 + 1] = r * z;
+      stars[i * 3 + 2] = r * d * Math.sin(a);
+    }
+
+    const starGeometry = new T.BufferGeometry();
+
+    starGeometry.setAttribute(
+      "position",
+      new T.BufferAttribute(stars, 3)
+    );
+
+    scene.add(new T.Points(
+      starGeometry,
+      new T.PointsMaterial({
+        color: 0x528299,
+        size: 0.07,
+        transparent: true,
+        opacity: 0.35,
+        depthWrite: false
+      })
+    ));
+
+    const plotContexts = {};
+
+    [
+      "occupation-chart",
+      "momentum-chart",
+      "phase-chart"
+    ].forEach(id => {
+      const context = $(id).getContext("2d");
+
+      if (!context) {
+        throw new Error("A diagnostic canvas could not be created.");
+      }
+
+      plotContexts[id] = context;
+    });
+
+    function chartBase(ctx, title, subtitle) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+
+      ctx.fillStyle = "#050c17";
+      ctx.fillRect(0, 0, w, h);
+      ctx.textAlign = "left";
+      ctx.font = "bold 15px monospace";
+      ctx.fillStyle = "#c8e5f4";
+      ctx.fillText(title, 20, 26);
+      ctx.font = "12px monospace";
+      ctx.fillStyle = "#90a6c1";
+      ctx.fillText(subtitle, 20, 47);
+      ctx.lineWidth = 1;
+
+      return { w, h };
+    }
+
+    function drawOccupation(ctx, sample) {
+      const { w, h } = chartBase(
+        ctx,
+        "SITE OCCUPATION",
+        "Probability in the local number basis"
+      );
+
+      const l = 42;
+      const r = w - 15;
+      const top = 65;
+      const bottom = h - 32;
+
+      ctx.font = "11px monospace";
+      ctx.textAlign = "right";
+
+      for (let j = 0; j <= 2; j++) {
+        const p = j / 2;
+        const y = mix(bottom, top, p);
+
+        ctx.strokeStyle = "#1c2c41";
+        ctx.beginPath();
+        ctx.moveTo(l, y);
+        ctx.lineTo(r, y);
+        ctx.stroke();
+
+        ctx.fillStyle = "#8da5bf";
+        ctx.fillText(p.toFixed(1), l - 6, y + 4);
+      }
+
+      const step = (r - l) / DIM;
+
+      for (let n = 0; n < DIM; n++) {
+        const height = sample.probabilities[n] * (bottom - top);
+        const x = l + n * step + 5;
+
+        ctx.fillStyle = sample.isMott ? "#e4bd75" : "#55dacd";
+        ctx.fillRect(
+          x,
+          bottom - height,
+          step - 9,
+          Math.max(height, 0.6)
+        );
+
+        ctx.fillStyle = "#9ab0c8";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          String(n),
+          x + (step - 9) / 2,
+          bottom + 18
+        );
+      }
+    }
+
+    const mapCanvas = document.createElement("canvas");
+    mapCanvas.width = mapCanvas.height = 193;
+
+    const mapContext = mapCanvas.getContext("2d");
+
+    if (!mapContext) {
+      throw new Error("Momentum-map drawing is unavailable.");
+    }
+
+    const mapImage = mapContext.createImageData(193, 193);
+
+    function drawMomentum(ctx, sample, title = "LIVE MOMENTUM SLICE") {
+      const { w, h } = chartBase(
+        ctx,
+        title,
+        "kz = 0 · fixed logarithmic exposure · 7³ sites"
+      );
+
+      // Identical exposure for live, SF and Mott images.
+      // No independent normalization that would erase their contrast.
+      const logMaximum = Math.log1p(NS);
+
+      for (let y = 0; y < 193; y++) {
+        const qy = (1 - y / 192 * 2) * 3 * PI;
+
+        for (let x = 0; x < 193; x++) {
+          const qx = (x / 192 * 2 - 1) * 3 * PI;
+
+          const brightness = clamp(
+            Math.log1p(momentum(qx, qy, sample)) / logMaximum,
+            0,
+            1
+          );
+
+          const b = Math.pow(brightness, 0.67);
+          const index = (y * 193 + x) * 4;
+
+          mapImage.data[index] = Math.round(5 + 215 * b ** 2);
+          mapImage.data[index + 1] = Math.round(10 + 235 * b);
+          mapImage.data[index + 2] = Math.round(
+            25 + 215 * Math.sqrt(b)
+          );
+          mapImage.data[index + 3] = 255;
+        }
+      }
+
+      mapContext.putImageData(mapImage, 0, 0);
+
+      const size = Math.min(w - 98, h - 103);
+      const left = (w - size) / 2;
+      const top = 62;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(mapCanvas, left, top, size, size);
+      ctx.strokeStyle = "#2c4460";
+      ctx.strokeRect(left, top, size, size);
+
+      ctx.fillStyle = "#a6bdd4";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+
+      [-3, 0, 3].forEach(tick => {
+        const f = (tick + 3) / 6;
+
+        ctx.fillText(
+          String(tick),
+          left + f * size,
+          top + size + 17
+        );
+
+        ctx.fillText(
+          String(-tick),
+          left - 14,
+          top + f * size + 4
+        );
+      });
+
+      ctx.fillText("kx a / π", w / 2, h - 7);
+
+      ctx.save();
+      ctx.translate(left - 32, top + size / 2);
+      ctx.rotate(-PI / 2);
+      ctx.fillText("ky a / π", 0, 0);
+      ctx.restore();
+    }
+
+    function drawPhase(ctx, sample) {
+      const { w, h } = chartBase(
+        ctx,
+        "CUBIC MEAN-FIELD PHASE DIAGRAM",
+        "Zero temperature · z = 6 · theoretical parameter space"
+      );
+
+      const l = 58;
+      const right = w - 25;
+      const top = 69;
+      const bottom = h - 45;
+      const maximum = Math.max(0.045, sample.t * 1.15);
+
+      const xx = t => l + t / maximum * (right - l);
+      const yy = m => bottom - m / 3 * (bottom - top);
+
+      ctx.font = "12px monospace";
+
+      for (let n = 1; n <= 3; n++) {
+        ctx.beginPath();
+        ctx.moveTo(xx(0), yy(n - 1));
+
+        for (let i = 0; i <= 140; i++) {
+          const m = n - 1 + i / 140;
+          const t = (n - m) * (m - n + 1) / (Z * (m + 1));
+          ctx.lineTo(xx(t), yy(m));
+        }
+
+        ctx.closePath();
+        ctx.fillStyle = ["#173442", "#282b48", "#3b3035"][n - 1];
+        ctx.fill();
+
+        ctx.strokeStyle = ["#58dfd0", "#b699ed", "#dcb783"][n - 1];
+        ctx.stroke();
+
+        const m = Math.sqrt(n * (n + 1)) - 1;
+        const tip = (Math.sqrt(n + 1) - Math.sqrt(n)) ** 2 / Z;
+
+        ctx.fillStyle = "#d1dfed";
+        ctx.textAlign = "left";
+        ctx.fillText("n = " + n, xx(tip) + 7, yy(m) + 4);
+      }
+
+      ctx.strokeStyle = "#354861";
+      ctx.beginPath();
+      ctx.moveTo(l, top);
+      ctx.lineTo(l, bottom);
+      ctx.lineTo(right, bottom);
+      ctx.stroke();
+
+      ctx.fillStyle = "#91adc6";
+
+      for (let i = 0; i <= 4; i++) {
+        const t = maximum * i / 4;
+        ctx.textAlign = "center";
+        ctx.fillText(t.toFixed(3), xx(t), bottom + 19);
+      }
+
+      for (let i = 0; i <= 3; i++) {
+        ctx.textAlign = "right";
+        ctx.fillText(String(i), l - 10, yy(i) + 4);
+      }
+
+      ctx.textAlign = "center";
+      ctx.fillText("J / U", (l + right) / 2, h - 6);
+
+      ctx.save();
+      ctx.translate(16, (top + bottom) / 2);
+      ctx.rotate(-PI / 2);
+      ctx.fillText("μ / U", 0, 0);
+      ctx.restore();
+
+      ctx.fillStyle = "#7898ad";
+      ctx.fillText(
+        "SUPERFLUID",
+        xx(maximum * 0.73),
+        yy(2.6)
+      );
+
+      const x = xx(sample.t);
+      const y = yy(sample.m);
+
+      ctx.strokeStyle = "#e3f5ff";
+      ctx.fillStyle = "#fcda95";
+
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, 2 * PI);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x, y, 9, 0, 2 * PI);
+      ctx.stroke();
+    }
+
+    const bandCanvas = document.createElement("canvas");
+    bandCanvas.width = 560;
+    bandCanvas.height = 280;
+
+    const bandContext = bandCanvas.getContext("2d");
+
+    function drawBand() {
+      if (!bandContext) return;
+
+      const ctx = bandContext;
+
+      const { w, h } = chartBase(
+        ctx,
+        "LOWEST TIGHT-BINDING BAND",
+        "kx cut: 4J · full cubic bandwidth: 12J"
+      );
+
+      const l = 54;
+      const right = w - 25;
+      const top = 66;
+      const bottom = h - 40;
+
+      ctx.strokeStyle = "#304963";
+      ctx.beginPath();
+      ctx.moveTo(l, top);
+      ctx.lineTo(l, bottom);
+      ctx.lineTo(right, bottom);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#b297ff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      for (let i = 0; i <= 160; i++) {
+        const q = -PI + i / 160 * 2 * PI;
+        const e = 2 * result.J * (1 - Math.cos(q));
+        const x = mix(l, right, i / 160);
+        const y = bottom - e / 0.28 * (bottom - top);
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#aec3d9";
+      ctx.font = "12px monospace";
+      ctx.textAlign = "center";
+
+      ctx.fillText("−π/a", l, bottom + 19);
+      ctx.fillText("Γ", (l + right) / 2, bottom + 19);
+      ctx.fillText("X: π/a", right, bottom + 19);
+      ctx.fillText(
+        "quasi-momentum · first Brillouin zone",
+        w / 2,
+        h - 4
+      );
+
+      ctx.textAlign = "right";
+      ctx.fillText("0", l - 8, bottom + 4);
+      ctx.fillText("0.28", l - 8, top + 4);
+
+      ctx.save();
+      ctx.translate(14, (top + bottom) / 2);
+      ctx.rotate(-PI / 2);
+      ctx.textAlign = "center";
+      ctx.fillText("energy above minimum / ER", 0, 0);
+      ctx.restore();
+    }
+
+    function screen(source, width, position) {
+      const texture = new T.CanvasTexture(source);
+
+      texture.encoding = T.sRGBEncoding;
+      texture.minFilter = T.LinearFilter;
+      texture.generateMipmaps = false;
+
+      const height = width * source.height / source.width;
+
+      const mesh = new T.Mesh(
+        new T.PlaneGeometry(width, height),
+        new T.MeshBasicMaterial({
+          map: texture,
+          side: T.DoubleSide,
+          toneMapped: false
+        })
+      );
+
+      mesh.position.copy(position);
+      scene.add(mesh);
+
+      const border = line([
+        V(-width / 2, -height / 2, 0.01),
+        V(width / 2, -height / 2, 0.01),
+        V(width / 2, height / 2, 0.01),
+        V(-width / 2, height / 2, 0.01),
+        V(-width / 2, -height / 2, 0.01)
+      ], blue, 0.5);
+
+      mesh.add(border);
+      resources.push(texture);
+
+      return { mesh, texture };
+    }
+
+    function momentumReference(sample, title, position) {
+      const source = document.createElement("canvas");
+      source.width = 560;
+      source.height = 440;
+
+      const ctx = source.getContext("2d");
+
+      if (!ctx) {
+        throw new Error("Reference-map drawing is unavailable.");
+      }
+
+      drawMomentum(ctx, sample, title);
+      return screen(source, 7, position);
+    }
+
+    momentumReference(
+      sfReference,
+      "SUPERFLUID · s = 6.5 · μ/U = 0.4",
+      V(-25, 2, -4)
+    );
+
+    momentumReference(
+      mottReference,
+      "MOTT · s = 18 · μ/U = 0.4",
+      V(-17, 2, -4)
+    );
+
+    const bandScreen = screen(
+      bandCanvas,
+      10,
+      V(-21, -4, -4)
+    );
+
+    const phaseScreen = screen(
+      $("phase-chart"),
+      11,
+      V(21, 6, -14)
+    );
+
+    function drawPlots() {
+      // Intrinsic canvas sizes remain valid when a <details> is collapsed.
+      drawOccupation(plotContexts["occupation-chart"], result);
+      drawMomentum(plotContexts["momentum-chart"], result);
+      drawPhase(plotContexts["phase-chart"], result);
+      drawBand();
+
+      bandScreen.texture.needsUpdate = true;
+      phaseScreen.texture.needsUpdate = true;
+
+      const occupied = result.probabilities.map((p, n) =>
+        p > 0.0005
+          ? "P(" + n + ") " + (p * 100).toFixed(1) + "%"
+          : ""
+      ).filter(Boolean);
+
+      setText(
+        "occupation-summary",
+        occupied.join("; ") +
+        ". Mean " + result.mean.toFixed(3) +
+        "; number uncertainty " +
+        Math.sqrt(result.variance).toFixed(3) + "."
+      );
+
+      setText(
+        "momentum-summary",
+        "kz = 0 slice; both axes span −3π/a to 3π/a. " +
+        "Shared logarithmic exposure. Mean-field coherent fraction " +
+        (result.coherent * 100).toFixed(1) + "%."
+      );
+
+      setText(
+        "phase-summary",
+        "Horizontal J/U; vertical μ/U. Current point (" +
+        result.t.toFixed(5) + ", " +
+        result.m.toFixed(3) + "): " +
+        (result.isMott
+          ? "Mott lobe n = " + result.mottFilling
+          : "superfluid") + "."
+      );
+
+      state.plotsDirty = false;
+    }
+
+    const cards = {};
+    const tags = [];
+
+    const cardNames = [
+      "potential",
+      "site",
+      "wannier",
+      "tunneling",
+      "interaction",
+      "superfluid",
+      "mott",
+      "band",
+      "momentum",
+      "hamiltonian",
+      "phase"
+    ];
+
+    cardNames.forEach(name => {
+      const template = $(name + "-card-template");
+
+      if (!template) {
+        throw new Error("Missing annotation template: " + name);
+      }
+
+      const element = template.content.firstElementChild.cloneNode(true);
+      const card = element.querySelector(".world-card");
+      const telemetry = document.createElement("p");
+
+      telemetry.className = "card-note";
+      card.appendChild(telemetry);
+
+      const object = new T.CSS2DObject(element);
+      const leader = document.createElementNS(svgNS, "polyline");
+
+      leaders.appendChild(leader);
+      scene.add(object);
+      labels.domElement.appendChild(element);
+
+      cards[name] = {
+        element,
+        card,
+        telemetry,
+        object,
+        leader
+      };
+    });
+
+    function tag(text, position, chapters) {
+      const element = document.createElement("div");
+      element.className = "world-tag";
+      element.textContent = text;
+
+      const object = new T.CSS2DObject(element);
+      object.position.copy(position);
+
+      scene.add(object);
+      labels.domElement.appendChild(element);
+
+      const item = { element, object, chapters };
+      tags.push(item);
+
+      return item;
+    }
+
+    const dimerTag = tag(
+      "Independent two-site example",
+      V(28, -1.6, 4),
+      [4]
+    );
+
+    tag(
+      "Optical carriers slowed · fixed intensity antinodes",
+      V(0, -7.4, -7.4),
+      [1]
+    );
+
+    tag(
+      "Displayed envelopes are magnified",
+      V(2, 2, 2),
+      [2]
+    );
+
+    tag(
+      "Independent n = 2 example · one interacting pair",
+      V(16, -0.8, -4),
+      [5, 10]
+    );
+
+    tag(
+      "Fixed SF reference · s = 6.5, μ/U = 0.4",
+      V(22, -1.7, -4),
+      [10]
+    );
+
+    tag(
+      "Fixed Mott reference · n = 1",
+      V(28, -1.7, -4),
+      [10]
+    );
+
+    function cardPositions() {
+      cards.potential.object.position.set(0, -6.2, 0);
+      cards.site.object.position.copy(siteCoordinates[state.site]);
+
+      cards.wannier.object.position.copy(
+        siteCoordinates[state.site]
+      ).add(V(1, 0.2, 0));
+
+      cards.superfluid.object.position.set(1, 2, 1);
+      cards.mott.object.position.copy(siteCoordinates[state.site]);
+
+      cards.tunneling.object.position.copy(
+        referencePositions.tunneling
+      );
+
+      cards.interaction.object.position.copy(
+        referencePositions.interaction
+      );
+
+      cards.band.object.position.set(-21, -4, -4);
+      cards.momentum.object.position.set(-21, 2, -4);
+      cards.hamiltonian.object.position.set(22, 0, 0);
+      cards.phase.object.position.set(21, 6, -14);
+
+      if (state.inspection) {
+        cards[state.inspection].object.position.copy(
+          referencePositions[state.inspection]
+        );
+      }
+    }
+
+    function showLabel(item, visible) {
+      const amount = reducedMotion.matches ? 1 : 0.16;
+
+      item.fade = mix(item.fade || 0, visible ? 1 : 0, amount);
+      if (item.fade < 0.002) item.fade = 0;
+
+      item.object.visible = item.fade > 0;
+      item.element.classList.toggle("is-visible", visible);
+      item.element.style.opacity = String(item.fade);
+      item.element.setAttribute("aria-hidden", String(!visible));
+      item.element.inert = !visible;
+
+      if (item.leader) {
+        item.leader.style.display = item.fade > 0 ? "" : "none";
+        item.leader.style.opacity = String(item.fade);
+      }
+    }
+
+    function visibleHUDRects() {
+      const ids = state.hidden
+        ? ["flight-controls"]
+        : [
+          "sidebar-ui",
+          "flight-controls",
+          "scene-caption",
+          "reference-legend"
+        ];
+
+      return ids.map(id => $(id)).filter(node => {
+        const style = getComputedStyle(node);
+
+        return style.display !== "none" &&
+          style.visibility !== "hidden";
+      }).map(node =>
+        node.getBoundingClientRect()
+      ).filter(r =>
+        r.width && r.height
+      ).map(r => ({
+        left: r.left - 10,
+        top: r.top - 10,
+        right: r.right + 10,
+        bottom: r.bottom + 10
+      }));
+    }
+
+    const intersects = (a, b) =>
+      a.left < b.right &&
+      a.right > b.left &&
+      a.top < b.bottom &&
+      a.bottom > b.top;
+
+    function project(object) {
+      projected.copy(object.position).project(camera);
+
+      if (
+        projected.z < -1 ||
+        projected.z > 1 ||
+        Math.abs(projected.x) > 1.04 ||
+        Math.abs(projected.y) > 1.04
+      ) {
+        return null;
+      }
+
+      return {
+        x: (projected.x + 1) * state.width / 2,
+        y: (1 - projected.y) * state.height / 2
+      };
+    }
+
+    function activeCardNames() {
+      if (state.inspection) return [state.inspection];
+
+      const phaseName = result.isMott ? "mott" : "superfluid";
+
+      return [
+        ["potential", phaseName],
+        ["potential"],
+        ["site", "wannier"],
+        [phaseName],
+        ["tunneling"],
+        ["interaction"],
+        ["potential"],
+        [phaseName, "site"],
+        [phaseName, "site"],
+        ["momentum", "band"],
+        ["hamiltonian", "interaction"],
+        ["phase"],
+        [phaseName, "potential"]
+      ][Math.max(0, state.chapter)];
+    }
+
+    function measureLabels() {
+      const items = [...Object.values(cards), ...tags];
+      const previous = items.map(item => item.element.style.display);
+
+      items.forEach(item => {
+        item.element.style.display = "";
+      });
+
+      const sizes = items.map(item => {
+        const node = item.card || item.element;
+        return [node.offsetWidth, node.offsetHeight];
+      });
+
+      cachedHUDRects = visibleHUDRects();
+
+      items.forEach((item, i) => {
+        if (sizes[i][0] && sizes[i][1]) {
+          item.width = sizes[i][0];
+          item.height = sizes[i][1];
+        }
+
+        item.element.style.display = previous[i];
+      });
+    }
+
+    function layoutLabels() {
+      const reserved = cachedHUDRects.slice();
+      const wanted = state.hidden ? [] : activeCardNames();
+      const displayed = new Set();
+
+      let count = 0;
+
+      for (const name of wanted) {
+        if (count >= (state.width > 1000 ? 2 : 1)) break;
+
+        const item = cards[name];
+        const anchor = project(item.object);
+
+        if (!anchor) continue;
+
+        const w = item.width || 310;
+        const h = item.height || 280;
+
+        if (!w || !h) continue;
+
+        const candidates = [
+          [anchor.x + 28, anchor.y - h / 2],
+          [anchor.x - w - 28, anchor.y - h / 2],
+          [anchor.x - w / 2, anchor.y - h - 26],
+          [anchor.x - w / 2, anchor.y + 26],
+          [state.width - w - 20, 82],
+          [state.width - w - 20, state.height - h - 170]
+        ];
+
+        let chosen = null;
+
+        for (const [left, top] of candidates) {
+          const box = {
+            left,
+            top,
+            right: left + w,
+            bottom: top + h
+          };
+
+          if (
+            left >= 12 &&
+            top >= 12 &&
+            box.right <= state.width - 12 &&
+            box.bottom <= state.height - 12 &&
+            !reserved.some(r => intersects(box, r))
+          ) {
+            chosen = box;
+            break;
           }
         }
 
-        lastDetuning = state.detuning;
+        if (!chosen) continue;
+
+        item.card.style.setProperty(
+          "--card-x",
+          chosen.left - anchor.x + "px"
+        );
+
+        item.card.style.setProperty(
+          "--card-y",
+          chosen.top - anchor.y + "px"
+        );
+
+        const endX = clamp(anchor.x, chosen.left, chosen.right);
+        const endY = clamp(anchor.y, chosen.top, chosen.bottom);
+
+        item.leader.setAttribute(
+          "points",
+          anchor.x + "," + anchor.y + " " +
+          mix(anchor.x, endX, 0.5) + "," + anchor.y + " " +
+          endX + "," + endY
+        );
+
+        displayed.add(item);
+        reserved.push(chosen);
+        count++;
       }
 
-      const s = spectrum(state.q, state.detuning);
+      Object.values(cards).forEach(item => {
+        showLabel(item, displayed.has(item));
+      });
 
-      lpMarker.position.set(
-        state.q * 6,
-        s.lp * 2.7,
-        0.1
-      );
+      tags.forEach(item => {
+        let visible = !state.hidden &&
+          !state.inspection &&
+          item.chapters.includes(state.chapter);
 
-      upMarker.position.set(
-        state.q * 6,
-        s.up * 2.7,
-        0.1
-      );
+        const anchor = visible ? project(item.object) : null;
+        if (!anchor) visible = false;
 
-      const p = gapLine.geometry.attributes.position;
+        if (visible) {
+          const w = item.width || 250;
+          const h = item.height || 24;
 
-      p.setXYZ(0, state.q * 6, s.lp * 2.7, 0.05);
-      p.setXYZ(1, state.q * 6, s.up * 2.7, 0.05);
-      p.needsUpdate = true;
+          const box = {
+            left: anchor.x - w / 2,
+            right: anchor.x + w / 2,
+            top: anchor.y - h / 2,
+            bottom: anchor.y + h / 2
+          };
 
-      gapLine.computeLineDistances();
+          visible =
+            box.left > 10 &&
+            box.right < state.width - 10 &&
+            box.top > 10 &&
+            box.bottom < state.height - 10 &&
+            !reserved.some(r => intersects(box, r));
+
+          if (visible) reserved.push(box);
+        }
+
+        showLabel(item, visible);
+      });
     }
 
-    function updateVisuals(dt) {
-      if (state.ell !== state.wantedEll) {
-        state.fieldFade = Math.max(
-          0,
-          state.fieldFade - dt * 2.5
-        );
-
-        if (state.fieldFade === 0) {
-          state.ell = state.wantedEll;
-        }
-      } else {
-        state.fieldFade = Math.min(
-          1,
-          state.fieldFade + dt * 2
-        );
-      }
-
-      const n = pop.n;
-      const t = state.visualTime;
-      const c0 = spectrum(0, state.detuning).photon;
-      const fu = condensate.material.uniforms;
-
-      fu.uN.value = n;
-      fu.uEll.value = state.ell;
-      fu.uNorm.value = NORMS[state.ell ? 1 : 0];
-      fu.uPhase.value = (pop.time * 0.75) % TAU;
-      fu.uMode.value = state.field === "density" ? 1 : 0;
-
-      const revealTarget = state.mode === "auto"
-        ? (
-          state.chapter === 1 || state.chapter === 2
-            ? 0.08
-            : state.chapter === 3
-              ? 0.08 + 0.92 * ease(localProgress)
-              : 1
-        )
-        : 1;
-
-      state.reveal = mix(
-        state.reveal,
-        revealTarget,
-        1 - Math.exp(-dt * 1.8)
-      );
-
-      fu.uOpacity.value =
-        state.fieldFade * state.reveal;
-
-      for (const material of standingMaterials) {
-        material.uniforms.uTime.value = t;
-      }
-
-      const bare =
-        state.chapter === 1 ? 0.30 :
-        state.chapter === 3 ? 0.23 :
-        0.08;
-
-      for (const sheet of photonSheets) {
-        const uniform = sheet.material.uniforms.uOpacity;
-
-        uniform.value = mix(
-          uniform.value,
-          bare,
-          1 - Math.exp(-dt * 2)
-        );
-      }
-
-      for (const { name, mesh } of referenceFields) {
-        mesh.material.uniforms.uPhase.value =
-          (t * 0.4) % TAU;
-
-        if (name !== "vortex") {
-          const fraction = name === "lower" ? c0 : 1 - c0;
-
-          mesh.material.uniforms.uTint.value
-            .set(0xf18fdc)
-            .lerp(photonColor, fraction);
-        }
-      }
-
-      reservoir.material.uniforms.uOpacity.value =
-        0.2 * (1 - Math.exp(-pop.r));
-
-      beamMaterial.opacity = 0.035 * state.pump;
-
-      pumpPoints.material.uniforms.uOpacity.value =
-        0.55 * (1 - Math.exp(-state.pump));
-
-      emission.material.uniforms.uOpacity.value =
-        0.85 * (1 - Math.exp(-c0 * n));
-
-      const pp = pumpPoints.geometry.attributes.position;
-
-      for (let i = 0; i < pumpSeeds.length; i++) {
-        const [offset, a, r] = pumpSeeds[i];
-        const u = (offset + t * 0.16) % 1;
-
-        pp.setXYZ(
-          i,
-          mix(pumpStart.x, pumpEnd.x, u) + Math.cos(a) * r,
-          mix(pumpStart.y, pumpEnd.y, u),
-          mix(pumpStart.z, pumpEnd.z, u) + Math.sin(a) * r
-        );
-      }
-
-      pp.needsUpdate = true;
-
-      const ep = emission.geometry.attributes.position;
-
-      for (let i = 0; i < emissionSeeds.length; i++) {
-        const [x, z, offset] = emissionSeeds[i];
-        const u = (offset + t * 0.075) % 1;
-
-        ep.setXYZ(
-          i,
-          x * (1 + u * 0.35),
-          4.7 + u * 18,
-          z * (1 + u * 0.35)
-        );
-      }
-
-      ep.needsUpdate = true;
-
-      let ai = 0;
-
-      for (const [x, y] of arrowSites) {
-        const r2 = x * x + y * y;
-        const rho = n * profile(x, y, state.ell);
-
-        if (
-          rho < 0.012 ||
-          (state.ell && r2 < 0.065)
-        ) {
-          continue;
-        }
-
-        let gx = 0.55 - state.ell * y / r2;
-        let gy = 0.08 + state.ell * x / r2;
-
-        const gradientMagnitude = Math.hypot(gx, gy);
-        gx /= gradientMagnitude;
-        gy /= gradientMagnitude;
-
-        const length =
-          0.35 + Math.min(0.3, gradientMagnitude * 0.09);
-
-        const sx = x * FIELD_SCALE;
-        const sz = -y * FIELD_SCALE;
-        const sy = 0.25 + 0.42 * Math.log(1 + 3 * rho);
-
-        const ex = sx + gx * length;
-        const ez = sz - gy * length;
-
-        arrowPositions.set([
-          sx, sy, sz,
-          ex, sy, ez,
-
-          ex, sy, ez,
-          ex - gx * 0.15 + gy * 0.085,
-          sy,
-          ez + gy * 0.15 + gx * 0.085,
-
-          ex, sy, ez,
-          ex - gx * 0.15 - gy * 0.085,
-          sy,
-          ez + gy * 0.15 - gx * 0.085
-        ], ai);
-
-        ai += 18;
-      }
-
-      arrowGeometry.setDrawRange(0, ai / 3);
-      arrowGeometry.attributes.position.needsUpdate = true;
-
-      arrows.material.opacity =
-        0.42 * state.fieldFade * state.reveal;
-
-      updateSpectrum();
-    }
-
+    // Each entry: heading, title, explanation, scope, seconds,
+    // camera position, look target, FOV, depth at chapter entry.
     const chapters = [
       [
-        55,
-        "MICROCAVITY",
-        "Where light meets matter.",
-        "An optical cavity confines light around a semiconductor quantum well. Two resonances can form new hybrid states.",
-        "Mirror dimensions and optical timing are schematic. The quantum fluid is planar.",
-        [29, 19, 36],
-        [0, 0, 0],
-        46,
-        ["cavity"]
+        "OPTICAL LATTICE",
+        "A landscape made of light.",
+        "Interfering laser fields create a periodic potential. Bosonic matter occupies quantum states within its wells.",
+        "The visible 7³ array is a window into a homogeneous cubic bulk model.",
+        50, [31, 20, 36], [0, 0, 0], 48, 6.5
       ],
       [
-        48,
-        "PHOTON MODE",
-        "Light, confined.",
-        "A standing cavity mode places an electric-field antinode at the quantum well. Its in-plane dispersion is approximately parabolic.",
-        "Bare-mode overlay: the optical oscillation is slowed for inspection.",
-        [8, 2.2, 18],
-        [0, 0, 0],
-        43,
-        ["photon"]
+        "POTENTIAL FORMATION",
+        "Light writes the wells.",
+        "Counter-propagating fields form a standing wave. For red detuning, atoms favor intensity antinodes; the shifted potential has sine-squared minima.",
+        "Carrier motion is slowed for teaching. The time-averaged potential remains fixed.",
+        45, [12, 6, 19], [0, -4, 0], 46, 6.5
       ],
       [
-        48,
-        "EXCITON",
-        "Matter has a resonance.",
-        "An exciton is a bound electron–hole excitation. Its nearly flat reference dispersion contrasts with the lighter cavity mode.",
-        "The two markers indicate a correlated pair, not an electron orbit.",
-        [-13, 2.3, 17],
-        [-7, 0.5, 3],
-        40,
-        ["exciton"]
+        "SITE INSPECTION",
+        "One site. A distribution of possibilities.",
+        "A site cloud represents density in a localized orbital. Its occupation is the calculated distribution P(n), rather than a collection of classical dots.",
+        "All bulk sites share the same distribution. Gaussian orbital sizes are magnified.",
+        45, [5, 3, 8], [0, 0, 0], 43, 6.5
       ],
       [
-        55,
-        "STRONG COUPLING",
-        "The eigenstates become hybrid.",
-        "The bare-mode overlays give way to a lower-polariton field. Diagonalizing the coupled modes also creates an upper branch.",
-        "This is a visual reveal; the reference coupling energy remains ΔR / E₀ = 1.",
-        [9, 10, 25],
-        [0, 0.5, 0],
-        46,
-        ["coupling"]
+        "SUPERFLUID",
+        "A phase shared across the lattice.",
+        "Nonzero mean-field order connects neighboring sites. Local number fluctuates while the chosen order-parameter phase is uniform.",
+        "Uniform phase gives no net current. Coherence links show correlations.",
+        55, [-9, 4, 11], [0, 0, 0], 48, 6.5
       ],
       [
-        65,
-        "DISPERSION",
-        "A crossing becomes a gap.",
-        "The dashed bare modes cross. The upper and lower polariton branches avoid crossing, with a minimum lossless gap of ΔR.",
-        "Momentum and energy axes use reference units. A spectral plot is not a physical trajectory.",
-        [49, 15, 36],
-        [43, 9, -10],
-        45,
-        ["upper", "lower"]
+        "TUNNELING",
+        "Probability moves through a coupling.",
+        "This independent one-boson dimer transfers probability between its left and right wells. The total probability stays exactly one.",
+        "A normalized teaching clock drives this isolated example; it is separate from the equilibrium bulk.",
+        45, [31, 2, 13], [28, -3, 4], 43, 6.5
       ],
       [
-        55,
-        "MIXED CHARACTER",
-        "One state, changing composition.",
-        "Follow the lower-branch probe through momentum space. Its photon and exciton fractions change continuously and sum to one.",
-        "The probe samples the spectrum. The condensate remains near q = 0.",
-        [43, 10, 25],
-        [43, 7, -10],
-        42,
-        ["lower"]
+        "ON-SITE INTERACTION",
+        "Every pair has an energy cost.",
+        "A separate n = 2 reference has one interacting pair and energy U. Three bosons would form three pairs and cost 3U.",
+        "This reference occupation is not imposed on the live lattice.",
+        45, [21, 3, 6], [16, -3, -4], 45, 6.5
       ],
       [
-        42,
-        "PUMP / RESERVOIR",
-        "Replenishment begins upstream.",
-        "A nonresonant pump feeds a reservoir of excitations. Stimulated transfer into the low-energy mode competes with finite loss.",
-        "Preparation reset: n_c = 10⁻⁴ and r = 0. This chapter uses a pump below the reference threshold.",
-        [-21, 14, 24],
-        [-4, 4, 0],
-        46,
-        ["reservoir"]
+        "LATTICE RAMP",
+        "Deeper wells reshape the balance.",
+        "Increasing lattice depth narrows each orbital and rapidly reduces tunneling. U/J grows while the self-consistent number distribution changes.",
+        "The ramp samples grand-canonical equilibrium states, not real-time loading dynamics.",
+        60, [16, 12, 22], [0, 0, 0], 49, 6.5
       ],
       [
-        78,
-        "CONDENSATION",
-        "A low-energy mode fills.",
-        "The pump rises through the population threshold. Reservoir feeding supports an increasingly occupied lower-polariton mode.",
-        "The rate equations calculate occupation. Coherent phase and the spatial envelope are prescribed.",
-        [15, 11, 25],
-        [0, 0.3, 0],
-        43,
-        ["condensate"]
+        "QUANTUM TRANSITION",
+        "Coherence approaches its boundary.",
+        "The order parameter and number uncertainty fall as the trajectory enters the mean-field Mott lobe. The coherent bridges disappear with the calculated order.",
+        "INTERMEDIATE labels a near-boundary display band, not an additional thermodynamic phase.",
+        70, [4, 3, 14], [0, 0, 0], 47, 10.5
       ],
       [
-        68,
-        "QUANTUM FLUID",
-        "Read amplitude and phase separately.",
-        "Density sets brightness; phase sets hue. The arrows follow the gradient of the displayed analytic phase field.",
-        "The surface height encodes density for visibility. It is not a third fluid dimension.",
-        [5, 2.5, 17],
-        [0, 0.2, 0],
-        39,
-        ["condensate"]
+        "MOTT INSULATOR",
+        "Number becomes localized.",
+        "At this integer-filling reference, single-site mean field selects n = 1 and zero order parameter. J remains finite even though coherent links vanish.",
+        "The full many-body Mott state has virtual particle–hole fluctuations omitted by this approximation.",
+        55, [-8, 1, 10], [0, 0, 0], 46, 18
       ],
       [
-        46,
-        "VORTEX",
-        "A full turn around a depleted core.",
-        "The imposed phase winds by 2π around one core. Density vanishes at the center, where phase is undefined.",
-        "A prescribed ℓ = +1 vortex is introduced during a field fade. Vortex nucleation is not simulated.",
-        [0, 2.6, 10],
-        [0, 0.12, 0],
-        38,
-        ["vortex"]
+        "MOMENTUM SPACE",
+        "Coherence leaves a reciprocal-space signature.",
+        "Two fixed reference slices compare coherent peaks with a broad Mott envelope at the same logarithmic exposure. The band below narrows as J decreases.",
+        "These are diagnostic panels: kz = 0 slices and a lowest-band cut, not a simulated expansion.",
+        65, [-21, 3, 17], [-21, 0, -4], 47, 18
       ],
       [
-        48,
-        "EMISSION",
-        "The cavity lets us look inside.",
-        "The photonic component leaks out as emitted light. Its relative signal follows the low-momentum photon fraction and mode occupation.",
-        "J_opt = |C₀|² n_c is a relative optical proxy, not a complete or calibrated condensate measurement.",
-        [9, 2.7, 19],
-        [0, 5, 0],
-        44,
-        ["emission"]
+        "BOSE–HUBBARD MODEL",
+        "Three terms describe the competition.",
+        "Hopping couples sites; interaction penalizes pairs; chemical potential sets the equilibrium filling. The Hamiltonian connects these visible mechanisms.",
+        "Reference objects illustrate separate states. Live energies are reported per bulk site.",
+        60, [27, 10, 19], [22, -1, 0], 49, 18
       ],
       [
-        56,
-        "DRIVEN-DISSIPATIVE CYCLE",
-        "A fluid maintained by exchange.",
-        "Pump → reservoir → lower-polariton mode → emission and loss. Continuous replenishment balances a finite lifetime.",
-        "Reference loss and transfer coefficients are held fixed as detuning changes.",
-        [25, 20, 31],
-        [0, 3, 0],
-        46,
-        ["reservoir", "emission"]
+        "PHASE DIAGRAM",
+        "Integer filling occupies lobes.",
+        "The marker locates this state in J/U and μ/U. Inside a lobe, mean-field filling is integer; outside, the nonzero order parameter identifies the superfluid branch.",
+        "A theoretical z = 6 mean-field diagram, with approximate phase boundaries.",
+        65, [24, 10, 9], [21, 6, -14], 44, 18
       ],
       [
-        56,
         "FULL SYSTEM",
-        "Hybrid states, collective behavior.",
-        "Cavity light and a matter resonance form polaritons. A driven low-energy mode connects their quantum character to a collective field.",
-        "Analytic spectrum · integrated mode populations · prescribed spatial field.",
-        [34, 22, 42],
-        [3, 1, 0],
-        47,
-        ["cavity", "condensate"]
+        "One model. Two quantum regimes.",
+        "The view returns to the full lattice while depth decreases. Coherent coupling and number fluctuations reappear continuously in the equilibrium scan.",
+        "Use the controls to inspect the model; Resume drone returns smoothly to this guided path.",
+        65, [35, 24, 39], [0, 0, 0], 50, 18
       ]
     ];
 
     const starts = [0];
 
-    for (const chapter of chapters) {
-      starts.push(starts[starts.length - 1] + chapter[0]);
-    }
+    chapters.forEach(chapter => {
+      starts.push(starts[starts.length - 1] + chapter[4]);
+    });
 
-    const duration = starts[13];
+    const duration = starts[starts.length - 1];
 
-    const eyeCurve = new T.CatmullRomCurve3(
-      chapters.map(chapter => V(...chapter[5])),
+    const positionPath = new T.CatmullRomCurve3(
+      chapters.map(c => V(...c[5])),
       true,
-      "catmullrom",
-      0.18
+      "centripetal"
     );
 
-    const aimCurve = new T.CatmullRomCurve3(
-      chapters.map(chapter => V(...chapter[6])),
+    const focusPath = new T.CatmullRomCurve3(
+      chapters.map(c => V(...c[6])),
       true,
-      "catmullrom",
-      0.18
+      "centripetal"
     );
 
-    const scratchCamera = new T.PerspectiveCamera();
+    const poseCamera = camera.clone();
 
-    const flightPose = {
-      position: V(),
-      target: V(),
-      quaternion: new T.Quaternion(),
-      fov: 46
-    };
+    function tourPose(time) {
+      const clock = ((time % duration) + duration) % duration;
 
-    let transition = null;
-    let localProgress = 0;
+      let chapter = 0;
 
-    function locate(time) {
-      let index = 0;
-
-      while (index < 12 && time >= starts[index + 1]) {
-        index++;
+      while (
+        chapter < chapters.length - 1 &&
+        clock >= starts[chapter + 1]
+      ) {
+        chapter++;
       }
 
-      return index;
+      const local = (clock - starts[chapter]) / chapters[chapter][4];
+      const eased = ease(local);
+      const u = (chapter + eased) / chapters.length;
+      const position = positionPath.getPoint(u);
+      const target = focusPath.getPoint(u);
+      const next = chapters[(chapter + 1) % chapters.length];
+
+      poseCamera.position.copy(position);
+      poseCamera.lookAt(target);
+
+      return {
+        position,
+        target,
+        quaternion: poseCamera.quaternion.clone(),
+        fov: mix(chapters[chapter][7], next[7], eased),
+        depth: mix(chapters[chapter][8], next[8], eased),
+        chapter
+      };
     }
 
-    function sampleFlight(time, out) {
-      const index = locate(time);
-      const u =
-        (time - starts[index]) / chapters[index][0];
+    function setChapter(index) {
+      if (state.chapter === index) return;
 
-      const t = ease(u);
-      const path = (index + t) / 13;
-
-      eyeCurve.getPoint(path, out.position);
-      aimCurve.getPoint(path, out.target);
-
-      out.fov = mix(
-        chapters[index][7],
-        chapters[(index + 1) % 13][7],
-        t
-      );
-
-      scratchCamera.position.copy(out.position);
-      scratchCamera.lookAt(out.target);
-      out.quaternion.copy(scratchCamera.quaternion);
-
-      return out;
-    }
-
-    function setCaption(
-      title,
-      description,
-      note,
-      eyebrow
-    ) {
-      $("scene-title").textContent = title;
-      $("scene-description").textContent = description;
-      $("scene-model-note").textContent = note;
-      $("chapter-value").textContent = eyebrow;
-    }
-
-    function enterChapter(index, prepare = true) {
       state.chapter = index;
-      state.inspection = null;
-
-      for (const [name, item] of Object.entries(cardObjects)) {
-        item.object.position.copy(cardAnchors[name]);
-      }
-
       const chapter = chapters[index];
 
-      setCaption(
-        chapter[2],
-        chapter[3],
-        chapter[4],
-        String(index + 1).padStart(2, "0") +
-          " / " + chapter[1]
+      setText(
+        "chapter-value",
+        String(index + 1).padStart(2, "0") + " / " + chapter[0]
       );
 
-      document.querySelectorAll("[data-chapter]")
-        .forEach(button => {
-          const active =
-            Number(button.dataset.chapter) === index;
+      setText(
+        "stage-counter",
+        String(index + 1).padStart(2, "0") + " / 13"
+      );
 
-          button.classList.toggle("is-active", active);
+      setText("scene-title", chapter[1]);
+      setText("scene-description", chapter[2]);
+      setText("scene-model-note", chapter[3]);
 
-          if (active) {
-            button.setAttribute("aria-current", "step");
-          } else {
-            button.removeAttribute("aria-current");
-          }
-        });
+      document.querySelectorAll("[data-chapter]").forEach(button => {
+        const active = Number(button.dataset.chapter) === index;
 
-      document.querySelectorAll("[data-inspect]")
-        .forEach(button => {
-          button.setAttribute("aria-pressed", "false");
-        });
+        button.classList.toggle("is-active", active);
 
-      if (prepare && index === 6) {
-        pop.reset();
-        state.pump = 0.75;
+        if (active) button.setAttribute("aria-current", "step");
+        else button.removeAttribute("aria-current");
+      });
 
-        announce(
-          "Pump preparation: occupation seed and reservoir were reset."
-        );
-      }
-
-      state.wantedEll = index === 9 ? 1 : 0;
-      $("vortex-select").value = String(state.wantedEll);
-
-      $("stage-counter").textContent =
-        String(index + 1).padStart(2, "0") + " / 13";
+      cardPositions();
     }
 
     function syncOrbit() {
-      orbit.enabled = false;
-
+      // Flush old damping before synchronizing the control camera.
       orbit.enableDamping = false;
       orbit.update();
       orbit.enableDamping = true;
 
       controlCamera.copy(camera, false);
-      controlCamera.updateProjectionMatrix();
+      camera.getWorldDirection(scratch);
 
-      const direction = V();
-      camera.getWorldDirection(direction);
-
-      orbit.target.copy(camera.position)
-        .addScaledVector(direction, state.focusDistance);
+      orbit.target.copy(camera.position).addScaledVector(
+        scratch,
+        clamp(
+          camera.position.distanceTo(focus),
+          orbit.minDistance,
+          orbit.maxDistance
+        )
+      );
 
       orbit.update();
-
-      orbit.enabled =
-        state.ready &&
-        !state.lost &&
-        state.mode === "manual";
     }
 
     function enterManual() {
       if (!state.ready || state.lost) return;
 
-      if (state.mode !== "manual" || transition) {
-        transition = null;
-        state.mode = "manual";
-        syncOrbit();
+      if (!state.manual || state.transition) syncOrbit();
 
-        announce(
-          "Manual inspection. Model time continues unless paused."
-        );
-      }
-
-      updateButtons();
+      state.manual = true;
+      state.transition = null;
+      orbit.enabled = true;
+      updatePlayback();
     }
 
-    function moveTo(pose, after) {
-      transition = {
+    ["pointerdown", "touchstart", "wheel"].forEach(type => {
+      canvas.addEventListener(type, enterManual, {
+        capture: true,
+        passive: true
+      });
+    });
+
+    function startTransition(pose, automatic) {
+      state.transition = {
         from: camera.position.clone(),
-        quaternion: camera.quaternion.clone(),
+        rotation: camera.quaternion.clone(),
+        focus: focus.clone(),
         fov: camera.fov,
-        position: pose.position.clone(),
-        target: pose.target.clone(),
-        rotation: pose.quaternion.clone(),
-        endFov: pose.fov,
+        to: pose,
         elapsed: 0,
-        duration: 4,
-        after,
-        lift: Math.min(
-          6,
-          camera.position.distanceTo(pose.position) * 0.08
-        )
+        length: reducedMotion.matches ? 1.2 : 4.2,
+        depth: state.depth,
+        chemical: state.chemical,
+        automatic
       };
 
-      state.mode = "returning";
+      state.manual = !automatic;
+      state.paused = false;
       orbit.enabled = false;
-      updateButtons();
+      updatePlayback();
     }
 
-    function resume() {
+    function resume(index) {
       if (!state.ready) return;
 
-      state.paused = false;
-      state.inspection = null;
+      if (Number.isInteger(index)) state.tour = starts[index];
+      if (state.inspection) state.chapter = -1;
 
-      enterChapter(locate(state.tour), false);
-      sampleFlight(state.tour, flightPose);
-      moveTo(flightPose, "auto");
+      state.inspection = "";
 
-      announce(
-        "Returning smoothly to the guided flight. Playback is enabled."
-      );
+      document.querySelectorAll("[data-inspect]").forEach(button => {
+        button.setAttribute("aria-pressed", "false");
+      });
+
+      const pose = tourPose(state.tour);
+
+      setChapter(pose.chapter);
+      cardPositions();
+      startTransition(pose, true);
     }
 
-    function updateCamera(dt) {
-      const panelRect =
-        $("sidebar-ui").getBoundingClientRect();
+    function inspect(name) {
+      if (!state.ready) return;
 
-      const desiredShift =
-        state.hud && state.width > 760
-          ? (panelRect.right + 10) / 2
-          : 0;
+      state.inspection = name;
 
-      state.viewShift = mix(
-        state.viewShift,
-        desiredShift,
-        1 - Math.exp(-dt * 5)
-      );
+      const target = referencePositions[name].clone();
+      const position = target.clone().add(V(3.5, 3, 8));
 
-      for (const cam of [camera, controlCamera]) {
-        cam.aspect = state.width / state.height;
+      poseCamera.position.copy(position);
+      poseCamera.lookAt(target);
 
-        cam.setViewOffset(
-          state.width,
-          state.height,
-          -state.viewShift,
-          0,
-          state.width,
-          state.height
-        );
-      }
-
-      if (transition) {
-        transition.elapsed += dt;
-
-        const u = ease(
-          transition.elapsed / transition.duration
-        );
-
-        camera.position.lerpVectors(
-          transition.from,
-          transition.position,
-          u
-        );
-
-        camera.position.y +=
-          Math.sin(Math.PI * u) ** 2 * transition.lift;
-
-        camera.quaternion.slerpQuaternions(
-          transition.quaternion,
-          transition.rotation,
-          u
-        );
-
-        camera.fov = mix(
-          transition.fov,
-          transition.endFov,
-          u
-        );
-
-        state.focusDistance =
-          camera.position.distanceTo(transition.target);
-
-        if (u === 1 && state.fieldFade > 0.999) {
-          state.mode = transition.after;
-          transition = null;
-
-          if (state.mode === "manual") {
-            syncOrbit();
-          }
-
-          updateButtons();
-        }
-      } else if (state.mode === "auto") {
-        sampleFlight(state.tour, flightPose);
-
-        camera.position.copy(flightPose.position);
-        camera.quaternion.copy(flightPose.quaternion);
-        camera.fov = flightPose.fov;
-
-        state.focusDistance =
-          camera.position.distanceTo(flightPose.target);
-      } else {
-        orbit.update();
-
-        const f = 1 - Math.exp(-dt * 13);
-
-        camera.position.lerp(controlCamera.position, f);
-        camera.quaternion.slerp(controlCamera.quaternion, f);
-        camera.fov = controlCamera.fov;
-
-        state.focusDistance =
-          camera.position.distanceTo(orbit.target);
-      }
-
-      camera.updateProjectionMatrix();
-      camera.updateMatrixWorld();
-    }
-
-    const cardObjects = {};
-
-    const cardAnchors = {
-      cavity: V(10, 3.8, 2),
-      photon: V(1, 1.2, 0),
-      exciton: V(-7, 0.7, 3),
-      coupling: V(0, 1.5, 0),
-      upper: V(43, 10, -10),
-      lower: V(43, 6, -10),
-      reservoir: V(-2, 1.2, -1),
-      condensate: V(1, 0.6, 0),
-      vortex: V(0, 0.15, 0),
-      emission: V(1, 9, 0)
-    };
-
-    for (const name of Object.keys(cardAnchors)) {
-      const element = $(name + "-card-template")
-        .content.firstElementChild.cloneNode(true);
-
-      const card = element.querySelector(".world-card");
-
-      labels.domElement.appendChild(element);
-
-      const object = new T.CSS2DObject(element);
-      object.position.copy(cardAnchors[name]);
-      scene.add(object);
-
-      const leader = document.createElementNS(
-        leaderSVG.namespaceURI,
-        "line"
-      );
-
-      leaderSVG.appendChild(leader);
-
-      cardObjects[name] = {
-        object,
-        element,
-        card,
-        leader,
-        fade: 0,
-        screen: V(),
-        w: 278,
-        h: 240
+      const pose = {
+        position,
+        target,
+        quaternion: poseCamera.quaternion.clone(),
+        fov: 43
       };
 
-      element.inert = true;
-      element.setAttribute("aria-hidden", "true");
-    }
+      cardPositions();
+      startTransition(pose, false);
 
-    const tags = [];
+      document.querySelectorAll("[data-inspect]").forEach(button => {
+        button.setAttribute(
+          "aria-pressed",
+          String(button.dataset.inspect === name)
+        );
+      });
 
-    function tag(text, position, kind) {
-      const el = document.createElement("span");
-      el.className = "world-tag";
-      el.textContent = text;
-      el.setAttribute("aria-hidden", "true");
+      setText("scene-title", {
+        site: "Read a site's occupation.",
+        wannier: "A localized basis orbital.",
+        tunneling: "Two sites. One boson.",
+        interaction: "Count pairs, then their energy.",
+        superfluid: "A coherent reference state.",
+        mott: "An integer-filling reference state."
+      }[name]);
 
-      const object = new T.CSS2DObject(el);
-      object.position.copy(position);
-      scene.add(object);
+      setText(
+        "scene-description",
+        "An independent reference object accompanies the live bulk calculation. " +
+        "Its world-space card identifies the equation and the scope of this example."
+      );
 
-      tags.push({ object, kind });
-    }
+      setText(
+        "scene-model-note",
+        name === "superfluid"
+          ? "Fixed reference: s = 6.5, μ/U = 0.4."
+          : name === "mott"
+            ? "Fixed reference: s = 18, μ/U = 0.4; mean-field n = 1."
+            : "The live telemetry continues to describe the homogeneous bulk lattice."
+      );
 
-    tag("UPPER DBR", V(12, 4.5, -8), "cavity");
-    tag("QUANTUM WELL", V(12, 0, -8), "cavity");
-    tag("LOWER DBR", V(12, -4.5, -8), "cavity");
-    tag("NONRESONANT PUMP", pumpStart.clone(), "pump");
-
-    tag("q = k / k*", V(43, -4.5, -10), "board");
-    tag("(E − Eₓ) / E₀", V(29, 25, -10), "board");
-
-    for (const q of [-2, 0, 2]) {
-      tag(String(q), V(43 + q * 6, -2, -10), "board");
-    }
-
-    for (const e of [-2, 0, 2, 4, 6]) {
-      tag(
-        String(e),
-        V(29, 7 + e * 2.7, -10),
-        "board"
+      setText(
+        "accessibility-status",
+        "Inspecting " + name + " reference."
       );
     }
 
-    for (const [name, position] of Object.entries(
-      inspectionPositions
-    )) {
-      tag(
-        name.toUpperCase(),
-        position.clone().add(V(0, -2.4, 0)),
-        "shelf"
+    function updatePlayback() {
+      setText(
+        "flight-mode",
+        state.transition
+          ? "RETURNING / TRANSIT"
+          : state.manual
+            ? "MANUAL"
+            : "AUTOMATIC DRONE"
       );
-    }
 
-    const hudObstacles = [];
-    let labelClock = 0;
-    let activeCards = [];
-
-    function overlaps(a, b, pad = 10) {
-      return (
-        a.x < b.x + b.w + pad &&
-        a.x + a.w + pad > b.x &&
-        a.y < b.y + b.h + pad &&
-        a.y + a.h + pad > b.y
-      );
-    }
-
-    function layoutLabels(dt) {
-      labelClock += dt;
-
-      if (labelClock > 0.12) {
-        labelClock = 0;
-        hudObstacles.length = 0;
-
-        if (state.hud) {
-          for (const id of [
-            "sidebar-ui",
-            "flight-controls",
-            "scene-caption",
-            "reference-legend"
-          ]) {
-            const el = $(id);
-            const r = el.getBoundingClientRect();
-
-            if (
-              r.width &&
-              r.height &&
-              getComputedStyle(el).display !== "none"
-            ) {
-              hudObstacles.push({
-                x: r.left,
-                y: r.top,
-                w: r.width,
-                h: r.height
-              });
-            }
-          }
-        }
-
-        activeCards = state.inspection
-          ? [state.inspection]
-          : chapters[state.chapter][8];
-      }
-
-      const occupied = hudObstacles.slice();
-      const maxCards = state.width < 1000 ? 1 : 2;
-      let placed = 0;
-
-      if (!state.inspection) {
-        cardObjects.upper.object.position
-          .copy(board.position)
-          .add(upMarker.position);
-
-        cardObjects.lower.object.position
-          .copy(board.position)
-          .add(lpMarker.position);
-      }
-
-      for (const [name, item] of Object.entries(cardObjects)) {
-        const wanted =
-          state.hud &&
-          activeCards.includes(name) &&
-          placed < maxCards;
-
-        item.object.updateMatrixWorld();
-        item.screen.copy(item.object.position).project(camera);
-
-        const onScreen =
-          item.screen.z > -1 &&
-          item.screen.z < 1 &&
-          Math.abs(item.screen.x) < 1.05 &&
-          Math.abs(item.screen.y) < 1.05;
-
-        let chosen = null;
-
-        if (wanted && onScreen) {
-          const x =
-            (item.screen.x * 0.5 + 0.5) * state.width;
-
-          const y =
-            (-item.screen.y * 0.5 + 0.5) * state.height;
-
-          const w = item.w;
-          const h = item.h;
-
-          const positions = [
-            [x + 25, y - h * 0.5],
-            [x - w - 25, y - h * 0.5],
-            [x - w * 0.5, y - h - 28],
-            [x - w * 0.5, y + 28],
-            [state.width - w - 22, 85]
-          ];
-
-          for (const p of positions) {
-            const r = {
-              x: clamp(p[0], 12, state.width - w - 12),
-              y: clamp(p[1], 78, state.height - h - 15),
-              w,
-              h
-            };
-
-            if (
-              r.y < 0 ||
-              r.y + h > state.height - 12 ||
-              occupied.some(o => overlaps(r, o))
-            ) {
-              continue;
-            }
-
-            chosen = r;
-            occupied.push(r);
-            placed++;
-
-            item.card.style.setProperty(
-              "--card-x",
-              (r.x - x) + "px"
-            );
-
-            item.card.style.setProperty(
-              "--card-y",
-              (r.y - y) + "px"
-            );
-
-            const endX = clamp(x, r.x, r.x + w);
-            const endY = clamp(y, r.y, r.y + h);
-
-            item.leader.setAttribute("x1", String(x));
-            item.leader.setAttribute("y1", String(y));
-            item.leader.setAttribute("x2", String(endX));
-            item.leader.setAttribute("y2", String(endY));
-
-            break;
-          }
-        }
-
-        const visible = !!chosen;
-
-        item.fade = mix(
-          item.fade,
-          visible ? 1 : 0,
-          1 - Math.exp(-dt * 9)
-        );
-
-        item.object.visible =
-          onScreen && item.fade > 0.005;
-
-        item.element.style.opacity = String(item.fade);
-
-        item.element.classList.toggle(
-          "is-visible",
-          item.fade > 0.01
-        );
-
-        if (
-          !visible &&
-          item.element.contains(document.activeElement)
-        ) {
-          $("hud-toggle").focus();
-        }
-
-        item.element.inert = !visible;
-
-        item.element.setAttribute(
-          "aria-hidden",
-          String(!visible)
-        );
-
-        item.card.style.pointerEvents =
-          visible ? "auto" : "none";
-
-        item.leader.style.opacity =
-          String(visible ? item.fade : 0);
-      }
-
-      for (const item of tags) {
-        const dist =
-          camera.position.distanceTo(item.object.position);
-
-        item.object.visible = state.hud && (
-          (
-            item.kind === "board" &&
-            dist < 65 &&
-            (state.chapter === 4 || state.chapter === 5)
-          ) ||
-          (
-            item.kind === "shelf" &&
-            dist < 24
-          ) ||
-          (
-            item.kind === "cavity" &&
-            dist < 42 &&
-            (state.chapter === 0 || state.chapter === 12)
-          ) ||
-          (
-            item.kind === "pump" &&
-            dist < 50 &&
-            (state.chapter === 6 || state.chapter === 11)
-          )
-        );
-      }
-
-      labels.render(scene, camera);
-    }
-
-    const graph = $("dispersion-chart");
-    const ctx = graph.getContext("2d");
-
-    if (!ctx) {
-      throw new Error(
-        "The dispersion chart could not obtain a 2D context."
-      );
-    }
-
-    function drawChart() {
-      const rect = graph.getBoundingClientRect();
-      const w = Math.max(160, rect.width);
-      const h = w / 2;
-      const ratio = Math.min(2, devicePixelRatio || 1);
-
-      const pw = Math.round(w * ratio);
-      const ph = Math.round(h * ratio);
-
-      if (graph.width !== pw || graph.height !== ph) {
-        graph.width = pw;
-        graph.height = ph;
-      }
-
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-
-      const left = 27;
-      const top = 9;
-      const cw = w - 36;
-      const ch = h - 32;
-
-      const X = q => left + (q + 2) * cw / 4;
-      const Y = e => top + (6.4 - e) * ch / 9.1;
-
-      ctx.font = "8px monospace";
-      ctx.lineWidth = 0.6;
-      ctx.fillStyle = "#9eb0c6";
-      ctx.strokeStyle = "#263b51";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-
-      for (const e of [-2, 0, 2, 4, 6]) {
-        const y = Y(e);
-
-        ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(w - 9, y);
-        ctx.stroke();
-        ctx.fillText(String(e), left - 6, y);
-      }
-
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-
-      for (const q of [-2, -1, 0, 1, 2]) {
-        ctx.fillText(String(q), X(q), top + ch + 6);
-      }
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(left, top, cw, ch);
-      ctx.clip();
-
-      for (const [name, color, dash, width] of [
-        ["ec", "#65b5ff", [4, 3], 1],
-        ["ex", "#f18fdc", [1, 3], 1.2],
-        ["up", "#f3ce87", [], 1.2],
-        ["lp", "#66f5ed", [], 2]
-      ]) {
-        ctx.strokeStyle = color;
-        ctx.setLineDash(dash);
-        ctx.lineWidth = width;
-        ctx.beginPath();
-
-        for (let i = 0; i <= 140; i++) {
-          const q = -2 + i / 35;
-          const s = spectrum(q, state.detuning);
-          const energy = name === "ex" ? 0 : s[name];
-
-          if (i === 0) {
-            ctx.moveTo(X(q), Y(energy));
-          } else {
-            ctx.lineTo(X(q), Y(energy));
-          }
-        }
-
-        ctx.stroke();
-      }
-
-      const s = spectrum(state.q, state.detuning);
-
-      ctx.setLineDash([2, 3]);
-      ctx.strokeStyle = "#bed4e777";
-      ctx.lineWidth = 0.7;
-      ctx.beginPath();
-      ctx.moveTo(X(state.q), top);
-      ctx.lineTo(X(state.q), top + ch);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      for (const [energy, color] of [
-        [s.lp, "#a0fff4"],
-        [s.up, "#ffdea6"]
-      ]) {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(X(state.q), Y(energy), 2.5, 0, TAU);
-        ctx.fill();
-      }
-
-      ctx.restore();
-    }
-
-    const format = (value, digits = 3) => {
-      if (!Number.isFinite(value)) return "—";
-
-      if (Math.abs(value) < 1e-3 && value !== 0) {
-        return value.toExponential(2);
-      }
-
-      return value.toFixed(digits);
-    };
-
-    function updateButtons() {
-      const mode =
-        state.mode === "auto" ? "AUTOMATIC DRONE" :
-        state.mode === "returning" ? "RETURNING" :
-        "MANUAL";
-
-      $("flight-mode").textContent =
-        state.paused ? mode + " / PAUSED" : mode;
-
-      $("flight-mode").dataset.mode =
-        state.paused ? "paused" :
-        state.mode === "auto" ? "auto" :
-        state.mode;
+      setText("pause-label", state.paused ? "Play" : "Pause");
 
       $("pause-toggle").setAttribute(
         "aria-pressed",
         String(state.paused)
       );
 
-      $("pause-label").textContent =
-        state.paused ? "Play" : "Pause";
+      setText("hud-label", state.hidden ? "Show HUD" : "Hide HUD");
 
       $("hud-toggle").setAttribute(
         "aria-pressed",
-        String(!state.hud)
+        String(state.hidden)
       );
-
-      $("hud-label").textContent =
-        state.hud ? "Hide HUD" : "Show HUD";
     }
 
-    function updateHUD() {
-      const s = spectrum(state.q, state.detuning);
-      const c0 = spectrum(0, state.detuning).photon;
-      const n = pop.n;
+    function togglePause() {
+      if (!state.ready) return;
 
-      const values = {
-        "photon-fraction-value":
-          (s.photon * 100).toFixed(1) + "%",
+      state.paused = !state.paused;
+      updatePlayback();
+    }
 
-        "exciton-fraction-value":
-          (s.exciton * 100).toFixed(1) + "%",
+    function toggleHUD() {
+      if (!state.ready) return;
 
-        "photon-energy-value": format(s.ec),
-        "exciton-energy-value": "0.000",
-        "lp-energy-value": format(s.lp),
-        "up-energy-value": format(s.up),
-        "probe-detuning-value": format(s.ec),
-        "rabi-value": "ΔR / E₀ = 1.00",
+      state.hidden = !state.hidden;
 
-        "population-value": format(n),
-        "reservoir-value": format(pop.r),
-        "net-gain-value": format(pop.r - 1),
-        "emission-value": format(c0 * n),
-
-        "condensate-photon-value":
-          (100 * c0).toFixed(1) + "%",
-
-        "winding-value":
-          state.fieldFade < 0.999
-            ? "fading"
-            : String(state.ell),
-
-        "simulation-time-value": pop.time.toFixed(1),
-
-        "pump-regime":
-          state.pump > 1 ? "ABOVE THRESHOLD" :
-          state.pump < 1 ? "BELOW THRESHOLD" :
-          "AT THRESHOLD"
-      };
-
-      const phase =
-        0.55 * 0.7 +
-        0.08 * 0.2 +
-        state.ell * Math.atan2(0.2, 0.7) -
-        pop.time * 0.75;
-
-      values["phase-value"] =
-        n * profile(0.7, 0.2, state.ell) > 1e-9
-          ? Math.atan2(
-            Math.sin(phase),
-            Math.cos(phase)
-          ).toFixed(3)
-          : "undefined";
-
-      for (const [id, text] of Object.entries(values)) {
-        $(id).textContent = text;
+      if (state.hidden) {
+        $("hud-toggle").focus({ preventScroll: true });
       }
 
-      $("photon-fill").style.width = s.photon * 100 + "%";
-      $("exciton-fill").style.width = s.exciton * 100 + "%";
+      document.body.classList.toggle("hud-hidden", state.hidden);
 
-      for (const [id, value] of [
-        ["detuning", state.detuning],
-        ["momentum", state.q],
-        ["pump", state.pump]
-      ]) {
-        $(id + "-setting").value = value.toFixed(2);
+      [
+        "sidebar-ui",
+        "scene-caption",
+        "reference-legend"
+      ].forEach(id => {
+        $(id).inert = state.hidden;
+        $(id).setAttribute("aria-hidden", String(state.hidden));
+      });
 
-        const control = $(id + "-control");
+      updatePlayback();
+      measureLabels();
+      layoutLabels();
+    }
 
-        if (document.activeElement !== control) {
-          control.value = String(value);
-        }
+    $("pause-toggle").addEventListener("click", togglePause);
+    $("hud-toggle").addEventListener("click", toggleHUD);
+    $("resume-flight").addEventListener("click", () => resume());
 
-        control.setAttribute(
-          "aria-valuetext",
-          value.toFixed(2)
-        );
+    document.querySelectorAll("[data-chapter]").forEach(button => {
+      button.addEventListener("click", () => {
+        resume(Number(button.dataset.chapter));
+      });
+    });
+
+    document.querySelectorAll("[data-inspect]").forEach(button => {
+      button.addEventListener("click", () => {
+        inspect(button.dataset.inspect);
+      });
+    });
+
+    function changeParameters(s, m) {
+      state.depth = clamp(s, 6, 22);
+      state.chemical = clamp(m, 0.05, 2.95);
+      state.dirty = true;
+    }
+
+    $("depth-control").addEventListener("input", event => {
+      enterManual();
+      changeParameters(Number(event.target.value), state.chemical);
+    });
+
+    $("chemical-control").addEventListener("input", event => {
+      enterManual();
+      changeParameters(state.depth, Number(event.target.value));
+    });
+
+    document.querySelectorAll("[data-preset]").forEach(button => {
+      button.addEventListener("click", () => {
+        enterManual();
+
+        const depths = {
+          superfluid: 6.5,
+          boundary: CRITICAL_DEPTH,
+          mott: 18
+        };
+
+        changeParameters(depths[button.dataset.preset], 0.4);
+      });
+    });
+
+    $("view-select").addEventListener("change", event => {
+      enterManual();
+      state.view = event.target.value;
+      state.dirty = true;
+    });
+
+    $("site-select").addEventListener("change", event => {
+      enterManual();
+
+      state.site = event.target.value;
+      state.inspection = "";
+      state.chapter = -1;
+
+      setChapter(2);
+
+      document.querySelectorAll("[data-inspect]").forEach(button => {
+        button.setAttribute("aria-pressed", "false");
+      });
+
+      cardPositions();
+
+      const target = siteCoordinates[state.site].clone();
+      const position = target.clone().add(V(4, 3, 7));
+
+      poseCamera.position.copy(position);
+      poseCamera.lookAt(target);
+
+      startTransition({
+        position,
+        target,
+        quaternion: poseCamera.quaternion.clone(),
+        fov: 43
+      }, false);
+
+      state.dirty = true;
+    });
+
+    document.querySelectorAll("details").forEach(node => {
+      node.addEventListener("toggle", () => {
+        state.plotsDirty = true;
+        measureLabels();
+      });
+    });
+
+    document.addEventListener("keydown", event => {
+      if (
+        !state.ready ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
+        return;
       }
 
-      const progress = 100 * state.tour / duration;
-      $("flight-progress").style.width = progress + "%";
+      if (
+        event.target.closest(
+          "input,select,textarea,[contenteditable='true']"
+        )
+      ) {
+        return;
+      }
 
-      $("journey-progress").setAttribute(
-        "aria-valuenow",
-        progress.toFixed(1)
+      if (
+        event.code === "Space" &&
+        event.target.closest("button,a,summary")
+      ) {
+        return;
+      }
+
+      if (event.repeat) return;
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        togglePause();
+      } else if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        resume();
+      } else if (event.key.toLowerCase() === "h") {
+        event.preventDefault();
+        toggleHUD();
+      }
+    });
+
+    const motionChange = event => {
+      if (event.matches) {
+        state.paused = true;
+        updatePlayback();
+      }
+    };
+
+    if (reducedMotion.addEventListener) {
+      reducedMotion.addEventListener("change", motionChange);
+    } else {
+      reducedMotion.addListener(motionChange);
+    }
+
+    let viewShift = 0;
+
+    function projection(dt) {
+      const panel = $("sidebar-ui").getBoundingClientRect();
+
+      const desired = !state.hidden && state.width > 760
+        ? (panel.right + 12) * 0.5
+        : 0;
+
+      viewShift = mix(
+        viewShift,
+        desired,
+        1 - Math.exp(-dt * 5)
       );
 
-      const seconds = Math.floor(state.tour);
+      camera.aspect = state.width / state.height;
 
-      $("tour-time").textContent =
-        String(Math.floor(seconds / 60)).padStart(2, "0") +
-        ":" +
-        String(seconds % 60).padStart(2, "0");
+      camera.setViewOffset(
+        state.width,
+        state.height,
+        -viewShift,
+        0,
+        state.width,
+        state.height
+      );
 
-      $("model-status").textContent =
-        transition ? "Camera transition" :
-        state.paused ? "Time paused" :
-        "Reference model running";
+      camera.updateProjectionMatrix();
 
-      $("display-status").textContent =
-        (hdr ? "HDR" : "WEBGL") +
-        " · " +
-        state.dpr.toFixed(1) +
-        "×";
+      controlCamera.aspect = camera.aspect;
 
-      drawChart();
+      controlCamera.setViewOffset(
+        state.width,
+        state.height,
+        -viewShift,
+        0,
+        state.width,
+        state.height
+      );
+
+      controlCamera.updateProjectionMatrix();
     }
 
     function resize() {
-      state.width = Math.max(1, host.clientWidth);
-      state.height = Math.max(1, host.clientHeight);
+      state.width = Math.max(1, container.clientWidth);
+      state.height = Math.max(1, container.clientHeight);
 
       state.dpr = Math.min(
-        devicePixelRatio || 1,
+        window.devicePixelRatio || 1,
         1.5,
-        Math.sqrt(
-          2400000 / (state.width * state.height)
-        )
+        Math.sqrt(2400000 / (state.width * state.height))
       );
 
       renderer.setPixelRatio(state.dpr);
@@ -2504,14 +2357,8 @@
       composer.setSize(state.width, state.height);
 
       bloom.setSize(
-        Math.max(
-          1,
-          Math.round(state.width * state.dpr * 0.65)
-        ),
-        Math.max(
-          1,
-          Math.round(state.height * state.dpr * 0.65)
-        )
+        Math.ceil(state.width * state.dpr * 0.65),
+        Math.ceil(state.height * state.dpr * 0.65)
       );
 
       fxaa.uniforms.resolution.value.set(
@@ -2521,490 +2368,556 @@
 
       labels.setSize(state.width, state.height);
 
-      for (const item of Object.values(cardObjects)) {
-        const previous = item.element.style.display;
-        item.element.style.display = "";
-
-        item.w = item.card.offsetWidth || 278;
-        item.h = item.card.offsetHeight || 240;
-
-        item.element.style.display = previous;
-      }
-
-      leaderSVG.setAttribute(
+      leaders.setAttribute(
         "viewBox",
         "0 0 " + state.width + " " + state.height
       );
 
-      for (const material of pointMaterials) {
-        material.uniforms.uPixelRatio.value = state.dpr;
-      }
-
-      for (const cam of [camera, controlCamera]) {
-        cam.aspect = state.width / state.height;
-        cam.updateProjectionMatrix();
-      }
+      projection(1);
+      state.plotsDirty = true;
+      measureLabels();
     }
 
-    function setHUD(visible) {
-      state.hud = visible;
-      const active = document.activeElement;
+    window.addEventListener("resize", resize);
 
-      if (
-        !visible &&
-        (
-          $("sidebar-ui").contains(active) ||
-          labels.domElement.contains(active)
-        )
-      ) {
-        $("hud-toggle").focus();
-      }
-
-      body.classList.toggle("hud-hidden", !visible);
-
-      for (const el of document.querySelectorAll(".hud-region")) {
-        el.inert = !visible;
-      }
-
-      labels.domElement.inert = !visible;
-      updateButtons();
-
-      announce(
-        visible ? "Interface shown." : "Interface hidden."
-      );
+    if (window.ResizeObserver) {
+      new ResizeObserver(resize).observe(container);
     }
 
-    function setField(value) {
-      state.field = value;
-      body.dataset.field = value;
-      $("field-select").value = value;
-
-      $("legend-field-note").textContent =
-        value === "phase" ? "PHASE + DENSITY" : "DENSITY";
-
-      const paragraphs =
-        $("reference-legend").querySelectorAll("p");
-
-      paragraphs[0].textContent =
-        value === "phase"
-          ? "Hue → phase · brightness → density"
-          : "Brightness → normalized density";
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => measureLabels());
     }
-
-    function pause() {
-      state.paused = !state.paused;
-      updateButtons();
-
-      announce(
-        state.paused
-          ? "Model and tour paused. Manual camera controls remain available."
-          : "Playback resumed."
-      );
-    }
-
-    for (const event of [
-      "pointerdown",
-      "touchstart",
-      "wheel"
-    ]) {
-      canvas.addEventListener(
-        event,
-        enterManual,
-        { capture: true, passive: true }
-      );
-    }
-
-    $("hud-toggle").addEventListener("click", () => {
-      setHUD(!state.hud);
-    });
-
-    $("pause-toggle").addEventListener("click", pause);
-    $("resume-flight").addEventListener("click", resume);
-
-    for (const [id, keyName] of [
-      ["detuning-control", "detuning"],
-      ["momentum-control", "q"],
-      ["pump-control", "pump"]
-    ]) {
-      $(id).addEventListener("input", event => {
-        enterManual();
-        state[keyName] = Number(event.target.value);
-        updateHUD();
-      });
-    }
-
-    $("field-select").addEventListener("change", event => {
-      enterManual();
-      setField(event.target.value);
-    });
-
-    $("vortex-select").addEventListener("change", event => {
-      enterManual();
-      state.wantedEll = Number(event.target.value);
-
-      announce(
-        "Changing the prescribed winding to " +
-        state.wantedEll +
-        " during a field fade."
-      );
-    });
-
-    $("population-reset").addEventListener("click", () => {
-      enterManual();
-      pop.reset();
-      updateHUD();
-
-      announce(
-        "Populations reset to the documented seed. Pump and pause settings were retained."
-      );
-    });
-
-    document.querySelectorAll("[data-chapter]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          const index = Number(button.dataset.chapter);
-
-          state.tour =
-            starts[index] + chapters[index][0] * 0.15;
-
-          enterChapter(index, true);
-
-          if (index === 7) {
-            pop.reset();
-
-            announce(
-              "Condensation demonstration prepared with the documented seed."
-            );
-
-            $("scene-model-note").textContent =
-              "Preparation reset: n_c = 10⁻⁴, r = 0. Coherent spatial phase is prescribed.";
-          }
-
-          state.pump =
-            index === 6 ? 0.75 :
-            index === 7 ? 2.2 :
-            1.6;
-
-          sampleFlight(state.tour, flightPose);
-          moveTo(flightPose, "manual");
-        });
-      });
-
-    document.querySelectorAll("[data-inspect]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          const name = button.dataset.inspect;
-          const target = inspectionPositions[name];
-
-          state.inspection = name;
-
-          for (const [keyName, item] of Object.entries(
-            cardObjects
-          )) {
-            item.object.position.copy(
-              keyName === name
-                ? target
-                : cardAnchors[keyName]
-            );
-          }
-
-          const position = target.clone().add(V(5, 4.4, 8));
-
-          scratchCamera.position.copy(position);
-          scratchCamera.lookAt(target);
-
-          moveTo({
-            position,
-            target,
-            quaternion: scratchCamera.quaternion,
-            fov: 40
-          }, "manual");
-
-          const card = cardObjects[name].card;
-
-          setCaption(
-            card.querySelector("h3").textContent,
-            card.querySelector(
-              "p:not(.card-kicker):not(.card-note)"
-            ).textContent.trim(),
-            "Reference schematic. Field glyphs use unit reference occupation; live population readouts still describe the main cavity.",
-            "REFERENCE / " + name.toUpperCase()
-          );
-
-          document.querySelectorAll("[data-inspect]")
-            .forEach(other => {
-              other.setAttribute(
-                "aria-pressed",
-                String(other === button)
-              );
-            });
-
-          announce("Inspecting " + name + ".");
-        });
-      });
-
-    document.addEventListener("keydown", event => {
-      if (
-        !state.ready ||
-        event.repeat ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey
-      ) {
-        return;
-      }
-
-      if (
-        event.target instanceof Element &&
-        event.target.closest(
-          "input,select,textarea,button,a,summary,[contenteditable='true']"
-        )
-      ) {
-        return;
-      }
-
-      if (event.code === "Space") {
-        event.preventDefault();
-        pause();
-      } else if (event.key.toLowerCase() === "r") {
-        event.preventDefault();
-        resume();
-      } else if (event.key.toLowerCase() === "h") {
-        event.preventDefault();
-        setHUD(!state.hud);
-      }
-    });
-
-    let lastTime = 0;
-    let hudClock = 0;
-    let resizePending = true;
-    let raf = 0;
-
-    const observer =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-          resizePending = true;
-        })
-        : null;
-
-    if (observer) {
-      observer.observe(host);
-    }
-
-    window.addEventListener("resize", () => {
-      resizePending = true;
-    });
 
     document.addEventListener("visibilitychange", () => {
-      lastTime = 0;
+      state.last = 0;
     });
+
+    function applySolution() {
+      if (
+        result.s !== state.depth ||
+        result.m !== state.chemical
+      ) {
+        result = solveState(state.depth, state.chemical);
+      }
+
+      const width = 7.5 * SPACING * result.ell;
+
+      sizeClouds(population, width);
+      sizeClouds(siteRef, width);
+      sizeClouds(wannierRef, width);
+
+      populationMaterial.uniforms.tint.value.set(
+        result.isMott ? gold : cyan
+      );
+
+      populationMaterial.uniforms.strength.value =
+        0.5 + 0.2 * Math.min(result.mean, 3);
+
+      siteRef.material.uniforms.strength.value =
+        populationMaterial.uniforms.strength.value;
+
+      siteRef.material.uniforms.tint.value.copy(
+        populationMaterial.uniforms.tint.value
+      );
+
+      potentialMaterial.uniforms.depth.value = result.s;
+      potentialMaterial.uniforms.alpha.value =
+        state.view === "potential" ? 0.95 : 0.44;
+
+      population.visible = state.view !== "potential";
+      selectedHalo.visible = population.visible;
+      uncertaintyHalo.visible = population.visible;
+
+      selectedHalo.position.copy(siteCoordinates[state.site]).y -= 0.4;
+      uncertaintyHalo.position.copy(siteCoordinates[state.site]).y += 0.05;
+
+      uncertaintyHalo.scale.setScalar(
+        1 + 0.65 * Math.sqrt(result.variance)
+      );
+
+      uncertaintyHalo.material.opacity =
+        result.variance > 1e-8 ? 0.4 : 0;
+
+      updateBridges();
+
+      document.body.dataset.view = state.view;
+      state.dirty = false;
+      state.plotsDirty = true;
+    }
+
+    let lastRegime = "";
+
+    function updateHUD() {
+      const close = result.criticalT > 0 &&
+        Math.abs(result.t / result.criticalT - 1) < 0.16;
+
+      const regime = close
+        ? "intermediate"
+        : result.isMott
+          ? "mott"
+          : "superfluid";
+
+      const branch = result.isMott
+        ? "Mott n = " + result.mottFilling
+        : "superfluid";
+
+      document.body.dataset.regime = regime;
+
+      setText(
+        "regime-value",
+        regime === "intermediate"
+          ? "INTERMEDIATE"
+          : result.isMott
+            ? "MOTT INSULATOR"
+            : "SUPERFLUID"
+      );
+
+      setText(
+        "regime-note",
+        close
+          ? "Near-boundary display band · " + branch + " side."
+          : result.isMott
+            ? "Mean-field integer filling · n = " +
+              result.mottFilling + " per site."
+            : "Nonzero order parameter · uniform phase · no net current."
+      );
+
+      if (regime !== lastRegime) {
+        setText(
+          "accessibility-status",
+          "Current equilibrium branch: " + branch + "."
+        );
+
+        lastRegime = regime;
+      }
+
+      setText(
+        "coherence-value",
+        (result.coherent * 100).toFixed(1) + "%"
+      );
+
+      $("coherence-fill").style.width =
+        result.coherent * 100 + "%";
+
+      setText("depth-setting", result.s.toFixed(2));
+      setText("chemical-setting", result.m.toFixed(2));
+
+      if (document.activeElement !== $("depth-control")) {
+        $("depth-control").value = String(result.s);
+      }
+
+      if (document.activeElement !== $("chemical-control")) {
+        $("chemical-control").value = String(result.m);
+      }
+
+      setText("hopping-value", result.J.toFixed(5));
+      setText("interaction-value", result.U.toFixed(4));
+      setText("ratio-value", result.ratio.toFixed(2));
+      setText("chemical-value", result.m.toFixed(3));
+      setText("occupation-value", result.mean.toFixed(3));
+
+      setText(
+        "fluctuation-value",
+        Math.sqrt(result.variance).toFixed(3)
+      );
+
+      setText("order-value", result.psi.toFixed(4));
+      setText("bandwidth-value", (12 * result.J).toFixed(4));
+      setText("cutoff-weight-value", sci(result.tail));
+      setText("solver-residual-value", sci(result.residual));
+
+      setText(
+        "selected-site-value",
+        "(" +
+        siteCoordinates[state.site].toArray()
+          .map(v => v / SPACING).join(", ") +
+        ")"
+      );
+
+      setText("legend-view-value", {
+        coherence: "COHERENCE + DENSITY",
+        density: "DENSITY ONLY",
+        potential: "POTENTIAL SLICE"
+      }[state.view]);
+
+      setText(
+        "legend-phase-note",
+        result.isMott
+          ? "Mott order-parameter phase is undefined. Gold marks density, not a random phase."
+          : "Uniform order-parameter phase. Links encode coherent coupling, with zero net current."
+      );
+
+      setText("solver-status", "MEAN FIELD · n ≤ 12");
+
+      setText(
+        "display-status",
+        (renderer.capabilities.isWebGL2 ? "GL2" : "GL1") +
+        " · DPR " + state.dpr.toFixed(2)
+      );
+
+      setText(
+        "tour-time",
+        clockText(state.tour) + " / " + clockText(duration)
+      );
+
+      const percent = state.tour / duration * 100;
+
+      $("flight-progress").style.width = percent + "%";
+
+      $("journey-progress").setAttribute(
+        "aria-valuenow",
+        percent.toFixed(1)
+      );
+
+      $("journey-progress").setAttribute(
+        "aria-valuetext",
+        "Chapter " + (state.chapter + 1) + " of 13"
+      );
+
+      document.querySelectorAll("[data-preset]").forEach(button => {
+        const target = {
+          superfluid: 6.5,
+          boundary: CRITICAL_DEPTH,
+          mott: 18
+        }[button.dataset.preset];
+
+        button.setAttribute(
+          "aria-pressed",
+          String(
+            Math.abs(result.s - target) < 0.002 &&
+            Math.abs(result.m - 0.4) < 0.002
+          )
+        );
+      });
+
+      cards.site.telemetry.textContent =
+        "Live: mean " + result.mean.toFixed(3) +
+        " · Δn " + Math.sqrt(result.variance).toFixed(3);
+
+      cards.wannier.telemetry.textContent =
+        "Live orbital length ℓ/a = " + result.ell.toFixed(4) +
+        " · magnified display";
+
+      cards.potential.telemetry.textContent =
+        "Live depth s = " + result.s.toFixed(3) +
+        " · explanatory height scale";
+
+      const sf = state.inspection === "superfluid"
+        ? sfReference
+        : result;
+
+      cards.superfluid.telemetry.textContent =
+        "ψ = " + sf.psi.toFixed(4) +
+        " · coherent fraction " +
+        (sf.coherent * 100).toFixed(1) + "%";
+
+      const mi = state.inspection === "mott"
+        ? mottReference
+        : result;
+
+      cards.mott.telemetry.textContent =
+        "Mean-field filling " + mi.mean.toFixed(3) +
+        " · ψ = " + mi.psi.toFixed(4);
+
+      cards.interaction.telemetry.textContent =
+        "At the live U: n = 2 costs " +
+        result.U.toFixed(4) +
+        " ER; n = 3 costs " +
+        (3 * result.U).toFixed(4) + " ER.";
+
+      cards.hamiltonian.telemetry.textContent =
+        "Live energy / site in ER: hopping " +
+        (-Z * result.J * result.psi ** 2).toFixed(4) +
+        " · interaction " +
+        (result.U * result.pairs).toFixed(4) +
+        " · chemical " +
+        (-result.m * result.U * result.mean).toFixed(4) + ".";
+
+      cards.band.telemetry.textContent =
+        "Live Γ→X width: " +
+        (4 * result.J).toFixed(5) +
+        " ER · full width: " +
+        (12 * result.J).toFixed(5) + " ER.";
+
+      cards.momentum.telemetry.textContent =
+        "Fixed side-by-side references; the sidebar momentum map follows the live state.";
+
+      cards.phase.telemetry.textContent =
+        "Live J/U = " + result.t.toFixed(5) +
+        " · μ/U = " + result.m.toFixed(3) +
+        " · " + branch;
+    }
+
+    function updateCamera(dt) {
+      if (state.transition) {
+        const transition = state.transition;
+
+        if (!state.paused) transition.elapsed += dt;
+
+        const f = ease(clamp(
+          transition.elapsed / transition.length,
+          0,
+          1
+        ));
+
+        camera.position.lerpVectors(
+          transition.from,
+          transition.to.position,
+          f
+        );
+
+        camera.quaternion.slerpQuaternions(
+          transition.rotation,
+          transition.to.quaternion,
+          f
+        );
+
+        camera.fov = mix(
+          transition.fov,
+          transition.to.fov,
+          f
+        );
+
+        focus.lerpVectors(
+          transition.focus,
+          transition.to.target,
+          f
+        );
+
+        if (transition.automatic) {
+          changeParameters(
+            mix(transition.depth, transition.to.depth, f),
+            mix(transition.chemical, 0.4, f)
+          );
+        }
+
+        if (f >= 1) {
+          state.transition = null;
+
+          if (!transition.automatic) {
+            syncOrbit();
+            orbit.enabled = true;
+          }
+
+          updatePlayback();
+        }
+      } else if (state.manual) {
+        orbit.update();
+
+        const a = 1 - Math.exp(-dt * 15);
+
+        camera.position.lerp(controlCamera.position, a);
+        camera.quaternion.slerp(controlCamera.quaternion, a);
+        camera.fov = controlCamera.fov;
+        focus.copy(orbit.target);
+      } else {
+        if (!state.paused && state.ready) {
+          state.tour = (state.tour + dt) % duration;
+        }
+
+        const pose = tourPose(state.tour);
+
+        camera.position.copy(pose.position);
+        camera.quaternion.copy(pose.quaternion);
+        camera.fov = pose.fov;
+        focus.copy(pose.target);
+
+        setChapter(pose.chapter);
+
+        if (
+          Math.abs(state.depth - pose.depth) > 0.0001 ||
+          state.chemical !== 0.4
+        ) {
+          changeParameters(pose.depth, 0.4);
+        }
+      }
+
+      projection(dt);
+      camera.updateMatrixWorld();
+    }
+
+    function validatePrograms() {
+      const bad = (renderer.info.programs || []).find(program =>
+        program.diagnostics &&
+        program.diagnostics.runnable === false
+      );
+
+      if (bad) {
+        throw new Error("A WebGL shader failed to compile or link.");
+      }
+    }
 
     canvas.addEventListener("webglcontextlost", event => {
       event.preventDefault();
 
       state.lost = true;
       state.ready = false;
+      state.last = 0;
       orbit.enabled = false;
 
       gate(false);
-      $("render-notice").hidden = false;
 
-      $("notice-title").textContent =
-        "Graphics context interrupted";
-
-      $("notice-message").textContent =
-        "The model is paused while the browser restores graphics access.";
-
-      $("notice-detail").textContent =
-        "Your parameters and population state are retained. Reload if recovery does not complete.";
-
-      $("notice-reload").hidden = false;
-
-      $("model-status").textContent =
-        "Waiting for graphics recovery";
-
-      announce(
-        "Graphics context lost. Waiting for restoration."
+      notice(
+        "Graphics context interrupted",
+        "The calculation is preserved while the browser restores the graphics context.",
+        "If restoration does not complete, reload the visualization.",
+        true
       );
     });
 
     canvas.addEventListener("webglcontextrestored", () => {
       try {
-        state.lost = false;
-        lastTime = 0;
-
         composer.reset();
-        resizePending = true;
 
-        $("notice-title").textContent =
-          "Restoring the microcavity";
+        resources.forEach(texture => {
+          texture.needsUpdate = true;
+        });
 
-        $("notice-message").textContent =
-          "Rebuilding graphics resources and checking the first frame.";
+        state.lost = false;
+        state.last = 0;
+        state.dirty = true;
+        state.plotsDirty = true;
+
+        resize();
+
+        notice(
+          "Restoring the optical lattice",
+          "Rebuilding graphics resources.",
+          ""
+        );
       } catch (error) {
         fail(error);
       }
     });
 
-    function frame(timestamp) {
-      raf = requestAnimationFrame(frame);
+    let frameHandle = 0;
 
-      if (state.failed) {
-        cancelAnimationFrame(raf);
-        return;
-      }
+    function frame(now) {
+      if (state.failed) return;
+
+      frameHandle = requestAnimationFrame(frame);
 
       if (state.lost || document.hidden) {
-        lastTime = 0;
+        state.last = 0;
         return;
       }
 
+      const dt = state.last
+        ? Math.min((now - state.last) / 1000, 0.05)
+        : 0;
+
+      state.last = now;
+
       try {
-        const dt = lastTime
-          ? Math.min(
-            0.05,
-            Math.max(0, (timestamp - lastTime) / 1000)
-          )
-          : 0;
-
-        lastTime = timestamp;
-
-        if (resizePending) {
-          resize();
-          resizePending = false;
-        }
+        updateCamera(dt);
 
         if (
-          state.ready &&
           !state.paused &&
-          !transition
+          !state.transition &&
+          state.ready
         ) {
-          state.visualTime += dt;
-
-          if (state.mode === "auto") {
-            state.tour = (state.tour + dt) % duration;
-
-            const index = locate(state.tour);
-
-            if (index !== state.chapter) {
-              enterChapter(index, true);
-            }
-
-            localProgress =
-              (state.tour - starts[index]) /
-              chapters[index][0];
-
-            const desiredPump =
-              index === 6 ? 0.75 :
-              index === 7
-                ? 0.75 + 1.45 * ease(localProgress * 1.5)
-                : 1.6;
-
-            state.pump = mix(
-              state.pump,
-              desiredPump,
-              1 - Math.exp(-dt * 2)
-            );
-
-            const desiredQ =
-              index === 5
-                ? 1.7 * Math.sin(TAU * localProgress)
-                : 0;
-
-            state.q = mix(
-              state.q,
-              desiredQ,
-              1 - Math.exp(-dt * 5)
-            );
-          }
-
-          pop.advance(dt * 0.75, state.pump);
+          state.teaching += dt;
         }
 
-        updateVisuals(dt);
-        updateCamera(dt);
-        scene.updateMatrixWorld();
+        state.solveClock += dt;
+
+        if (
+          state.dirty &&
+          (!state.ready || state.solveClock >= 1 / 15)
+        ) {
+          applySolution();
+          state.solveClock = 0;
+        }
+
+        animateOptics(state.teaching);
+
+        // Isolated dimer clock τ, intentionally independent of lab time.
+        const probability = Math.sin(state.teaching * 0.45) ** 2;
+
+        dimerLeft.material.uniforms.strength.value =
+          0.95 * (1 - probability);
+
+        dimerRight.material.uniforms.strength.value =
+          0.95 * probability;
+
+        state.hudClock += dt;
+
+        if (state.hudClock >= 0.15 || !state.ready) {
+          updateHUD();
+
+          cards.tunneling.telemetry.textContent =
+            "P_L = " + (1 - probability).toFixed(3) +
+            " · P_R = " + probability.toFixed(3) +
+            " · normalized clock";
+
+          dimerTag.element.textContent =
+            "Independent dimer · left " +
+            ((1 - probability) * 100).toFixed(0) +
+            "% · right " +
+            (probability * 100).toFixed(0) + "%";
+
+          if (state.plotsDirty) drawPlots();
+
+          measureLabels();
+          state.hudClock = 0;
+        }
+
+        // CSS2D owns outer anchor transforms. Card offsets are applied
+        // only to their children, with SVG leaders projected alongside.
+        layoutLabels();
 
         composer.render(dt);
-        layoutLabels(dt);
-
-        hudClock += dt;
-
-        if (hudClock > 0.1 || !state.ready) {
-          hudClock = 0;
-          updateHUD();
-        }
+        labels.render(scene, camera);
 
         if (!state.ready) {
-          const programs = renderer.info.programs || [];
-
-          if (programs.some(program =>
-            program.diagnostics &&
-            program.diagnostics.runnable === false
-          )) {
-            throw new Error(
-              "A graphics shader failed to compile on this device."
-            );
-          }
-
           if (gl.isContextLost()) return;
 
+          validatePrograms();
+
           state.ready = true;
-          body.classList.remove(
+          gate(true);
+
+          orbit.enabled = state.manual && !state.transition;
+
+          document.body.classList.remove(
             "is-loading",
             "render-failed"
           );
 
           $("render-notice").hidden = true;
-          gate(true);
+          updatePlayback();
 
-          orbit.enabled = state.mode === "manual";
-          updateButtons();
-
-          announce(
-            state.paused
-              ? "Ready. Reduced motion is respected; press Play to begin."
-              : "Polariton observatory ready."
+          setText(
+            "accessibility-status",
+            "Optical lattice ready. " +
+            (state.paused
+              ? "Reduced-motion preference: tour starts paused."
+              : "Guided tour running.")
           );
         }
       } catch (error) {
+        cancelAnimationFrame(frameHandle);
         fail(error);
       }
     }
 
-    state.orbit = orbit;
-
     state.start = () => {
+      setChapter(0);
+      cardPositions();
+      applySolution();
+      updateHUD();
+      drawPlots();
       resize();
-      sampleFlight(0, flightPose);
+      updatePlayback();
 
-      camera.position.copy(flightPose.position);
-      camera.quaternion.copy(flightPose.quaternion);
-      camera.fov = flightPose.fov;
-      camera.updateProjectionMatrix();
-
-      state.focusDistance =
-        camera.position.distanceTo(flightPose.target);
-
-      enterChapter(0, false);
-      setField("phase");
-      updateButtons();
-      syncOrbit();
-      updateVisuals(0);
-
-      renderer.compile(scene, camera);
-      raf = requestAnimationFrame(frame);
+      frameHandle = requestAnimationFrame(frame);
     };
 
     return state;
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener(
-      "DOMContentLoaded",
-      boot,
-      { once: true }
-    );
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
     boot();
   }
