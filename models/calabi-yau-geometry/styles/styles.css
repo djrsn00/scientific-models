@@ -1,0 +1,1647 @@
+/* ==========================================================================
+   QuantumEngine — P31 phosphor interface
+   Matches index.html. The canvas remains independent of the scrolling HUD.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+  background: #000000;
+  color: #00ff66;
+
+  --qe-black: #000000;
+  --qe-green: #00ff66;
+  --qe-green-rgb: 0, 255, 102;
+  --qe-text-muted: rgba(var(--qe-green-rgb), 0.76);
+  --qe-line-soft: rgba(var(--qe-green-rgb), 0.24);
+  --qe-panel-background: rgba(0, 0, 0, 0.48);
+  --qe-font: "Courier New", "Fira Code", Courier, monospace;
+  --qe-glow: 0 0 7px rgba(var(--qe-green-rgb), 0.2);
+  --qe-gap: clamp(0.625rem, 1vw, 1rem);
+  --qe-edge: clamp(0.75rem, 1.35vw, 1.5rem);
+  --qe-left-column: clamp(16rem, 21vw, 22rem);
+  --qe-right-column: clamp(16rem, 21vw, 21rem);
+  --qe-console-clearance: 16rem;
+  --qe-safe-top: env(safe-area-inset-top, 0px);
+  --qe-safe-right: env(safe-area-inset-right, 0px);
+  --qe-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --qe-safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* Foundation and accessibility. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: #000000;
+  color: #00ff66;
+  font-family: var(--qe-font);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-shadow: var(--qe-glow);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+::selection {
+  background: var(--qe-green);
+  color: var(--qe-black);
+  text-shadow: none;
+}
+
+button,
+input,
+select,
+textarea,
+output {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+input,
+select,
+summary,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+a:visited {
+  color: var(--qe-green);
+}
+
+a {
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+
+button,
+input,
+select {
+  accent-color: var(--qe-green);
+}
+
+button,
+summary,
+input[type="checkbox"],
+input[type="range"] {
+  cursor: pointer;
+}
+
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--qe-green);
+  outline-offset: 4px;
+}
+
+:where(button, input, select):disabled {
+  cursor: not-allowed;
+}
+
+.qe-app :where(h1, h2, h3, p, dl, dd, ol, fieldset) {
+  margin: 0;
+}
+
+.qe-app :where(h1, h2, h3) {
+  font-family: var(--qe-font);
+  font-weight: 700;
+}
+
+.qe-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.qe-skip-link {
+  position: fixed;
+  top: max(0.75rem, var(--qe-safe-top));
+  left: max(0.75rem, var(--qe-safe-left));
+  z-index: 10;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.75rem 1rem;
+  transform: translateY(calc(-100% - 2rem - var(--qe-safe-top)));
+  border: 1px solid var(--qe-green);
+  background: var(--qe-black);
+  font-weight: 700;
+}
+
+.qe-skip-link:focus {
+  transform: translateY(0);
+}
+
+/* Scene foundation.
+   The stage must not trap the waypoint in a lower stacking context. */
+
+.qe-app {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--qe-black);
+}
+
+.qe-stage {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  overflow: visible;
+}
+
+.qe-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #000000;
+  outline: none;
+  image-rendering: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.qe-canvas:focus-visible {
+  outline: 1px solid var(--qe-green);
+  outline-offset: -0.5rem;
+}
+
+.qe-stage-frame {
+  position: absolute;
+  inset: var(--qe-edge);
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.qe-frame-corner {
+  position: absolute;
+  width: clamp(1rem, 2.5vw, 2.5rem);
+  height: clamp(1rem, 2.5vw, 2.5rem);
+  border: 0 solid rgba(var(--qe-green-rgb), 0.4);
+}
+
+.qe-frame-corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.qe-frame-corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.qe-frame-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.qe-frame-corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.qe-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: translate(-50%, -50%);
+  opacity: 0.32;
+}
+
+.qe-reticle::before,
+.qe-reticle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: "";
+  background: var(--qe-green);
+  transform: translate(-50%, -50%);
+}
+
+.qe-reticle::before {
+  width: 100%;
+  height: 1px;
+}
+
+.qe-reticle::after {
+  width: 1px;
+  height: 100%;
+}
+
+/* Static scanlines preserve the renderer's resolution and antialiasing. */
+
+.qe-crt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.qe-crt-overlay__scanlines,
+.qe-crt-overlay__vignette {
+  position: absolute;
+  inset: 0;
+}
+
+.qe-crt-overlay__scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.18) 0,
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  opacity: 0.55;
+}
+
+.qe-crt-overlay__vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 52%,
+    rgba(0, 0, 0, 0.12) 78%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  box-shadow: inset 0 0 clamp(2rem, 6vw, 7rem) rgba(0, 0, 0, 0.36);
+}
+
+.qe-crt-overlay::after {
+  position: absolute;
+  inset: 0.25rem;
+  content: "";
+  border: 1px solid rgba(var(--qe-green-rgb), 0.09);
+  border-radius: clamp(0.4rem, 1vw, 1.25rem);
+  box-shadow: inset 0 0 1.25rem rgba(0, 0, 0, 0.32);
+}
+
+.qe-crt-overlay__scan-flash {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 18%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(var(--qe-green-rgb), 0.035) 48%,
+    rgba(var(--qe-green-rgb), 0.055) 50%,
+    transparent
+  );
+  opacity: 0;
+  transform: translate3d(0, -110%, 0);
+  animation: qe-scan-sweep 16s linear infinite;
+}
+
+@keyframes qe-scan-sweep {
+  0% {
+    transform: translate3d(0, -110%, 0);
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 0.55;
+  }
+
+  70% {
+    opacity: 0.55;
+  }
+
+  88%,
+  100% {
+    transform: translate3d(0, 680%, 0);
+    opacity: 0;
+  }
+}
+
+/* HUD: only visible interface surfaces intercept pointer input. */
+
+.qe-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns:
+    var(--qe-left-column)
+    minmax(0, 1fr)
+    var(--qe-right-column);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "header header header"
+    "theory . diagnostics"
+    "controls controls controls"
+    "footer footer footer";
+  gap: var(--qe-gap);
+  min-width: 0;
+  min-height: 0;
+  padding:
+    max(var(--qe-edge), var(--qe-safe-top))
+    max(var(--qe-edge), var(--qe-safe-right))
+    max(var(--qe-edge), var(--qe-safe-bottom))
+    max(var(--qe-edge), var(--qe-safe-left));
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+.qe-hud > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.qe-panel,
+.qe-header > *,
+.qe-footer > * {
+  pointer-events: auto;
+}
+
+.qe-header {
+  grid-area: header;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--qe-line-soft);
+}
+
+.qe-brand {
+  min-width: 0;
+}
+
+.qe-overline {
+  color: var(--qe-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.qe-brand > .qe-overline {
+  margin-bottom: 0.4rem;
+}
+
+#qe-title {
+  line-height: 1.1;
+}
+
+.qe-title__primary,
+.qe-title__secondary {
+  display: block;
+}
+
+.qe-title__primary {
+  font-size: clamp(1.375rem, 2.4vw, 2.25rem);
+  letter-spacing: 0.075em;
+  text-shadow: 0 0 12px rgba(var(--qe-green-rgb), 0.3);
+}
+
+.qe-title__secondary {
+  margin-top: 0.45rem;
+  font-size: clamp(0.625rem, 0.9vw, 0.8125rem);
+  line-height: 1.45;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.qe-system-indicator {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 40%;
+  padding: 0.35rem 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qe-status-light {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border: 1px solid var(--qe-green);
+  background: var(--qe-green);
+  box-shadow: 0 0 8px rgba(var(--qe-green-rgb), 0.6);
+}
+
+.qe-status-light[data-state="loading"] {
+  animation: qe-status-pulse 2.4s ease-in-out infinite;
+}
+
+.qe-status-light[data-state="failed"] {
+  background: var(--qe-black);
+  outline: 1px solid var(--qe-green);
+  outline-offset: 2px;
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes qe-status-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Thin wireframe panels and mathematical typography. */
+
+.qe-panel {
+  padding: 0.9rem;
+  border: 1px solid #00ff66;
+  border-radius: 0;
+  background: var(--qe-panel-background);
+  box-shadow:
+    inset 0 0 18px rgba(var(--qe-green-rgb), 0.025),
+    0 0 10px rgba(0, 0, 0, 0.25);
+}
+
+.qe-panel--theory {
+  grid-area: theory;
+}
+
+.qe-panel--diagnostics {
+  grid-area: diagnostics;
+}
+
+.qe-panel--theory,
+.qe-panel--diagnostics {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.qe-panel__header {
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--qe-line-soft);
+}
+
+.qe-panel__header h2 {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+}
+
+.qe-equation-card + .qe-equation-card {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--qe-line-soft);
+}
+
+.qe-equation-card h3,
+.qe-terminal h3 {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.qe-equation-card p,
+.qe-disclosure > p {
+  margin-top: 0.45rem;
+  color: var(--qe-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.qe-equation {
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0 0.45rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  color: var(--qe-green);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.qe-equation--compact {
+  font-size: 0.75rem;
+}
+
+.qe-equation .katex {
+  color: var(--qe-green);
+  font-size: 1.05em;
+  text-shadow: 0 0 6px rgba(var(--qe-green-rgb), 0.15);
+}
+
+.qe-equation .katex-display {
+  margin: 0.35em 0;
+  text-align: left;
+}
+
+.qe-equation .katex-display > .katex {
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* KaTeX retains its own fonts and its built-in accessible MathML layer. */
+
+.qe-equation-list > div {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(var(--qe-green-rgb), 0.14);
+}
+
+.qe-equation-list > div:last-child {
+  border-bottom: 0;
+}
+
+.qe-equation-list dt {
+  color: var(--qe-text-muted);
+  font-size: 0.6875rem;
+}
+
+.qe-equation-list dd {
+  margin-top: 0.15rem;
+}
+
+.qe-disclosure {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--qe-line-soft);
+}
+
+.qe-disclosure > summary {
+  padding: 0.3rem 0;
+  margin-left: 1rem;
+  color: var(--qe-green);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  list-style-position: outside;
+}
+
+.qe-disclosure > summary::marker {
+  color: var(--qe-green);
+  font-size: 0.85em;
+}
+
+.qe-disclosure[open] > summary {
+  margin-bottom: 0.35rem;
+}
+
+.qe-text-link {
+  display: inline-block;
+  margin-top: 0.7rem;
+  font-size: 0.6875rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+/* Instrumentation displays actual values without digit-width shifts. */
+
+.qe-readout-grid {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.qe-readout-grid > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(var(--qe-green-rgb), 0.14);
+}
+
+.qe-readout-grid dt {
+  color: var(--qe-text-muted);
+}
+
+.qe-readout-grid dd {
+  min-width: 0;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.qe-terminal {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--qe-green);
+}
+
+.qe-terminal__log {
+  max-height: 10rem;
+  margin-top: 0.6rem !important;
+  padding: 0 0.2rem 0 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  font-size: 0.6875rem;
+  line-height: 1.65;
+}
+
+.qe-terminal__entry {
+  padding: 0.2rem 0;
+  overflow-wrap: anywhere;
+}
+
+.qe-terminal__entry::before {
+  content: "> ";
+  color: var(--qe-text-muted);
+}
+
+.qe-terminal__entry time {
+  color: var(--qe-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.qe-terminal__entry[data-level="warn"],
+.qe-terminal__entry[data-level="error"] {
+  margin: 0.3rem 0;
+  padding: 0.35rem 0.5rem;
+  border-left: 2px solid var(--qe-green);
+  background: rgba(var(--qe-green-rgb), 0.075);
+}
+
+.qe-terminal__entry[data-level="error"] {
+  font-weight: 700;
+}
+
+/* Observer controls. */
+
+.qe-panel--controls {
+  grid-area: controls;
+  display: grid;
+  grid-template-columns:
+    10.5rem
+    minmax(17rem, 1.1fr)
+    minmax(24rem, 1.4fr);
+  grid-template-areas:
+    "title transport fields"
+    "help help help";
+  align-items: start;
+  gap: 0.6rem 1rem;
+  max-height: min(38vh, 20rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.qe-panel--controls > .qe-panel__header {
+  grid-area: title;
+  margin: 0;
+  padding: 0.15rem 0 0;
+  border: 0;
+}
+
+.qe-control-group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.qe-control-group > legend {
+  max-width: 100%;
+  margin-bottom: 0.45rem;
+  padding: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#qe-transport-controls {
+  grid-area: transport;
+}
+
+#qe-field-controls {
+  grid-area: fields;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.7rem;
+}
+
+.qe-button-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.qe-button {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--qe-green);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--qe-green);
+  font-family: var(--qe-font);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: var(--qe-glow);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.qe-button[aria-pressed="true"] {
+  background: rgba(var(--qe-green-rgb), 0.16);
+  box-shadow: inset 0 -2px 0 var(--qe-green);
+}
+
+.qe-button:active:not(:disabled) {
+  background: var(--qe-green);
+  color: var(--qe-black);
+  text-shadow: none;
+}
+
+.qe-button:disabled {
+  border-color: rgba(var(--qe-green-rgb), 0.32);
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(var(--qe-green-rgb), 0.48);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.qe-control-group:disabled :where(label, output, .qe-control-note) {
+  opacity: 0.55;
+}
+
+.qe-control-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.6875rem;
+}
+
+.qe-control-note {
+  margin-top: 0.4rem !important;
+  color: var(--qe-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.55;
+}
+
+.qe-slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.35rem;
+  min-width: 0;
+}
+
+.qe-slider-control label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.qe-slider-control output {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--qe-text-muted);
+  font-size: 0.625rem;
+  line-height: 1.6;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.qe-slider-control input[type="range"] {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.qe-slider-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border: 0;
+  background: rgba(var(--qe-green-rgb), 0.38);
+}
+
+.qe-slider-control input[type="range"]::-moz-range-track {
+  height: 3px;
+  border: 0;
+  background: rgba(var(--qe-green-rgb), 0.38);
+}
+
+.qe-slider-control input[type="range"]::-moz-range-progress {
+  height: 3px;
+  background: var(--qe-green);
+}
+
+.qe-slider-control input[type="range"]::-webkit-slider-thumb {
+  width: 0.65rem;
+  height: 0.95rem;
+  margin-top: calc((3px - 0.95rem) / 2);
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--qe-green);
+  border-radius: 0;
+  background: var(--qe-black);
+  box-shadow: 0 0 6px rgba(var(--qe-green-rgb), 0.25);
+}
+
+.qe-slider-control input[type="range"]::-moz-range-thumb {
+  width: 0.65rem;
+  height: 0.95rem;
+  border: 1px solid var(--qe-green);
+  border-radius: 0;
+  background: var(--qe-black);
+  box-shadow: 0 0 6px rgba(var(--qe-green-rgb), 0.25);
+}
+
+.qe-slider-control input[type="range"]:disabled {
+  opacity: 0.4;
+}
+
+.qe-select-control {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.6875rem;
+}
+
+.qe-select-control select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--qe-green);
+  border-radius: 0;
+  background: var(--qe-black);
+  font-size: 0.6875rem;
+}
+
+.qe-select-control option {
+  background: var(--qe-black);
+  color: var(--qe-green);
+}
+
+.qe-select-control select:disabled {
+  border-color: rgba(var(--qe-green-rgb), 0.32);
+  color: rgba(var(--qe-green-rgb), 0.48);
+}
+
+.qe-checkbox-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.qe-checkbox-control input {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--qe-green);
+}
+
+.qe-progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: rgba(var(--qe-green-rgb), 0.14);
+  color: var(--qe-green);
+}
+
+.qe-progress::-webkit-progress-bar {
+  background: rgba(var(--qe-green-rgb), 0.14);
+}
+
+.qe-progress::-webkit-progress-value {
+  background: var(--qe-green);
+  box-shadow: 0 0 8px rgba(var(--qe-green-rgb), 0.45);
+}
+
+.qe-progress::-moz-progress-bar {
+  background: var(--qe-green);
+  box-shadow: 0 0 8px rgba(var(--qe-green-rgb), 0.45);
+}
+
+.qe-disclosure--help {
+  grid-area: help;
+  margin-top: 0;
+  padding-top: 0.35rem;
+}
+
+.qe-disclosure--help[open] {
+  max-height: 11rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.qe-shortcut-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.65rem !important;
+  font-size: 0.6875rem;
+}
+
+.qe-shortcut-list > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.4rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid rgba(var(--qe-green-rgb), 0.55);
+  background: var(--qe-black);
+  font-family: var(--qe-font);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Cinematic captions remain in the open center of the desktop viewport. */
+
+.qe-waypoint {
+  position: absolute;
+  left: calc(
+    var(--qe-edge) +
+    var(--qe-left-column) +
+    2 * var(--qe-gap)
+  );
+  bottom: calc(
+    var(--qe-console-clearance) +
+    var(--qe-edge) +
+    var(--qe-safe-bottom)
+  );
+  z-index: 10;
+  width: min(
+    28rem,
+    calc(
+      100vw -
+      var(--qe-left-column) -
+      var(--qe-right-column) -
+      2 * var(--qe-edge) -
+      4 * var(--qe-gap)
+    )
+  );
+  padding: 0.75rem 1rem;
+  border-left: 1px solid var(--qe-green);
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.68),
+    rgba(0, 0, 0, 0.08)
+  );
+  pointer-events: none;
+}
+
+.qe-waypoint h2 {
+  margin-top: 0.3rem;
+  font-size: clamp(1rem, 1.4vw, 1.375rem);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+.qe-waypoint .qe-equation {
+  pointer-events: auto;
+}
+
+.qe-waypoint > p:last-child {
+  color: var(--qe-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.qe-footer {
+  grid-area: footer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  color: var(--qe-text-muted);
+  font-size: 0.625rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qe-spectral-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.qe-spectral-key__bar {
+  display: inline-block;
+  width: 3.75rem;
+  height: 0.45rem;
+  border: 1px solid rgba(var(--qe-green-rgb), 0.65);
+  background: repeating-linear-gradient(
+    to right,
+    rgba(var(--qe-green-rgb), 0.75) 0,
+    rgba(var(--qe-green-rgb), 0.75) 6px,
+    transparent 6px,
+    transparent 9px
+  );
+}
+
+/* Startup and errors share UI layer 10.
+   Their later DOM order places them above the HUD. */
+
+.qe-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding:
+    max(1rem, var(--qe-safe-top))
+    max(1rem, var(--qe-safe-right))
+    max(1rem, var(--qe-safe-bottom))
+    max(1rem, var(--qe-safe-left));
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: rgba(0, 0, 0, 0.88);
+  pointer-events: auto;
+}
+
+.qe-boot__card {
+  position: relative;
+  width: min(100%, 32rem);
+  max-height: 100%;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  overflow: auto;
+  border: 1px solid var(--qe-green);
+  background: rgba(0, 0, 0, 0.94);
+  box-shadow: 0 0 24px rgba(var(--qe-green-rgb), 0.08);
+}
+
+.qe-boot__card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28%;
+  height: 2px;
+  content: "";
+  background: var(--qe-green);
+  box-shadow: 0 0 10px rgba(var(--qe-green-rgb), 0.4);
+}
+
+.qe-boot__card h2 {
+  margin-top: 0.65rem;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  line-height: 1.35;
+}
+
+#qe-boot-message {
+  min-height: 3em;
+  margin-top: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+#qe-boot-progress {
+  height: 5px;
+  margin: 1rem 0 0.8rem;
+}
+
+.qe-notice {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  width: min(
+    36rem,
+    calc(100% - 2rem - var(--qe-safe-left) - var(--qe-safe-right))
+  );
+  max-height: calc(
+    100% - 2rem - var(--qe-safe-top) - var(--qe-safe-bottom)
+  );
+  padding: clamp(1rem, 3vw, 2rem);
+  transform: translate(-50%, -50%);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #00ff66;
+  background: #000000;
+  color: #00ff66;
+  pointer-events: auto;
+}
+
+.qe-notice--error {
+  box-shadow:
+    0 0 0 100vmax rgba(0, 0, 0, 0.86),
+    0 0 24px rgba(var(--qe-green-rgb), 0.12);
+}
+
+.qe-notice :where(h1, h2) {
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  line-height: 1.35;
+}
+
+.qe-notice p {
+  margin: 0.65rem 0;
+  overflow-wrap: anywhere;
+}
+
+.qe-notice > .qe-button {
+  margin-top: 1rem;
+}
+
+.qe-error-detail {
+  max-height: 16rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  overflow: auto;
+  border: 1px solid var(--qe-line-soft);
+  background: var(--qe-black);
+  color: var(--qe-text-muted);
+  font-family: var(--qe-font);
+  font-size: 0.6875rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+html[data-engine-state="failed"] .qe-crt-overlay__scan-flash {
+  animation: none;
+  opacity: 0;
+}
+
+/* Compact scrollbars are scoped to the interface, never the document. */
+
+.qe-hud,
+.qe-panel,
+.qe-equation,
+.qe-terminal__log,
+.qe-disclosure--help,
+.qe-boot,
+.qe-boot__card,
+.qe-notice,
+.qe-error-detail {
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(var(--qe-green-rgb), 0.6)
+    rgba(0, 0, 0, 0.35);
+}
+
+.qe-app ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.qe-app ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.qe-app ::-webkit-scrollbar-thumb {
+  border: 1px solid var(--qe-black);
+  border-radius: 0;
+  background: rgba(var(--qe-green-rgb), 0.6);
+}
+
+.qe-app ::-webkit-scrollbar-corner {
+  background: var(--qe-black);
+}
+
+/* Progressive enhancements. */
+
+@supports (
+  (backdrop-filter: blur(4px)) or
+  (-webkit-backdrop-filter: blur(4px))
+) {
+  .qe-panel {
+    background: rgba(0, 0, 0, 0.35);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@supports selector(:has(*)) {
+  .qe-app:has(#qe-crt-enabled:not(:checked)) .qe-crt-overlay {
+    display: none;
+  }
+}
+
+@supports (height: 100dvh) {
+  .qe-app,
+  .qe-canvas {
+    height: 100dvh;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qe-button:hover:not(:disabled) {
+    background: rgba(var(--qe-green-rgb), 0.14);
+    box-shadow: 0 0 10px rgba(var(--qe-green-rgb), 0.14);
+  }
+
+  .qe-disclosure > summary:hover,
+  .qe-text-link:hover {
+    text-shadow: 0 0 9px rgba(var(--qe-green-rgb), 0.55);
+  }
+
+  .qe-app ::-webkit-scrollbar-thumb:hover {
+    background: var(--qe-green);
+  }
+}
+
+/* Narrow desktops retain both scientific panels and a compact console. */
+
+@media (max-width: 1179px) {
+  :root {
+    --qe-left-column: 15.5rem;
+    --qe-right-column: 15.5rem;
+    --qe-console-clearance: 18rem;
+  }
+
+  .qe-panel--controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    grid-template-areas:
+      "title title"
+      "transport fields"
+      "help help";
+  }
+
+  .qe-panel--controls > .qe-panel__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 1rem;
+    padding: 0 0 0.35rem;
+    border-bottom: 1px solid var(--qe-line-soft);
+  }
+
+  .qe-panel--controls > .qe-panel__header h2 {
+    margin: 0;
+  }
+
+  .qe-system-indicator {
+    max-width: 32%;
+  }
+}
+
+/* Tablets scroll the HUD while the canvas stays pinned to the viewport. */
+
+@media (max-width: 980px) {
+  .qe-panel,
+  .qe-terminal__log,
+  .qe-disclosure--help {
+    overscroll-behavior: auto;
+  }
+
+  .qe-hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto minmax(18rem, 42vh) auto auto auto;
+    grid-template-areas:
+      "header header"
+      ". ."
+      "controls controls"
+      "theory diagnostics"
+      "footer footer";
+    align-content: start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .qe-panel--controls {
+    max-height: none;
+  }
+
+  .qe-panel--theory,
+  .qe-panel--diagnostics {
+    max-height: min(65vh, 30rem);
+  }
+
+  .qe-waypoint {
+    top: clamp(8rem, 20vh, 12rem);
+    right: auto;
+    bottom: auto;
+    left: max(
+      calc(var(--qe-edge) + 0.5rem),
+      var(--qe-safe-left)
+    );
+    width: min(
+      27rem,
+      calc(100vw - 2 * var(--qe-edge) - 1rem)
+    );
+  }
+
+  .qe-system-indicator {
+    max-width: 35%;
+    font-size: 0.625rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --qe-gap: 0.75rem;
+    --qe-edge: 0.75rem;
+  }
+
+  .qe-hud {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(15rem, 38vh) auto auto auto auto;
+    grid-template-areas:
+      "header"
+      "."
+      "controls"
+      "theory"
+      "diagnostics"
+      "footer";
+  }
+
+  .qe-header {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .qe-title__primary {
+    font-size: clamp(1.25rem, 6vw, 1.875rem);
+  }
+
+  .qe-title__secondary {
+    font-size: 0.6875rem;
+    letter-spacing: 0.07em;
+  }
+
+  .qe-system-indicator {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .qe-panel {
+    padding: 0.85rem;
+  }
+
+  .qe-panel--controls {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "transport"
+      "fields"
+      "help";
+    gap: 0.8rem;
+  }
+
+  #qe-field-controls {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--qe-line-soft);
+  }
+
+  .qe-slider-control {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qe-slider-control label {
+    min-height: 2.9em;
+  }
+
+  .qe-slider-control output {
+    grid-column: 1;
+    grid-row: 3;
+    text-align: left;
+  }
+
+  .qe-waypoint {
+    top: 10rem;
+    left: max(1rem, var(--qe-safe-left));
+    width: min(26rem, calc(100vw - 2rem));
+    padding: 0.65rem 0.85rem;
+  }
+
+  .qe-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .qe-shortcut-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Short landscape windows retain scroll access to every panel and control. */
+
+@media (max-height: 600px) and (min-width: 981px) {
+  .qe-panel,
+  .qe-terminal__log,
+  .qe-disclosure--help {
+    overscroll-behavior: auto;
+  }
+
+  .qe-hud {
+    grid-template-rows: auto minmax(14rem, 60vh) auto auto;
+    align-content: start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .qe-panel--theory,
+  .qe-panel--diagnostics {
+    max-height: 60vh;
+  }
+
+  .qe-panel--controls {
+    max-height: none;
+  }
+
+  .qe-waypoint {
+    top: 8rem;
+    bottom: auto;
+  }
+}
+
+/* Touch targets remain usable without enlarging the desktop interface. */
+
+@media (pointer: coarse) {
+  .qe-button,
+  .qe-select-control select,
+  .qe-checkbox-control {
+    min-height: 2.75rem;
+  }
+
+  .qe-slider-control input[type="range"] {
+    height: 2.75rem;
+  }
+
+  .qe-disclosure > summary {
+    min-height: 2.75rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .qe-checkbox-control input {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+/* Honor both the application control and operating-system motion preference. */
+
+html[data-motion="reduced"] .qe-app *,
+html[data-motion="reduced"] .qe-app *::before,
+html[data-motion="reduced"] .qe-app *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-motion="reduced"] .qe-crt-overlay__scan-flash {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qe-app *,
+  .qe-app *::before,
+  .qe-app *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .qe-crt-overlay__scan-flash {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --qe-text-muted: #00ff66;
+    --qe-line-soft: #00ff66;
+    --qe-panel-background: rgba(0, 0, 0, 0.9);
+    --qe-glow: none;
+  }
+
+  .qe-panel {
+    background: rgba(0, 0, 0, 0.9);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .qe-title__primary,
+  .qe-equation .katex {
+    text-shadow: none;
+  }
+
+  .qe-crt-overlay {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .qe-panel,
+  .qe-waypoint,
+  .qe-boot,
+  .qe-boot__card,
+  .qe-notice {
+    background: #000000;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .qe-panel,
+  .qe-notice,
+  .qe-boot__card,
+  .qe-button,
+  .qe-select-control select,
+  kbd {
+    border-color: CanvasText;
+  }
+
+  .qe-crt-overlay,
+  .qe-stage-frame {
+    display: none;
+  }
+
+  .qe-status-light {
+    border-color: CanvasText;
+    background: Highlight;
+    box-shadow: none;
+  }
+
+  .qe-button[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -4px;
+  }
+
+  :where(a, button, input, select, summary, [tabindex]):focus-visible {
+    outline-color: Highlight;
+  }
+}

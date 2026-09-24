@@ -1,0 +1,1244 @@
+/* styles.css */
+
+:root {
+  color-scheme: dark;
+
+  --void: #000000;
+  --panel: rgba(5, 5, 20, 0.92);
+  --border: #222233;
+
+  --text: #edf4ff;
+  --secondary: #adbad2;
+  --muted: #7e8ca6;
+  --dim: #596881;
+
+  --cyan: #64eaff;
+  --violet: #b79aff;
+  --magenta: #f291ff;
+  --gold: #ffd080;
+  --blue: #88b7ff;
+
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --math: "STIX Two Math", "Cambria Math", "Latin Modern Math", math;
+
+  --sidebar-width: 344px;
+  --gutter: 22px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--void);
+}
+
+body {
+  position: relative;
+  color: var(--text);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+output,
+kbd {
+  font: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.accent-cyan {
+  color: var(--cyan);
+}
+
+.accent-violet {
+  color: var(--violet);
+}
+
+.accent-gold {
+  color: var(--gold);
+}
+
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--void);
+  isolation: isolate;
+}
+
+#canvas-container > canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+#canvas-container > canvas:active {
+  cursor: grabbing;
+}
+
+#canvas-container > canvas:focus-visible {
+  outline: 1px solid rgba(100, 234, 255, 0.4);
+  outline-offset: -2px;
+}
+
+#label-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#sidebar-ui {
+  position: fixed;
+  z-index: 20;
+  top: var(--gutter);
+  left: var(--gutter);
+
+  display: flex;
+  flex-direction: column;
+
+  width: var(--sidebar-width);
+  max-height: calc(100vh - var(--gutter) * 2);
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-top-color: rgba(100, 234, 255, 0.5);
+  border-radius: 4px;
+  background: var(--panel);
+
+  box-shadow:
+    0 18px 75px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+  pointer-events: none;
+  visibility: visible;
+  opacity: 1;
+
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear;
+}
+
+.sidebar-header {
+  flex: 0 0 auto;
+  padding: 24px 24px 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+
+  color: var(--cyan);
+  font-size: 8px;
+  line-height: 1.6;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  flex: 0 0 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 9px rgba(100, 234, 255, 0.65);
+}
+
+h1 {
+  color: #f0f6ff;
+  font-size: 37px;
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.07em;
+}
+
+.subtitle {
+  margin-top: 12px;
+  color: var(--secondary);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.flight-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  min-height: 37px;
+  margin-top: 19px;
+  padding: 8px 0;
+
+  border-top: 1px solid rgba(137, 155, 188, 0.15);
+  border-bottom: 1px solid rgba(137, 155, 188, 0.15);
+
+  color: #c6f4f7;
+  font-size: 8px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+
+.dimension-badge {
+  padding: 3px 5px;
+  border: 1px solid #304057;
+  border-radius: 2px;
+  color: #9eafc8;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.sidebar-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 19px 24px 18px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color: #33405a transparent;
+
+  pointer-events: auto;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: #33405a;
+}
+
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.section-heading h2,
+.section-label {
+  color: #a6b8d0;
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.section-note {
+  color: var(--dim);
+  font-size: 6px;
+  line-height: 1.5;
+  letter-spacing: 0.065em;
+  white-space: nowrap;
+}
+
+.telemetry {
+  display: grid;
+  gap: 13px;
+  margin-top: 15px;
+}
+
+.telemetry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.telemetry-row dt {
+  color: #b3c0d5;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.telemetry-row dt > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--dim);
+  font-size: 7px;
+  line-height: 1.5;
+}
+
+.telemetry-row dd {
+  padding-top: 1px;
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.reference-note {
+  margin-top: 13px;
+  color: #71829a;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.journey-section,
+.equations-section,
+.gauge-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(137, 155, 188, 0.14);
+}
+
+.journey-stages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px;
+  list-style: none;
+}
+
+.journey-stages li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  min-height: 31px;
+  padding: 7px;
+
+  border: 1px solid transparent;
+  border-radius: 2px;
+
+  color: #74839d;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.stage-number {
+  color: #52647f;
+  font-size: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.journey-stages li.is-active {
+  border-color: rgba(100, 234, 255, 0.18);
+  background: rgba(28, 130, 155, 0.075);
+  color: #c7f7ff;
+}
+
+.journey-stages li.is-active .stage-number {
+  color: var(--cyan);
+}
+
+.journey-stages li[data-stage="particles"].is-active {
+  border-color: rgba(255, 208, 128, 0.23);
+  background: rgba(139, 96, 33, 0.08);
+  color: #ffe4b5;
+}
+
+.journey-stages li[data-stage="particles"].is-active .stage-number {
+  color: var(--gold);
+}
+
+.equation-disclosure {
+  margin-top: 9px;
+  border: 1px solid rgba(91, 112, 146, 0.2);
+  border-radius: 3px;
+  background: rgba(10, 15, 32, 0.3);
+  pointer-events: auto;
+}
+
+.equation-disclosure:first-of-type {
+  margin-top: 13px;
+}
+
+.equation-disclosure summary {
+  position: relative;
+  padding: 11px 29px 11px 11px;
+
+  color: #aabbd4;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.equation-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.equation-disclosure summary::after {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  content: "+";
+  transform: translateY(-50%);
+
+  color: #647e9e;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.equation-disclosure[open] summary {
+  border-bottom: 1px solid rgba(91, 112, 146, 0.17);
+  color: var(--cyan);
+}
+
+.equation-disclosure[open] summary::after {
+  content: "−";
+  color: var(--cyan);
+}
+
+.equation-disclosure summary:hover {
+  color: #e1f7ff;
+  background: rgba(72, 163, 194, 0.045);
+}
+
+.equation-disclosure summary:focus-visible {
+  outline: 1px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.equation-body {
+  padding: 12px 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #33405a transparent;
+}
+
+math {
+  font-family: var(--math);
+  font-size: 18px;
+  font-weight: normal;
+  color: #eaf3ff;
+}
+
+math[display="block"] {
+  margin: 7px 0;
+}
+
+.equation-body math {
+  font-size: 16px;
+}
+
+.equation-body--compact math {
+  font-size: 17px;
+}
+
+.equation-body p {
+  margin-top: 11px;
+  color: #8192ac;
+  font-size: 8px;
+  line-height: 1.75;
+}
+
+.flavor-catalog {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.flavor-catalog > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+
+  border: 1px solid rgba(110, 127, 155, 0.17);
+  border-radius: 2px;
+
+  color: #8d9bb3;
+  font-size: 7px;
+  line-height: 1.4;
+}
+
+.flavor-catalog b {
+  color: #d7e4f5;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.gauge-section math {
+  margin-top: 12px;
+  color: #efd4a0;
+  font-size: 18px;
+}
+
+.scope-note {
+  margin-top: 16px;
+  color: #6f7f98;
+  font-size: 8px;
+  line-height: 1.75;
+}
+
+.sidebar-footer {
+  flex: 0 0 auto;
+  padding: 13px 24px 17px;
+  border-top: 1px solid rgba(137, 155, 188, 0.15);
+  background: rgba(4, 7, 19, 0.55);
+}
+
+.journey-progress {
+  width: 100%;
+  height: 2px;
+  margin-bottom: 11px;
+  overflow: hidden;
+  background: #182238;
+}
+
+#flight-progress {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    var(--cyan),
+    var(--violet),
+    var(--gold)
+  );
+}
+
+.sidebar-footer p {
+  color: #8b9db6;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.sidebar-footer p + p {
+  margin-top: 5px;
+  color: #64768f;
+}
+
+kbd {
+  color: #d7e8fb;
+  font-size: inherit;
+  white-space: nowrap;
+}
+
+#flight-controls {
+  position: fixed;
+  z-index: 40;
+  top: var(--gutter);
+  right: var(--gutter);
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  pointer-events: auto;
+}
+
+button {
+  min-height: 38px;
+  padding: 0 13px;
+
+  border: 1px solid #2c384f;
+  border-radius: 3px;
+  background: rgba(5, 5, 20, 0.92);
+
+  color: #bdcee4;
+  font-size: 9px;
+  line-height: 1;
+
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+button:hover {
+  border-color: #558ea1;
+  background: rgba(10, 27, 39, 0.96);
+  color: #effcff;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.primary-control {
+  border-color: rgba(100, 234, 255, 0.33);
+  color: #c9f7ff;
+}
+
+button[aria-pressed="true"] {
+  border-color: rgba(255, 208, 128, 0.55);
+  color: var(--gold);
+}
+
+#scene-caption {
+  position: fixed;
+  z-index: 15;
+  left: calc(var(--sidebar-width) + var(--gutter) * 2);
+  bottom: 27px;
+
+  max-width: min(530px, calc(100vw - 650px));
+
+  pointer-events: none;
+  text-shadow:
+    0 2px 16px #000000,
+    0 0 38px #000000;
+
+  visibility: visible;
+  opacity: 1;
+
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear;
+}
+
+.caption-eyebrow {
+  margin-bottom: 8px;
+  color: var(--cyan);
+  font-size: 8px;
+  line-height: 1.5;
+  letter-spacing: 0.15em;
+}
+
+#scene-title {
+  color: #e7f0ff;
+  font-size: clamp(15px, 1.35vw, 21px);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.04em;
+}
+
+#scene-description {
+  margin-top: 7px;
+  color: #8297b3;
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+#reference-legend {
+  position: fixed;
+  z-index: 15;
+  right: 27px;
+  bottom: 28px;
+
+  text-align: right;
+  pointer-events: none;
+  text-shadow: 0 2px 15px #000000;
+
+  visibility: visible;
+  opacity: 1;
+
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear;
+}
+
+#reference-legend > span {
+  color: #637791;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+}
+
+#reference-legend p {
+  margin-top: 9px;
+  color: #bed0e8;
+  font-family: var(--math);
+  font-size: 20px;
+}
+
+#reference-legend i {
+  margin: 0 7px;
+  color: #4a627f;
+  font-style: normal;
+}
+
+.world-card {
+  --card-accent: var(--cyan);
+
+  position: relative;
+  width: 310px;
+  max-width: calc(100vw - 30px);
+  padding: 16px 18px 15px;
+
+  border: 1px solid rgba(133, 155, 190, 0.29);
+  border-left: 2px solid var(--card-accent);
+  border-radius: 3px;
+  background: rgba(5, 5, 20, 0.92);
+
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  color: #e7f0fc;
+  pointer-events: auto;
+  cursor: default;
+  user-select: text;
+}
+
+.world-card--cyan {
+  --card-accent: #64eaff;
+}
+
+.world-card--violet {
+  --card-accent: #b79aff;
+}
+
+.world-card--magenta {
+  --card-accent: #f291ff;
+}
+
+.world-card--gold {
+  --card-accent: #ffd080;
+}
+
+.world-card--blue {
+  --card-accent: #88b7ff;
+}
+
+.world-card:focus-visible {
+  outline: 1px solid var(--card-accent);
+  outline-offset: 4px;
+}
+
+.card-eyebrow {
+  margin-bottom: 8px;
+  color: var(--card-accent);
+  font-size: 7px;
+  line-height: 1.6;
+  letter-spacing: 0.09em;
+}
+
+.world-card h2 {
+  color: #f0f6ff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
+}
+
+.card-equation {
+  margin: 13px 0 11px;
+  padding: 10px 0;
+
+  border-top: 1px solid rgba(137, 155, 188, 0.13);
+  border-bottom: 1px solid rgba(137, 155, 188, 0.13);
+}
+
+.card-equation math {
+  font-size: 18px;
+}
+
+.card-description {
+  color: #a0b1c9;
+  font-size: 9px;
+  line-height: 1.75;
+}
+
+.card-footnote {
+  margin-top: 10px;
+  color: #70849f;
+  font-size: 8px;
+  line-height: 1.65;
+}
+
+.coordinate-tick {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+
+.coordinate-tick::before,
+.coordinate-tick::after {
+  position: absolute;
+  display: block;
+  content: "";
+  background: var(--card-accent);
+  box-shadow: 0 0 6px var(--card-accent);
+}
+
+.coordinate-tick::before {
+  top: 4px;
+  left: 0;
+  width: 10px;
+  height: 1px;
+}
+
+.coordinate-tick::after {
+  top: 0;
+  left: 4px;
+  width: 1px;
+  height: 10px;
+}
+
+.valence-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.quark-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 23px;
+  height: 23px;
+
+  border: 1px solid currentColor;
+  border-radius: 50%;
+
+  font-family: var(--math);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.quark-chip--red {
+  color: #ff768b;
+  background: rgba(255, 55, 86, 0.07);
+}
+
+.quark-chip--green {
+  color: #77ffc1;
+  background: rgba(40, 240, 138, 0.06);
+}
+
+.quark-chip--blue {
+  color: #8bb4ff;
+  background: rgba(65, 123, 255, 0.08);
+}
+
+.valence-caption {
+  margin-left: 2px;
+  color: #798ca8;
+  font-size: 6px;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+}
+
+#render-notice,
+.noscript-notice {
+  position: fixed;
+  z-index: 100;
+  top: 50%;
+  left: 50%;
+
+  width: min(450px, calc(100vw - 40px));
+  padding: 24px;
+
+  transform: translate(-50%, -50%);
+
+  border: 1px solid #45536f;
+  border-radius: 4px;
+  background: rgba(5, 5, 20, 0.97);
+
+  color: #e6efff;
+  font-size: 12px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+body.hud-hidden #sidebar-ui,
+body.hud-hidden #scene-caption,
+body.hud-hidden #reference-legend,
+body.hud-hidden #label-layer {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+body.hud-hidden .world-card,
+body.hud-hidden .sidebar-content,
+body.hud-hidden .equation-disclosure {
+  pointer-events: none !important;
+}
+
+@supports ((backdrop-filter: blur(14px)) or (-webkit-backdrop-filter: blur(14px))) {
+  #sidebar-ui,
+  .world-card,
+  button {
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #canvas-container {
+    height: 100dvh;
+  }
+
+  #sidebar-ui {
+    max-height: calc(100dvh - var(--gutter) * 2);
+  }
+}
+
+@media (max-height: 850px) {
+  .sidebar-header {
+    padding: 19px 21px 0;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .eyebrow {
+    margin-bottom: 11px;
+  }
+
+  .subtitle {
+    margin-top: 9px;
+    font-size: 9px;
+  }
+
+  .flight-status {
+    margin-top: 13px;
+  }
+
+  .sidebar-content {
+    padding: 15px 21px;
+  }
+
+  .telemetry {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .journey-section,
+  .equations-section,
+  .gauge-section {
+    margin-top: 15px;
+    padding-top: 13px;
+  }
+
+  .sidebar-footer {
+    padding: 11px 21px 14px;
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --sidebar-width: 310px;
+    --gutter: 18px;
+  }
+
+  .sidebar-header {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .sidebar-content,
+  .sidebar-footer {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .telemetry-row dd {
+    font-size: 9px;
+  }
+
+  .section-note {
+    font-size: 5px;
+  }
+
+  .equation-body math {
+    font-size: 15px;
+  }
+
+  .gauge-section math {
+    font-size: 16px;
+  }
+
+  #scene-caption {
+    max-width: calc(100vw - 525px);
+  }
+
+  #scene-description {
+    font-size: 8px;
+  }
+
+  .world-card {
+    width: 288px;
+    padding: 14px 15px;
+  }
+
+  .card-equation math {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --sidebar-width: 278px;
+    --gutter: 13px;
+  }
+
+  #flight-controls {
+    top: 13px;
+    right: 13px;
+    left: 13px;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  button {
+    min-height: 37px;
+    padding: 0 10px;
+    font-size: 8px;
+  }
+
+  #sidebar-ui {
+    top: 64px;
+    max-height: calc(100vh - 145px);
+  }
+
+  .sidebar-header {
+    padding-top: 16px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .eyebrow {
+    font-size: 7px;
+  }
+
+  .subtitle {
+    font-size: 8px;
+  }
+
+  .flight-status {
+    min-height: 30px;
+    margin-top: 11px;
+    font-size: 7px;
+  }
+
+  .sidebar-content {
+    padding-top: 13px;
+  }
+
+  .telemetry-row {
+    gap: 8px;
+  }
+
+  .telemetry-row dt {
+    font-size: 8px;
+  }
+
+  .telemetry-row dd {
+    font-size: 9px;
+  }
+
+  .section-note {
+    display: none;
+  }
+
+  .journey-stages {
+    gap: 4px;
+  }
+
+  .journey-stages li {
+    gap: 5px;
+    padding: 6px;
+    font-size: 7px;
+  }
+
+  .sidebar-footer p {
+    font-size: 7px;
+  }
+
+  #scene-caption {
+    right: 115px;
+    bottom: 18px;
+    left: 15px;
+    max-width: none;
+  }
+
+  .caption-eyebrow {
+    margin-bottom: 5px;
+    font-size: 6px;
+  }
+
+  #scene-title {
+    font-size: 13px;
+  }
+
+  #scene-description {
+    display: none;
+  }
+
+  #reference-legend {
+    right: 15px;
+    bottom: 18px;
+  }
+
+  #reference-legend > span {
+    font-size: 5px;
+  }
+
+  #reference-legend p {
+    margin-top: 7px;
+    font-size: 17px;
+  }
+
+  #reference-legend i {
+    margin: 0 4px;
+  }
+
+  .world-card {
+    width: 264px;
+    padding: 12px 14px;
+  }
+
+  .card-eyebrow {
+    font-size: 6px;
+  }
+
+  .world-card h2 {
+    font-size: 10px;
+  }
+
+  .card-equation {
+    margin: 10px 0;
+    padding: 8px 0;
+  }
+
+  .card-equation math {
+    font-size: 16px;
+  }
+
+  .card-description {
+    font-size: 8px;
+  }
+
+  .card-footnote {
+    margin-top: 8px;
+    font-size: 7px;
+  }
+}
+
+@media (max-height: 600px) {
+  .sidebar-header {
+    padding-top: 13px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 7px;
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  .flight-status {
+    min-height: 29px;
+    margin-top: 10px;
+  }
+
+  .sidebar-content {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .telemetry-row dt > span,
+  .reference-note,
+  .journey-section,
+  .scope-note,
+  .sidebar-footer p:last-child {
+    display: none;
+  }
+
+  .telemetry {
+    gap: 9px;
+  }
+
+  .telemetry-row dt,
+  .telemetry-row dd {
+    font-size: 8px;
+  }
+
+  .sidebar-footer {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .sidebar-footer p {
+    font-size: 7px;
+  }
+
+  .world-card {
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+
+  .card-footnote {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sidebar-ui,
+  #scene-caption,
+  #reference-legend,
+  #label-layer,
+  button,
+  body.hud-hidden #sidebar-ui,
+  body.hud-hidden #scene-caption,
+  body.hud-hidden #reference-legend,
+  body.hud-hidden #label-layer {
+    transition: none;
+  }
+}

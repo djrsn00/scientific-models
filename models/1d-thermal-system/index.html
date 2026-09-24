@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta
+    name="description"
+    content="A cinematic visualization of a one-dimensional quantum wavefunction, thermal color mapping, and accompanying particle exhibits."
+  >
+
+  <title>1D Thermal Quantum Engine</title>
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.css"
+    integrity="sha384-JctiRyLzXCrSoOOzFlSoWLdyzQl7OrrRnhyeBmzB6ZWtcjccUyc8lCQJqIbs3uQX"
+    crossorigin="anonymous"
+  >
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+
+<body data-engine-state="waiting">
+  <main
+    id="quantum-engine"
+    class="viewport-root"
+    aria-labelledby="engine-title"
+  >
+    <div
+      id="canvas-container"
+      class="canvas-container"
+      role="region"
+      aria-label="Quantum wavefunction and particle exhibit visualization"
+      aria-describedby="scene-description"
+    ></div>
+
+    <!-- The external stylesheet owns fullscreen sizing, P31 colors,
+         and pointer-transparent behavior for the UI layer. -->
+    <div id="ui-layer" class="ui-layer ui-layer--passthrough">
+      <header id="system-header" class="terminal-panel system-header">
+        <p class="terminal-kicker">Quantum visualization laboratory</p>
+
+        <h1 id="engine-title">1D Thermal Quantum Engine</h1>
+
+        <p id="scene-description" class="system-description">
+          A main quantum wire and a parallel gallery of particle exhibits.
+        </p>
+
+        <p
+          id="engine-status"
+          class="system-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >Awaiting initialization</p>
+      </header>
+
+      <section
+        id="telemetry-main"
+        class="telemetry-track telemetry-track--main"
+        data-track="main"
+        aria-labelledby="telemetry-main-title"
+      >
+        <div class="terminal-panel telemetry-panel">
+          <header class="telemetry-header">
+            <p class="terminal-kicker">Track 01 / Main wire</p>
+            <h2 id="telemetry-main-title">Wavefunction telemetry</h2>
+          </header>
+
+          <dl class="telemetry-readouts" aria-live="off">
+            <div class="telemetry-row">
+              <dt>Simulation time</dt>
+              <dd>
+                <span id="main-simulation-time" data-state="pending">Pending</span>
+              </dd>
+            </div>
+
+            <div class="telemetry-row">
+              <dt>Potential region</dt>
+              <dd>
+                <span id="main-potential-region" data-state="pending">Pending</span>
+              </dd>
+            </div>
+
+            <div class="telemetry-row">
+              <dt>Tunneling event</dt>
+              <dd>
+                <span id="main-tunneling-status" data-state="pending">Pending</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div
+          id="telemetry-main-anchors"
+          class="telemetry-anchors"
+          aria-label="Quantum wire annotations and mathematical telemetry"
+          aria-live="off"
+        ></div>
+      </section>
+
+      <section
+        id="telemetry-gallery"
+        class="telemetry-track telemetry-track--gallery"
+        data-track="gallery"
+        aria-labelledby="telemetry-gallery-title"
+      >
+        <div class="terminal-panel telemetry-panel">
+          <header class="telemetry-header">
+            <p class="terminal-kicker">Track 02 / Particle gallery</p>
+            <h2 id="telemetry-gallery-title">Exhibit telemetry</h2>
+          </header>
+
+          <dl class="telemetry-readouts" aria-live="off">
+            <div class="telemetry-row">
+              <dt>Active exhibit</dt>
+              <dd>
+                <span id="gallery-active-exhibit" data-state="pending">Pending</span>
+              </dd>
+            </div>
+
+            <div class="telemetry-row">
+              <dt>Exhibit state</dt>
+              <dd>
+                <span id="gallery-exhibit-state" data-state="pending">Pending</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div
+          id="telemetry-gallery-anchors"
+          class="telemetry-anchors"
+          aria-label="Particle exhibit annotations and mathematical telemetry"
+          aria-live="off"
+        ></div>
+      </section>
+    </div>
+
+    <section
+      id="render-error-notice"
+      class="terminal-panel render-error"
+      role="alert"
+      aria-labelledby="render-error-title"
+      aria-describedby="render-error-message"
+      tabindex="-1"
+      hidden
+    >
+      <h2 id="render-error-title">Visualization unavailable</h2>
+
+      <p id="render-error-message">
+        The graphics engine could not initialize.
+      </p>
+
+      <pre id="render-error-details" class="render-error-details"></pre>
+
+      <a class="terminal-link" href="index.html">Reload visualization</a>
+    </section>
+
+    <noscript>
+      <section class="terminal-panel noscript-notice">
+        <h2>JavaScript is required</h2>
+        <p>
+          Enable JavaScript and reload this page to run the quantum
+          visualization.
+        </p>
+      </section>
+    </noscript>
+  </main>
+
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"
+  ></script>
+
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.js"
+    integrity="sha384-+7Keh381hSkXmXqnjC0JBM/kzsN6TFj+wMKychSLjTvJ8/0ElMde2uKl8i6p6Buj"
+    crossorigin="anonymous"
+  ></script>
+
+  <script defer src="scripts/QuantumEngine.Core.js"></script>
+  <script defer src="scripts/QuantumEngine.Wavefunction.js"></script>
+  <script defer src="scripts/QuantumEngine.Exhibits.js"></script>
+  <script defer src="scripts/QuantumEngine.CRTCompositor.js"></script>
+  <script defer src="scripts/QuantumEngine.Cinematography.js"></script>
+  <script defer src="scripts/QuantumEngine.Telemetry.js"></script>
+</body>
+</html>

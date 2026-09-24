@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#020208">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="An interactive three-dimensional visualization of the Hubble sphere, cosmic event horizon, and particle horizon."
+  >
+
+  <title>Cosmic Horizons · ΛCDM</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container" aria-label="Three-dimensional cosmic visualization"></div>
+
+  <aside class="info-panel" aria-labelledby="panel-title">
+    <header class="panel-header">
+      <p class="eyebrow">ΛCDM · PRESENT-DAY SPATIAL MAP</p>
+      <h1 id="panel-title">Cosmic horizons</h1>
+      <p class="panel-subtitle">One observer. Three distinct limits.</p>
+    </header>
+
+    <div class="observer-label">
+      <span class="legend-dot observer-dot" aria-hidden="true"></span>
+      <span>Us – one observer</span>
+    </div>
+
+    <ul class="legend" aria-label="Cosmic horizon definitions">
+      <li class="legend-item hubble">
+        <span class="legend-dot" aria-hidden="true"></span>
+        <div>
+          <div class="legend-heading">
+            <h2>Hubble sphere</h2>
+            <span class="legend-value">14.5 Gly</span>
+          </div>
+          <p>Recession speed v = c; not a visibility boundary.</p>
+          <span class="equation">R<sub>H</sub> = c / H₀</span>
+        </div>
+      </li>
+
+      <li class="legend-item event">
+        <span class="legend-dot" aria-hidden="true"></span>
+        <div>
+          <div class="legend-heading">
+            <h2>Event horizon</h2>
+            <span class="legend-value">16.7 Gly</span>
+          </div>
+          <p>
+            Light emitted now beyond this horizon never reaches us,
+            assuming continued ΛCDM expansion.
+          </p>
+        </div>
+      </li>
+
+      <li class="legend-item particle">
+        <span class="legend-dot" aria-hidden="true"></span>
+        <div>
+          <div class="legend-heading">
+            <h2>Particle horizon</h2>
+            <span class="legend-value">46.5 Gly</span>
+          </div>
+          <p>
+            Observable radius today.<br>
+            Total diameter: <span id="observable-diameter">93</span> Gly.
+          </p>
+        </div>
+      </li>
+    </ul>
+
+    <footer class="panel-footer">
+      <p class="scale-note">1 scene unit = 1 billion light-years</p>
+      <p class="interaction-note">
+        Drag to orbit · Scroll to zoom<br>
+        Right-drag or two fingers to pan
+      </p>
+      <p class="science-note">
+        Wireframes are boundary guides. Filaments, redshift colors,
+        and rotation are illustrative. The observer marker is enlarged.
+      </p>
+    </footer>
+
+    <p id="render-status" class="render-status" role="status" hidden></p>
+  </aside>
+
+  <script src="scripts/script.js"></script>
+</body>
+</html>

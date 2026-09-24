@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="An interactive scientific atlas of the Higgs mechanism, particle fields, and cosmic scale.">
+
+  <title>The Higgs Continuum: Mass Acquisition and Cosmic Scale Ascension</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <main
+    id="canvas-container"
+    aria-label="Three-dimensional Higgs field and cosmic scale visualization">
+  </main>
+
+  <div id="render-notice" class="render-notice" role="alert" hidden></div>
+
+  <noscript>
+    <div class="render-notice">
+      JavaScript is required to render this interactive visualization.
+    </div>
+  </noscript>
+
+  <aside id="sidebar-ui" aria-labelledby="project-title">
+    <header class="panel-header">
+      <p class="eyebrow">
+        <span class="spectrum-mark" aria-hidden="true"></span>
+        FIELD ATLAS / 04 CHAPTERS
+      </p>
+
+      <h1 id="project-title">The Higgs<br><span>Continuum</span></h1>
+
+      <p class="project-subtitle">
+        Mass acquisition<br>&amp; cosmic scale ascension
+      </p>
+
+      <div class="flight-state">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="flight-mode">AUTOMATIC DRONE</span>
+        <span class="state-axis">−Z</span>
+      </div>
+    </header>
+
+    <div id="sidebar-content">
+      <section class="panel-section" aria-labelledby="telemetry-title">
+        <h2 id="telemetry-title" class="section-title">01 / LIVE TELEMETRY</h2>
+
+        <dl class="telemetry">
+          <div class="metric metric-wide">
+            <dt>Current scale phase</dt>
+            <dd id="phase-value">A / SUBATOMIC FOUNDATION</dd>
+          </div>
+
+          <div class="metric">
+            <dt>Scale atlas</dt>
+            <dd id="scale-value">Particle scale</dd>
+          </div>
+
+          <div class="metric">
+            <dt>Local pressure <span class="unit">[bar]</span></dt>
+            <dd id="pressure-value" class="muted-value">Not modeled</dd>
+          </div>
+
+          <div class="metric metric-wide">
+            <dt>Velocity vector <span class="unit">[scene units/s]</span></dt>
+            <dd id="velocity-value" class="vector-value">(0.00, 0.00, 0.00)</dd>
+          </div>
+
+          <div class="metric metric-wide metric-highlight">
+            <dt>Higgs vacuum expectation value</dt>
+            <dd>
+              v ≈ <span id="vev-value">246</span>
+              <span class="unit">GeV</span>
+            </dd>
+          </div>
+        </dl>
+
+        <div class="gauge-readout">
+          <p class="micro-label">STANDARD MODEL GAUGE GROUP</p>
+
+          <math
+            id="gauge-group"
+            display="block"
+            aria-label="SU three color times SU two left times U one hypercharge">
+            <mrow>
+              <msub>
+                <mrow>
+                  <mi mathvariant="normal">SU</mi>
+                  <mo>(</mo><mn>3</mn><mo>)</mo>
+                </mrow>
+                <mi>C</mi>
+              </msub>
+              <mo>×</mo>
+              <msub>
+                <mrow>
+                  <mi mathvariant="normal">SU</mi>
+                  <mo>(</mo><mn>2</mn><mo>)</mo>
+                </mrow>
+                <mi>L</mi>
+              </msub>
+              <mo>×</mo>
+              <msub>
+                <mrow>
+                  <mi mathvariant="normal">U</mi>
+                  <mo>(</mo><mn>1</mn><mo>)</mo>
+                </mrow>
+                <mi>Y</mi>
+              </msub>
+            </mrow>
+          </math>
+
+          <p class="micro-note">
+            Electroweak symmetry breaks to U(1)<sub>em</sub>;
+            color remains unbroken.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="equations-title">
+        <h2 id="equations-title" class="section-title">02 / FIELD EQUATIONS</h2>
+
+        <details class="equation-card" data-inspection-ui open>
+          <summary>
+            <span>Higgs potential</span>
+            <span class="equation-index">01</span>
+          </summary>
+
+          <div class="equation-content">
+            <div class="math-scroll">
+              <math
+                display="block"
+                aria-label="V of Phi equals mu squared Phi dagger Phi plus lambda times Phi dagger Phi squared">
+                <mrow>
+                  <mi>V</mi><mo>(</mo><mi>Φ</mi><mo>)</mo><mo>=</mo>
+                  <msup><mi>μ</mi><mn>2</mn></msup>
+                  <msup><mi>Φ</mi><mo>†</mo></msup><mi>Φ</mi>
+                  <mo>+</mo><mi>λ</mi>
+                  <msup>
+                    <mrow>
+                      <mo>(</mo>
+                      <msup><mi>Φ</mi><mo>†</mo></msup><mi>Φ</mi>
+                      <mo>)</mo>
+                    </mrow>
+                    <mn>2</mn>
+                  </msup>
+                </mrow>
+              </math>
+            </div>
+
+            <p class="equation-note">
+              For μ² &lt; 0 and λ &gt; 0, the minimum has a nonzero field expectation.
+            </p>
+
+            <div class="math-scroll secondary-equation">
+              <math
+                display="block"
+                aria-label="v equals the square root of negative mu squared over lambda">
+                <mrow>
+                  <mi>v</mi><mo>=</mo>
+                  <msqrt>
+                    <mfrac>
+                      <mrow><mo>−</mo><msup><mi>μ</mi><mn>2</mn></msup></mrow>
+                      <mi>λ</mi>
+                    </mfrac>
+                  </msqrt>
+                </mrow>
+              </math>
+            </div>
+          </div>
+        </details>
+
+        <details class="equation-card" data-inspection-ui>
+          <summary>
+            <span>Yukawa coupling</span>
+            <span class="equation-index">02</span>
+          </summary>
+
+          <div class="equation-content">
+            <div class="math-scroll">
+              <math
+                display="block"
+                aria-label="Yukawa Lagrangian equals negative y f psi bar left Phi f psi right plus Hermitian conjugate">
+                <mrow>
+                  <msub><mi>ℒ</mi><mi>Y</mi></msub>
+                  <mo>=</mo><mo>−</mo>
+                  <msub><mi>y</mi><mi>f</mi></msub>
+                  <msub>
+                    <mover accent="true"><mi>ψ</mi><mo>¯</mo></mover>
+                    <mi>L</mi>
+                  </msub>
+                  <msub><mi>Φ</mi><mi>f</mi></msub>
+                  <msub><mi>ψ</mi><mi>R</mi></msub>
+                  <mo>+</mo><mtext>h.c.</mtext>
+                </mrow>
+              </math>
+            </div>
+
+            <div class="math-scroll secondary-equation">
+              <math
+                display="block"
+                aria-label="Fermion mass equals y f v divided by the square root of two">
+                <mrow>
+                  <msub><mi>m</mi><mi>f</mi></msub><mo>=</mo>
+                  <mfrac>
+                    <mrow><msub><mi>y</mi><mi>f</mi></msub><mi>v</mi></mrow>
+                    <msqrt><mn>2</mn></msqrt>
+                  </mfrac>
+                </mrow>
+              </math>
+            </div>
+
+            <p class="equation-note">
+              Φ<sub>f</sub> is the charge-compatible Higgs doublet, Φ or Φ̃.
+              Coupling gives charged elementary fermions mass without drag.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-card" data-inspection-ui>
+          <summary>
+            <span>Covariant derivative</span>
+            <span class="equation-index">03</span>
+          </summary>
+
+          <div class="equation-content">
+            <div class="math-scroll">
+              <math
+                display="block"
+                aria-label="Electroweak covariant derivative: partial mu minus i g two W mu a tau a over two minus i g one B mu Y over two">
+                <mrow>
+                  <msub><mi>D</mi><mi>μ</mi></msub><mo>=</mo>
+                  <msub><mo>∂</mo><mi>μ</mi></msub>
+                  <mo>−</mo><mi>i</mi>
+                  <msub><mi>g</mi><mn>2</mn></msub>
+                  <msubsup><mi>W</mi><mi>μ</mi><mi>a</mi></msubsup>
+                  <mfrac><msup><mi>τ</mi><mi>a</mi></msup><mn>2</mn></mfrac>
+                  <mo>−</mo><mi>i</mi>
+                  <msub><mi>g</mi><mn>1</mn></msub>
+                  <msub><mi>B</mi><mi>μ</mi></msub>
+                  <mfrac><mi>Y</mi><mn>2</mn></mfrac>
+                </mrow>
+              </math>
+            </div>
+
+            <p class="equation-note">
+              Electroweak sector, with Q = T₃ + Y/2.
+              Colored fields also carry the SU(3)<sub>C</sub> connection.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-card" data-inspection-ui>
+          <summary>
+            <span>Polyakov action</span>
+            <span class="equation-index">04</span>
+          </summary>
+
+          <div class="equation-content">
+            <div class="math-scroll">
+              <math
+                display="block"
+                aria-label="Polyakov action for a string propagating in a target-space metric">
+                <mtable columnalign="left" rowspacing="0.6em">
+                  <mtr>
+                    <mtd>
+                      <mi>S</mi><mo>=</mo><mo>−</mo>
+                      <mfrac>
+                        <mn>1</mn>
+                        <mrow>
+                          <mn>4</mn><mi>π</mi>
+                          <msup><mi>α</mi><mo>′</mo></msup>
+                        </mrow>
+                      </mfrac>
+                      <mo>∫</mo>
+                      <msup><mi mathvariant="normal">d</mi><mn>2</mn></msup>
+                      <mi>σ</mi>
+                      <msqrt><mrow><mo>−</mo><mi>h</mi></mrow></msqrt>
+                      <msup><mi>h</mi><mrow><mi>α</mi><mi>β</mi></mrow></msup>
+                    </mtd>
+                  </mtr>
+                  <mtr>
+                    <mtd>
+                      <mspace width="1em"/><mo>×</mo>
+                      <msub><mo>∂</mo><mi>α</mi></msub>
+                      <msup><mi>X</mi><mi>μ</mi></msup>
+                      <msub><mo>∂</mo><mi>β</mi></msub>
+                      <msup><mi>X</mi><mi>ν</mi></msup>
+                      <msub><mi>G</mi><mrow><mi>μ</mi><mi>ν</mi></mrow></msub>
+                    </mtd>
+                  </mtr>
+                </mtable>
+              </math>
+            </div>
+
+            <p class="equation-note">
+              String-theory context for the final geometric scene;
+              separate from the Standard Model Higgs mechanism.
+              <a
+                href="https://www.damtp.cam.ac.uk/user/tong/string/string1.pdf"
+                target="_blank"
+                rel="noopener noreferrer">String theory reference</a>.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section
+        id="reference-legend"
+        class="panel-section"
+        aria-labelledby="legend-title">
+        <h2 id="legend-title" class="section-title">03 / CHROMATIC KEY</h2>
+
+        <ul class="color-key">
+          <li>
+            <span class="legend-dot spectrum" aria-hidden="true"></span>
+            <span>Higgs field / phase palette</span>
+          </li>
+          <li>
+            <span class="legend-dot hot" aria-hidden="true"></span>
+            <span>Mass coupling / warm emphasis</span>
+          </li>
+          <li>
+            <span class="legend-dot cyan" aria-hidden="true"></span>
+            <span>Massless modes / cool emphasis</span>
+          </li>
+          <li>
+            <span class="legend-dot gold" aria-hidden="true"></span>
+            <span>Photon packet / amber trace</span>
+          </li>
+          <li>
+            <span class="legend-dot infrared" aria-hidden="true"></span>
+            <span>Redshift / illustrative mapping</span>
+          </li>
+        </ul>
+      </section>
+
+      <details class="model-notes" data-inspection-ui>
+        <summary>Reading this model</summary>
+        <div>
+          <p>
+            The rainbow field and coupling swirls are visual schematics.
+            Higgs mass generation is not friction, and this scene does not
+            simulate thermodynamic pressure.
+            <a
+              href="https://pdg.lbl.gov/2025/reviews/rpp2025-rev-higgs-boson.pdf"
+              target="_blank"
+              rel="noopener noreferrer">PDG Higgs review</a>.
+          </p>
+          <p>
+            Neutrinos have nonzero masses; their mass-generation mechanism
+            is unresolved. Most ordinary matter’s mass comes from QCD dynamics
+            inside nucleons.
+            <a
+              href="https://pdg.lbl.gov/2025/reviews/rpp2025-rev-neutrino-mixing.pdf"
+              target="_blank"
+              rel="noopener noreferrer">PDG neutrino review</a>.
+          </p>
+          <p>
+            The flight uses changing scale factors. Objects in different
+            chapters cannot be compared by screen size; the TON 618 inset
+            states its own size reference.
+          </p>
+          <p>
+            Boötes is a galaxy underdensity with
+            <a
+              href="https://arxiv.org/abs/astro-ph/9511127"
+              target="_blank"
+              rel="noopener noreferrer">observed galaxies</a>.
+            Its field overlay is conceptual. The observable horizon is a
+            visibility limit, and the final multiverse sheets are speculative.
+          </p>
+        </div>
+      </details>
+
+      <footer class="panel-footer">
+        <span>SCHEMATIC FIELD ATLAS</span>
+        <span>v / 246 GeV</span>
+      </footer>
+    </div>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space">
+      <kbd>SPACE</kbd><span id="pause-label">Pause</span>
+    </button>
+
+    <button
+      id="resume-flight"
+      type="button"
+      aria-keyshortcuts="R">
+      <kbd>R</kbd><span>Resume flight</span>
+    </button>
+
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-expanded="true"
+      aria-controls="sidebar-ui label-layer scene-caption journey-ui"
+      aria-keyshortcuts="H">
+      <kbd>H</kbd><span id="hud-label">Hide HUD</span>
+    </button>
+  </nav>
+
+  <section id="scene-caption" aria-labelledby="scene-title">
+    <p id="chapter-value" class="eyebrow">PHASE A / SUBATOMIC FOUNDATION</p>
+    <h2 id="scene-title">A field throughout space.</h2>
+    <p id="scene-description">
+      Trace the couplings of elementary particles before ascending through
+      the cosmic scale atlas.
+    </p>
+    <p class="interaction-hint">
+      Drag to inspect · Scroll to zoom · R to rejoin the flight
+    </p>
+  </section>
+
+  <section id="journey-ui" aria-label="Scale ascension progress">
+    <div class="journey-heading">
+      <span>CONTINUOUS SCALE ASCENSION</span>
+      <span id="journey-value">01 / 04</span>
+    </div>
+
+    <div
+      id="journey-progress"
+      role="progressbar"
+      aria-label="Automated flight progress"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0">
+      <div id="flight-progress"></div>
+    </div>
+
+    <ol id="journey-stages">
+      <li data-stage="subatomic" class="is-active" aria-current="step">
+        <span>A</span><span>Particles</span>
+      </li>
+      <li data-stage="stellar">
+        <span>B</span><span>Stellar</span>
+      </li>
+      <li data-stage="cosmic">
+        <span>C</span><span>Cosmic</span>
+      </li>
+      <li data-stage="horizon">
+        <span>D</span><span>Theory</span>
+      </li>
+    </ol>
+  </section>
+
+  <template id="yukawa-label-template">
+    <article class="world-card accent-hot" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        A / MASS GENERATION
+      </p>
+      <h3>YUKAWA COUPLING ZONE</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="Fermion mass equals its Yukawa coupling times v over root two">
+        <mrow>
+          <msub><mi>m</mi><mi>f</mi></msub><mo>=</mo>
+          <mfrac>
+            <mrow><msub><mi>y</mi><mi>f</mi></msub><mi>v</mi></mrow>
+            <msqrt><mn>2</mn></msqrt>
+          </mfrac>
+        </mrow>
+      </math>
+
+      <p>
+        Charged elementary fermion masses reflect their Higgs couplings.
+        Swirling field markers visualize coupling, not drag.
+      </p>
+      <p class="card-footnote">
+        W and Z masses arise from gauge–Higgs coupling.
+      </p>
+    </article>
+  </template>
+
+  <template id="photon-label-template">
+    <article class="world-card accent-gold" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        A / UNBROKEN U(1)<sub>em</sub>
+      </p>
+      <h3>MASSLESS PHOTON STATE (γ)</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="Photon rest mass zero, energy h bar omega">
+        <mrow>
+          <msub><mi>m</mi><mi>γ</mi></msub><mo>=</mo><mn>0</mn>
+          <mspace width="1em"/>
+          <mi>E</mi><mo>=</mo><mi>ℏ</mi><mi>ω</mi>
+        </mrow>
+      </math>
+
+      <p>
+        Light propagates locally at c in vacuum.
+        The photon has no direct tree-level Higgs coupling.
+      </p>
+      <p class="card-footnote">
+        Amber marks the wave packet; it is not a measured spectrum.
+      </p>
+    </article>
+  </template>
+
+  <template id="gluon-label-template">
+    <article class="world-card accent-cyan" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        A / COLOR CONNECTION
+      </p>
+      <h3>GLUON FLUX TUBE</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="SU three color; gluon Lagrangian mass zero">
+        <mrow>
+          <msub>
+            <mrow>
+              <mi mathvariant="normal">SU</mi>
+              <mo>(</mo><mn>3</mn><mo>)</mo>
+            </mrow>
+            <mi>C</mi>
+          </msub>
+          <mspace width="1em"/>
+          <msub><mi>m</mi><mi>g</mi></msub><mo>=</mo><mn>0</mn>
+        </mrow>
+      </math>
+
+      <p>
+        Gluons carry color charge and interact with each other.
+        Their Higgs-independent, massless fields form confined flux structures.
+      </p>
+      <p class="card-footnote">
+        Colored tubes are a QCD schematic, not freely visible gluon rays.
+      </p>
+    </article>
+  </template>
+
+  <template id="void-label-template">
+    <article class="world-card accent-violet" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        C / LARGE-SCALE STRUCTURE
+      </p>
+      <h3>BOÖTES VOID BOUNDARY</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="Galaxy number density contrast is less than zero">
+        <mrow>
+          <msub><mi>δ</mi><mi>g</mi></msub><mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub><mi>n</mi><mi>g</mi></msub><mo>−</mo>
+              <msub>
+                <mover><mi>n</mi><mo>¯</mo></mover>
+                <mi>g</mi>
+              </msub>
+            </mrow>
+            <msub>
+              <mover><mi>n</mi><mo>¯</mo></mover>
+              <mi>g</mi>
+            </msub>
+          </mfrac>
+          <mo>&lt;</mo><mn>0</mn>
+        </mrow>
+      </math>
+
+      <p>
+        A vast region sparse in galaxies.
+        The rainbow vacuum field and matter filaments are conceptual overlays.
+      </p>
+      <p class="card-footnote">
+        A void has no rigid wall; the boundary marks an illustrative extent.
+      </p>
+    </article>
+  </template>
+
+  <template id="ton-label-template">
+    <article class="world-card accent-hot" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        C / QUASAR ENGINE
+      </p>
+      <h3>SUPERMASSIVE CORE: TON 618</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="Schwarzschild radius equals two G M over c squared">
+        <mrow>
+          <msub><mi>r</mi><mi>s</mi></msub><mo>=</mo>
+          <mfrac>
+            <mrow><mn>2</mn><mi>G</mi><mi>M</mi></mrow>
+            <msup><mi>c</mi><mn>2</mn></msup>
+          </mfrac>
+        </mrow>
+      </math>
+
+      <p>
+        A luminous quasar powered by an accreting supermassive black hole.
+        Its inferred mass is model-dependent.
+      </p>
+      <p class="card-footnote">
+        Nonrotating radius reference; accretion and bipolar outflow are schematic.
+      </p>
+    </article>
+  </template>
+
+  <template id="solar-label-template">
+    <article class="world-card accent-cyan" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        C / LOCAL SIZE REFERENCE
+      </p>
+      <h3>SOLAR SYSTEM SCALE ANCHOR</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="Neptune orbit semimajor axis approximately thirty point one astronomical units">
+        <mrow>
+          <msub><mi>a</mi><mi>N</mi></msub>
+          <mo>≈</mo><mn>30.1</mn>
+          <mspace width="0.3em"/><mtext>AU</mtext>
+        </mrow>
+      </math>
+
+      <p>
+        The inset shows planetary orbits through Neptune, using the same
+        length scale as the labeled black-hole radius.
+      </p>
+      <p class="card-footnote">
+        The heliosphere and Oort cloud extend beyond this planetary inset.
+      </p>
+    </article>
+  </template>
+
+  <template id="horizon-label-template">
+    <article class="world-card accent-violet" tabindex="0">
+      <p class="card-kicker">
+        <span class="anchor-dot" aria-hidden="true"></span>
+        D / SPECULATIVE GEOMETRY
+      </p>
+      <h3>OBSERVATION &amp; THEORETICAL LIMITS</h3>
+      <div class="card-rule"></div>
+
+      <math
+        display="block"
+        aria-label="One plus redshift equals the scale factor at observation divided by that at emission">
+        <mrow>
+          <mn>1</mn><mo>+</mo><mi>z</mi><mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>a</mi><mo>(</mo>
+              <msub><mi>t</mi><mtext>obs</mtext></msub><mo>)</mo>
+            </mrow>
+            <mrow>
+              <mi>a</mi><mo>(</mo>
+              <msub><mi>t</mi><mtext>em</mtext></msub><mo>)</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </math>
+
+      <p>
+        The observable horizon limits information reaching us.
+        It is not a physical edge of space.
+      </p>
+      <p class="card-footnote">
+        Folded sheets are a speculative multiverse motif;
+        border colors use an illustrative redshift mapping.
+      </p>
+    </article>
+  </template>
+
+  <template id="object-label-template">
+    <article class="world-card compact-card accent-cyan" tabindex="0">
+      <p class="card-kicker" data-card-kicker>STRUCTURE / SCALE ATLAS</p>
+      <h3 data-card-title>PROCEDURAL MODEL</h3>
+      <div class="card-rule"></div>
+      <p data-card-description>
+        Geometry is shown at the current chapter’s scale.
+      </p>
+      <p class="card-footnote" data-card-detail>
+        Length comparisons apply within the labeled local reference.
+      </p>
+    </article>
+  </template>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

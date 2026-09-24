@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#03060c">
+  <meta name="description" content="An interactive semiconductor microcavity: light–matter hybridization, polariton dispersion, and a driven condensate.">
+
+  <title>Polariton Condensate · Raw Code Visualizing Nature</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body class="is-loading">
+  <a class="skip-link" href="#sidebar-content">
+    Skip to instrument controls
+  </a>
+
+  <main id="observatory" aria-label="Polariton condensate observatory">
+    <div
+      id="canvas-container"
+      tabindex="0"
+      role="img"
+      aria-label="Interactive three-dimensional microcavity and polariton dispersion"
+      aria-describedby="scene-help"
+    ></div>
+
+    <div class="scene-vignette" aria-hidden="true"></div>
+    <div class="frame-corner corner-tl" aria-hidden="true"></div>
+    <div class="frame-corner corner-br" aria-hidden="true"></div>
+
+    <p id="scene-help" class="sr-only">
+      The condensate occupies a two-dimensional quantum well inside a
+      three-dimensional cavity illustration. Drag to orbit, scroll or pinch
+      to zoom, and right-drag or use two fingers to pan. Use the inspection
+      buttons for guided views. Space pauses, R resumes the drone, and H
+      toggles the interface when a form control is not focused.
+    </p>
+
+    <aside
+      id="sidebar-ui"
+      class="instrument-panel hud-region"
+      aria-labelledby="project-title"
+    >
+      <header class="panel-header">
+        <div class="project-line">
+          <span class="project-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none">
+              <path
+                d="M4 8h32M4 12h32M4 28h32M4 32h32"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <path
+                d="M5 20h30"
+                stroke="currentColor"
+                stroke-dasharray="2 3"
+                opacity=".4"
+              />
+              <path
+                d="M5 20c5-12 10 12 15 0s10 12 15 0"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </span>
+
+          <span>
+            RAW CODE<br>
+            <strong>VISUALIZING NATURE</strong>
+          </span>
+
+          <span class="edition-tag">LP / 01</span>
+        </div>
+
+        <h1 id="project-title">
+          <span>Polariton</span>
+          <span>Condensate</span>
+        </h1>
+
+        <p class="subtitle">Hybrid Light-Matter Quantum Fluid</p>
+
+        <div class="badge-row">
+          <span class="dimension-badge">3D VISUALIZATION</span>
+          <span id="flight-mode" class="mode-badge" data-mode="loading">
+            INITIALIZING
+          </span>
+        </div>
+
+        <p class="header-note">
+          Planar quantum fluid · layered cavity schematic
+        </p>
+      </header>
+
+      <div id="sidebar-content" class="panel-scroll" tabindex="-1">
+        <section
+          class="instrument-section"
+          aria-labelledby="composition-heading"
+        >
+          <div class="section-heading">
+            <h2 id="composition-heading">Light / matter</h2>
+            <span>LOWER POLARITON · PROBE q</span>
+          </div>
+
+          <div class="composition-labels">
+            <div>
+              <span class="color-dot photon-dot" aria-hidden="true"></span>
+              Photon
+              <strong id="photon-fraction-value">—</strong>
+            </div>
+
+            <div>
+              <span class="color-dot exciton-dot" aria-hidden="true"></span>
+              Exciton
+              <strong id="exciton-fraction-value">—</strong>
+            </div>
+          </div>
+
+          <div class="composition-track" aria-hidden="true">
+            <span id="photon-fill" class="photon-fill"></span>
+            <span id="exciton-fill" class="exciton-fill"></span>
+          </div>
+
+          <div class="equation compact-equation">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              aria-label="Photon fraction plus exciton fraction equals one"
+            >
+              <mrow>
+                <msup>
+                  <mrow>
+                    <mo>|</mo>
+                    <msub><mi>C</mi><mi>q</mi></msub>
+                    <mo>|</mo>
+                  </mrow>
+                  <mn>2</mn>
+                </msup>
+                <mo>+</mo>
+                <msup>
+                  <mrow>
+                    <mo>|</mo>
+                    <msub><mi>X</mi><mi>q</mi></msub>
+                    <mo>|</mo>
+                  </mrow>
+                  <mn>2</mn>
+                </msup>
+                <mo>=</mo>
+                <mn>1</mn>
+              </mrow>
+            </math>
+          </div>
+
+          <p class="micro-note">
+            Fractions describe one hybrid eigenstate. A polariton is not an
+            electron with a photon attached.
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="spectrum-heading"
+        >
+          <div class="section-heading">
+            <h2 id="spectrum-heading">Spectral probe</h2>
+            <span>LOSSLESS REFERENCE</span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="detuning-control">Cavity detuning δ₀ / E₀</label>
+              <output id="detuning-setting" for="detuning-control">
+                −0.65
+              </output>
+            </div>
+
+            <input
+              id="detuning-control"
+              type="range"
+              min="-2"
+              max="2"
+              step="0.01"
+              value="-0.65"
+              aria-describedby="spectral-units detuning-help"
+              data-engine-control
+              disabled
+            >
+
+            <div class="range-endpoints" aria-hidden="true">
+              <span>PHOTON-LIKE LP</span>
+              <span>EXCITON-LIKE LP</span>
+            </div>
+
+            <p id="detuning-help" class="micro-note">
+              δ₀ = E<sub>C</sub>(0) − E<sub>X</sub>. Negative detuning favors
+              the photon component at q = 0.
+            </p>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="momentum-control">Dispersion probe q</label>
+              <output id="momentum-setting" for="momentum-control">
+                0.00
+              </output>
+            </div>
+
+            <input
+              id="momentum-control"
+              type="range"
+              min="-1.8"
+              max="1.8"
+              step="0.01"
+              value="0"
+              aria-describedby="spectral-units momentum-help"
+              data-engine-control
+              disabled
+            >
+
+            <p id="momentum-help" class="micro-note">
+              Moves the spectral marker. The condensate remains a
+              low-momentum mode near q = 0.
+            </p>
+          </div>
+
+          <figure class="dispersion-figure">
+            <figcaption>
+              <span>ENERGY / MOMENTUM</span>
+              <span id="rabi-value">ΔR / E₀ = —</span>
+            </figcaption>
+
+            <canvas
+              id="dispersion-chart"
+              width="560"
+              height="280"
+              role="img"
+              aria-label="Bare photon and exciton modes, and upper and lower polariton branches"
+              aria-describedby="spectral-units spectral-values"
+            >
+              The current energies are listed beneath this dispersion chart.
+            </canvas>
+
+            <div class="plot-key" aria-label="Dispersion curve key">
+              <span>
+                <i class="curve-key bare-photon" aria-hidden="true"></i>
+                Photon
+              </span>
+              <span>
+                <i class="curve-key bare-exciton" aria-hidden="true"></i>
+                Exciton
+              </span>
+              <span>
+                <i class="curve-key upper-branch" aria-hidden="true"></i>
+                UP
+              </span>
+              <span>
+                <i class="curve-key lower-branch" aria-hidden="true"></i>
+                LP
+              </span>
+            </div>
+          </figure>
+
+          <p id="spectral-units" class="micro-note">
+            q = k / k*; energies in E₀ relative to E<sub>X</sub>.
+            E<sub>C</sub>(q) / E₀ = δ₀ / E₀ + q².
+            ΔR is a Rabi <em>energy</em>.
+          </p>
+
+          <dl id="spectral-values" class="telemetry-grid">
+            <div>
+              <dt>Photon E<sub>C</sub> / E₀</dt>
+              <dd id="photon-energy-value">—</dd>
+            </div>
+            <div>
+              <dt>Exciton E<sub>X</sub> / E₀</dt>
+              <dd id="exciton-energy-value">—</dd>
+            </div>
+            <div class="accent-gold">
+              <dt>Upper E<sub>UP</sub> / E₀</dt>
+              <dd id="up-energy-value">—</dd>
+            </div>
+            <div class="accent-cyan">
+              <dt>Lower E<sub>LP</sub> / E₀</dt>
+              <dd id="lp-energy-value">—</dd>
+            </div>
+            <div class="wide">
+              <dt>Probe detuning δ(q) / E₀</dt>
+              <dd id="probe-detuning-value">—</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="fluid-heading"
+        >
+          <div class="section-heading">
+            <h2 id="fluid-heading">Driven quantum fluid</h2>
+            <span id="pump-regime">REFERENCE UNITS</span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="pump-control">
+                Pump p = P / P<sub>th</sub>
+              </label>
+              <output id="pump-setting" for="pump-control">1.60</output>
+            </div>
+
+            <input
+              id="pump-control"
+              type="range"
+              min="0"
+              max="2.8"
+              step="0.01"
+              value="1.6"
+              aria-describedby="pump-help"
+              data-engine-control
+              disabled
+            >
+
+            <div class="range-endpoints" aria-hidden="true">
+              <span>0 · PUMP OFF</span>
+              <span>THRESHOLD p = 1</span>
+              <span>2.8</span>
+            </div>
+
+            <p id="pump-help" class="micro-note">
+              Nonresonant pumping replenishes a reservoir. Its phase is not
+              imposed on the condensate.
+            </p>
+          </div>
+
+          <div class="select-grid">
+            <div class="control-group">
+              <label for="field-select">Field display</label>
+              <select id="field-select" data-engine-control disabled>
+                <option value="phase">Phase + density</option>
+                <option value="density">Density only</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="vortex-select">Prescribed vortex</label>
+              <select
+                id="vortex-select"
+                aria-describedby="vortex-help"
+                data-engine-control
+                disabled
+              >
+                <option value="0">None · ℓ = 0</option>
+                <option value="1">Positive · ℓ = +1</option>
+                <option value="-1">Negative · ℓ = −1</option>
+              </select>
+            </div>
+          </div>
+
+          <p id="vortex-help" class="micro-note">
+            Integer winding is imposed for inspection. Core depletion and
+            circulation are prescribed; vortex formation is not simulated.
+          </p>
+
+          <dl class="telemetry-grid">
+            <div>
+              <dt>Mode occupation n<sub>c</sub></dt>
+              <dd id="population-value">—</dd>
+            </div>
+            <div>
+              <dt>Reservoir r</dt>
+              <dd id="reservoir-value">—</dd>
+            </div>
+            <div>
+              <dt>Net gain r − 1</dt>
+              <dd id="net-gain-value">—</dd>
+            </div>
+            <div>
+              <dt>Emission proxy J<sub>opt</sub></dt>
+              <dd id="emission-value">—</dd>
+            </div>
+            <div>
+              <dt>Photon fraction at q = 0</dt>
+              <dd id="condensate-photon-value">—</dd>
+            </div>
+            <div>
+              <dt>Phase at probe / rad</dt>
+              <dd id="phase-value">—</dd>
+            </div>
+            <div>
+              <dt>Winding ℓ</dt>
+              <dd id="winding-value">—</dd>
+            </div>
+            <div>
+              <dt>Population time τ</dt>
+              <dd id="simulation-time-value">—</dd>
+            </div>
+          </dl>
+
+          <p class="micro-note">
+            Phase probe: (x, y) = (0.7, 0.2) in normalized well coordinates.
+            Phase is undefined where the field vanishes.
+          </p>
+
+          <button
+            id="population-reset"
+            class="quiet-button"
+            type="button"
+            data-engine-control
+            disabled
+          >
+            Reset populations
+            <span aria-hidden="true">↺</span>
+          </button>
+
+          <p class="micro-note">
+            Reset restores n<sub>c</sub> = 10⁻⁴ and r = 0, retaining the
+            current pump and pause state.
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="journey-heading"
+        >
+          <div class="section-heading">
+            <h2 id="journey-heading">Inspection sequence</h2>
+            <span id="stage-counter">01 / 13</span>
+          </div>
+
+          <nav
+            id="journey-stages"
+            class="journey-stages"
+            aria-label="Choose a tour chapter"
+          >
+            <button type="button" data-chapter="0" data-engine-control disabled>
+              <span>01</span>Microcavity<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="1" data-engine-control disabled>
+              <span>02</span>Photon mode<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="2" data-engine-control disabled>
+              <span>03</span>Exciton<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="3" data-engine-control disabled>
+              <span>04</span>Strong coupling<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="4" data-engine-control disabled>
+              <span>05</span>Dispersion<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="5" data-engine-control disabled>
+              <span>06</span>Mixed character<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="6" data-engine-control disabled>
+              <span>07</span>Pump / reservoir<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="7" data-engine-control disabled>
+              <span>08</span>Condensation<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="8" data-engine-control disabled>
+              <span>09</span>Quantum fluid<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="9" data-engine-control disabled>
+              <span>10</span>Vortex<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="10" data-engine-control disabled>
+              <span>11</span>Emission<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="11" data-engine-control disabled>
+              <span>12</span>Driven-dissipative cycle<i aria-hidden="true"></i>
+            </button>
+            <button type="button" data-chapter="12" data-engine-control disabled>
+              <span>13</span>Full system<i aria-hidden="true"></i>
+            </button>
+          </nav>
+
+          <div
+            id="journey-progress"
+            class="journey-progress"
+            role="progressbar"
+            aria-label="Guided tour progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="flight-progress"></span>
+          </div>
+
+          <div class="tour-meta">
+            <span>LONG-FORM GUIDED FLIGHT</span>
+            <time id="tour-time">00:00</time>
+          </div>
+
+          <p class="micro-note">
+            Chapters guide the camera and prepare labeled demonstrations.
+            Adjusting a model control enters manual inspection.
+          </p>
+        </section>
+
+        <details class="instrument-section disclosure">
+          <summary>Reference objects <span>06</span></summary>
+
+          <p class="micro-note">
+            Fly to the adjacent inspection shelf. Each object is an
+            explanatory schematic.
+          </p>
+
+          <div class="inspection-grid" aria-label="Inspect a reference object">
+            <button type="button" data-inspect="photon" data-engine-control disabled>
+              <i class="photon-dot" aria-hidden="true"></i>
+              Photon mode
+            </button>
+            <button type="button" data-inspect="exciton" data-engine-control disabled>
+              <i class="exciton-dot" aria-hidden="true"></i>
+              Exciton
+            </button>
+            <button type="button" data-inspect="upper" data-engine-control disabled>
+              <i class="upper-dot" aria-hidden="true"></i>
+              Upper polariton
+            </button>
+            <button type="button" data-inspect="lower" data-engine-control disabled>
+              <i class="lower-dot" aria-hidden="true"></i>
+              Lower polariton
+            </button>
+            <button type="button" data-inspect="reservoir" data-engine-control disabled>
+              <i class="reservoir-dot" aria-hidden="true"></i>
+              Pump / reservoir
+            </button>
+            <button type="button" data-inspect="vortex" data-engine-control disabled>
+              <i class="vortex-dot" aria-hidden="true"></i>
+              Vortex
+            </button>
+          </div>
+        </details>
+
+        <details
+          id="model-scope"
+          class="instrument-section disclosure"
+        >
+          <summary>Equations &amp; model scope <span>READ</span></summary>
+
+          <p>
+            <strong>Three connected representations.</strong>
+            The spectrum is analytic. Two spatially uniform population
+            equations are integrated numerically. The spatial profile and
+            coherent phase are prescribed illustrations.
+          </p>
+
+          <p>
+            The field is not a solution of a spatial Gross–Pitaevskii
+            equation. The model does not calculate spontaneous coherence,
+            superfluidity, or vortex nucleation.
+          </p>
+
+          <div class="equation equation-block">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="d n c over d tau equals r minus one times n c"
+            >
+              <mrow>
+                <mfrac>
+                  <mrow>
+                    <mi>d</mi>
+                    <msub><mi>n</mi><mi>c</mi></msub>
+                  </mrow>
+                  <mrow><mi>d</mi><mi>τ</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <mo>(</mo><mi>r</mi><mo>−</mo><mn>1</mn><mo>)</mo>
+                <msub><mi>n</mi><mi>c</mi></msub>
+              </mrow>
+            </math>
+
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="d r over d tau equals beta times p minus one plus n c times r"
+            >
+              <mrow>
+                <mfrac>
+                  <mrow><mi>d</mi><mi>r</mi></mrow>
+                  <mrow><mi>d</mi><mi>τ</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <mi>β</mi>
+                <mo>[</mo>
+                <mi>p</mi>
+                <mo>−</mo>
+                <mo>(</mo>
+                <mn>1</mn>
+                <mo>+</mo>
+                <msub><mi>n</mi><mi>c</mi></msub>
+                <mo>)</mo>
+                <mi>r</mi>
+                <mo>]</mo>
+              </mrow>
+            </math>
+          </div>
+
+          <p>
+            Phenomenological single-mode populations:
+            n<sub>c</sub> = RN / γ<sub>R</sub>,
+            r = RN<sub>R</sub> / γ<sub>C</sub>,
+            τ = γ<sub>C</sub>t,
+            β = γ<sub>R</sub> / γ<sub>C</sub> = 0.35,
+            and p = P / P<sub>th</sub>, with
+            P<sub>th</sub> = γ<sub>C</sub>γ<sub>R</sub> / R.
+            Here R is the stimulated reservoir-to-mode transfer coefficient.
+          </p>
+
+          <p>
+            Initial seed: n<sub>c</sub> = 10⁻⁴, r = 0.
+            The pump-preparation chapter explicitly restores this seed.
+            Fixed reference rates are independent of detuning; changing
+            composition does not predict an experimental lifetime.
+          </p>
+
+          <p>
+            The steady reference is
+            n<sub>c,ss</sub> = max(p − 1, 0),
+            r<sub>ss</sub> = min(p, 1).
+            Telemetry reports evolving populations, not those steady values.
+          </p>
+
+          <div class="equation equation-block">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="Integral of the squared spatial profile over the plane equals one"
+            >
+              <mrow>
+                <mo>∫</mo>
+                <msup>
+                  <mrow>
+                    <mo>|</mo>
+                    <msub><mi>u</mi><mi>ℓ</mi></msub>
+                    <mo>|</mo>
+                  </mrow>
+                  <mn>2</mn>
+                </msup>
+                <msup><mi>d</mi><mn>2</mn></msup>
+                <mi mathvariant="bold">r</mi>
+                <mo>=</mo>
+                <mn>1</mn>
+              </mrow>
+            </math>
+          </div>
+
+          <p>
+            A normalized Gaussian envelope converts mode occupation into a
+            displayed spatial density. An optional vortex adds a normalized
+            depleted core and integer phase winding. Arrows show the
+            prescribed phase gradient, not calibrated velocity.
+          </p>
+
+          <p>
+            The lossless coupled-mode gap ΔR / E₀ = 1 is a reference energy.
+            Experimental strong coupling also depends on linewidths.
+            Mirror spacing, layer thickness, electron–hole markers, field
+            height, and optical timing are schematic.
+          </p>
+
+          <p>
+            Emission uses J<sub>opt</sub> = |C<sub>0</sub>|²n<sub>c</sub>,
+            a relative optical proxy with an assumed fixed outcoupling
+            factor. It omits background emission and is not a calibrated
+            detector signal.
+          </p>
+
+          <div class="source-links">
+            <a
+              href="https://arxiv.org/abs/cond-mat/0702431"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Wouters &amp; Carusotto · driven condensate model ↗
+            </a>
+            <a
+              href="https://www.nature.com/articles/s41467-023-37772-7"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Coupled-mode energies &amp; Hopfield fractions ↗
+            </a>
+            <a
+              href="https://arxiv.org/abs/0801.1916"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Lagoudakis et al. · polariton vortices ↗
+            </a>
+          </div>
+        </details>
+      </div>
+
+      <footer class="panel-footer">
+        <span class="status-led" aria-hidden="true"></span>
+        <span id="model-status">Waiting for renderer</span>
+        <span id="display-status">WEBGL</span>
+      </footer>
+    </aside>
+
+    <nav
+      id="flight-controls"
+      class="flight-controls"
+      aria-label="View and playback controls"
+    >
+      <button
+        id="hud-toggle"
+        type="button"
+        aria-controls="sidebar-ui scene-caption reference-legend"
+        aria-pressed="false"
+        title="Hide or show the interface (H)"
+        data-engine-control
+        disabled
+      >
+        <span id="hud-label">Hide HUD</span>
+        <kbd>H</kbd>
+      </button>
+
+      <button
+        id="pause-toggle"
+        type="button"
+        aria-pressed="false"
+        title="Pause or play the model and tour (Space)"
+        data-engine-control
+        disabled
+      >
+        <span id="pause-label">Pause</span>
+        <kbd>SPACE</kbd>
+      </button>
+
+      <button
+        id="resume-flight"
+        class="resume-button"
+        type="button"
+        title="Smoothly return to automatic flight (R)"
+        data-engine-control
+        disabled
+      >
+        <span>Resume drone</span>
+        <kbd>R</kbd>
+      </button>
+    </nav>
+
+    <section
+      id="scene-caption"
+      class="scene-caption hud-region"
+      aria-labelledby="scene-title"
+    >
+      <div class="caption-eyebrow">
+        <span id="chapter-value">01 / MICROCAVITY</span>
+        <span class="caption-rule" aria-hidden="true"></span>
+        <span>SCIENTIFIC FLIGHT</span>
+      </div>
+
+      <h2 id="scene-title">Where light meets matter.</h2>
+
+      <p id="scene-description">
+        An optical cavity confines light around a semiconductor quantum
+        well. Coupling its photon mode to an exciton resonance creates two
+        hybrid branches.
+      </p>
+
+      <p id="scene-model-note" class="caption-model-note">
+        Layered geometry is schematic. The quantum fluid lies in the well
+        plane.
+      </p>
+    </section>
+
+    <aside
+      id="reference-legend"
+      class="reference-legend hud-region"
+      aria-label="Field legend"
+    >
+      <div class="legend-heading">
+        <span>FIELD KEY</span>
+        <span id="legend-field-note">PHASE + DENSITY</span>
+      </div>
+
+      <div class="phase-ramp" aria-hidden="true"></div>
+
+      <div class="phase-ticks">
+        <span>−π</span>
+        <span>0</span>
+        <span>+π</span>
+      </div>
+
+      <p>Hue → phase · brightness → density</p>
+      <p>Arrows → prescribed phase gradient</p>
+
+      <div class="legend-separator"></div>
+
+      <div class="legend-swatches">
+        <span><i class="photon-dot" aria-hidden="true"></i>Photon</span>
+        <span><i class="exciton-dot" aria-hidden="true"></i>Exciton</span>
+        <span><i class="upper-dot" aria-hidden="true"></i>UP</span>
+        <span><i class="lower-dot" aria-hidden="true"></i>LP</span>
+      </div>
+    </aside>
+
+    <section
+      id="render-notice"
+      class="render-notice"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div class="notice-card">
+        <div class="notice-orbit" aria-hidden="true"><span></span></div>
+        <p class="notice-eyebrow">RAW CODE VISUALIZING NATURE</p>
+
+        <h2 id="notice-title">Preparing the microcavity</h2>
+
+        <p id="notice-message">
+          Loading the renderer, optical layers, and coupled-mode field.
+        </p>
+
+        <p id="notice-detail">
+          The first launch requires an internet connection for the Three.js
+          libraries.
+        </p>
+
+        <button
+          id="notice-reload"
+          class="quiet-button"
+          type="button"
+          hidden
+        >
+          Reload visualization
+        </button>
+
+        <noscript>
+          <p class="noscript-message">
+            JavaScript is disabled. Enable JavaScript and reload to run
+            this visualization.
+          </p>
+        </noscript>
+      </div>
+    </section>
+
+    <p
+      id="accessibility-status"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+  </main>
+
+  <template id="cavity-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">01 / OPTICAL CONFINEMENT</p>
+        <h3>Semiconductor microcavity</h3>
+
+        <p>
+          Two distributed Bragg reflectors confine an optical mode.
+          A quantum well sits at a standing-field antinode.
+        </p>
+
+        <div class="layer-key">
+          <span>UPPER DBR</span>
+          <span>QUANTUM WELL</span>
+          <span>LOWER DBR</span>
+        </div>
+
+        <p class="card-note">
+          Layer dimensions and optical timing are schematic.
+          Condensate motion is planar.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="photon-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">02 / BARE PHOTON MODE</p>
+        <h3>Confined light</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Cavity energy over E zero equals detuning zero over E zero plus q squared"
+          >
+            <mrow>
+              <mfrac>
+                <mrow>
+                  <msub><mi>E</mi><mi>C</mi></msub>
+                  <mo>(</mo><mi>q</mi><mo>)</mo>
+                </mrow>
+                <msub><mi>E</mi><mn>0</mn></msub>
+              </mfrac>
+              <mo>=</mo>
+              <mfrac>
+                <msub><mi>δ</mi><mn>0</mn></msub>
+                <msub><mi>E</mi><mn>0</mn></msub>
+              </mfrac>
+              <mo>+</mo>
+              <msup><mi>q</mi><mn>2</mn></msup>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The in-plane momentum changes the cavity-mode energy.
+          The standing optical field is confined between mirrors.
+        </p>
+
+        <p class="card-note">
+          Parabolic reference dispersion, relative to E<sub>X</sub> = 0.
+          Light is shown as a mode, not orbiting particles.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="exciton-card-template">
+    <div class="world-anchor" data-accent="magenta">
+      <article class="world-card">
+        <p class="card-kicker">03 / MATTER RESONANCE</p>
+        <h3>A bound electron–hole excitation</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Exciton energy E X is approximately independent of q in this reference"
+          >
+            <mrow>
+              <msub><mi>E</mi><mi>X</mi></msub>
+              <mo>(</mo><mi>q</mi><mo>)</mo>
+              <mo>≈</mo>
+              <msub><mi>E</mi><mi>X</mi></msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          An exciton is a correlated electron and hole in the semiconductor.
+          Its resonance supplies the matter component of a polariton.
+        </p>
+
+        <p class="card-note">
+          Markers and envelope are schematic. They do not depict an
+          electron orbit or resolve a many-body wavefunction.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="coupling-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card wide-card">
+        <p class="card-kicker">04 / STRONG COUPLING</p>
+        <h3>Two modes. Two hybrid states.</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Coupled Hamiltonian with diagonal cavity and exciton energies and off-diagonal Rabi energy divided by two"
+          >
+            <mrow>
+              <mi>H</mi>
+              <mo>=</mo>
+              <mo>[</mo>
+              <mtable columnspacing="1.2em" rowspacing=".5em">
+                <mtr>
+                  <mtd>
+                    <mrow>
+                      <msub><mi>E</mi><mi>C</mi></msub>
+                      <mo>(</mo><mi>q</mi><mo>)</mo>
+                    </mrow>
+                  </mtd>
+                  <mtd>
+                    <mfrac>
+                      <msub><mi>Δ</mi><mi>R</mi></msub>
+                      <mn>2</mn>
+                    </mfrac>
+                  </mtd>
+                </mtr>
+                <mtr>
+                  <mtd>
+                    <mfrac>
+                      <msub><mi>Δ</mi><mi>R</mi></msub>
+                      <mn>2</mn>
+                    </mfrac>
+                  </mtd>
+                  <mtd>
+                    <msub><mi>E</mi><mi>X</mi></msub>
+                  </mtd>
+                </mtr>
+              </mtable>
+              <mo>]</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Diagonalizing the coupled modes creates upper and lower
+          polaritons. At resonance the lossless gap is ΔR, and each state
+          is half photon, half exciton.
+        </p>
+
+        <p class="card-note">
+          A lossless reference Hamiltonian. Linewidths also matter when
+          identifying experimental strong coupling.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="upper-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card wide-card">
+        <p class="card-kicker">REFERENCE / UPPER BRANCH</p>
+        <h3>Upper polariton</h3>
+
+        <div class="equation branch-equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Upper polariton energy is one half of cavity plus exciton energy plus the square root of detuning squared plus Rabi energy squared"
+          >
+            <mrow>
+              <msub><mi>E</mi><mtext>UP</mtext></msub>
+              <mo>=</mo>
+              <mfrac><mn>1</mn><mn>2</mn></mfrac>
+              <mo>[</mo>
+              <msub><mi>E</mi><mi>C</mi></msub>
+              <mo>+</mo>
+              <msub><mi>E</mi><mi>X</mi></msub>
+              <mo>+</mo>
+              <msqrt>
+                <mrow>
+                  <msup><mi>δ</mi><mn>2</mn></msup>
+                  <mo>+</mo>
+                  <msubsup><mi>Δ</mi><mi>R</mi><mn>2</mn></msubsup>
+                </mrow>
+              </msqrt>
+              <mo>]</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The higher-energy hybrid eigenstate. Its branch repels the
+          lower branch near the bare-mode crossing.
+        </p>
+
+        <p class="card-note">
+          δ = E<sub>C</sub>(q) − E<sub>X</sub>. Reference object illustrates
+          composition; it is not a literal composite particle.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="lower-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card wide-card">
+        <p class="card-kicker">REFERENCE / LOWER BRANCH</p>
+        <h3>Lower polariton</h3>
+
+        <div class="equation branch-equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Lower polariton energy is one half of cavity plus exciton energy minus the square root of detuning squared plus Rabi energy squared"
+          >
+            <mrow>
+              <msub><mi>E</mi><mtext>LP</mtext></msub>
+              <mo>=</mo>
+              <mfrac><mn>1</mn><mn>2</mn></mfrac>
+              <mo>[</mo>
+              <msub><mi>E</mi><mi>C</mi></msub>
+              <mo>+</mo>
+              <msub><mi>E</mi><mi>X</mi></msub>
+              <mo>−</mo>
+              <msqrt>
+                <mrow>
+                  <msup><mi>δ</mi><mn>2</mn></msup>
+                  <mo>+</mo>
+                  <msubsup><mi>Δ</mi><mi>R</mi><mn>2</mn></msubsup>
+                </mrow>
+              </msqrt>
+              <mo>]</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Lower polariton equals photon amplitude C q times photon state plus exciton amplitude X q times exciton state"
+          >
+            <mrow>
+              <mo>|</mo><mtext>LP</mtext><mo>⟩</mo>
+              <mo>=</mo>
+              <msub><mi>C</mi><mi>q</mi></msub>
+              <mo>|</mo><mtext>photon</mtext><mo>⟩</mo>
+              <mo>+</mo>
+              <msub><mi>X</mi><mi>q</mi></msub>
+              <mo>|</mo><mtext>exciton</mtext><mo>⟩</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The lower hybrid branch supports the low-energy mode used for
+          the condensate illustration.
+        </p>
+
+        <p class="card-note">
+          The coefficients are amplitudes; their squared magnitudes are
+          the HUD fractions. Their relative phase is part of the eigenstate.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="reservoir-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">07 / NONRESONANT DRIVE</p>
+        <h3>Replenish. Relax. Decay.</h3>
+
+        <div class="pump-cycle">
+          <span>PUMP</span><b>→</b>
+          <span>RESERVOIR</span><b>→</b>
+          <span>LP MODE</span><b>→</b>
+          <span>LOSS</span>
+        </div>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Condensate growth rate equals reservoir minus one times mode occupation"
+          >
+            <mrow>
+              <mfrac>
+                <mrow>
+                  <mi>d</mi>
+                  <msub><mi>n</mi><mi>c</mi></msub>
+                </mrow>
+                <mrow><mi>d</mi><mi>τ</mi></mrow>
+              </mfrac>
+              <mo>=</mo>
+              <mo>(</mo><mi>r</mi><mo>−</mo><mn>1</mn><mo>)</mo>
+              <msub><mi>n</mi><mi>c</mi></msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Reservoir feeding competes with finite mode loss. Sustained
+          occupation requires continued pumping in this driven model.
+        </p>
+
+        <p class="card-note">
+          Integrated single-mode population equations. The displayed
+          spatial cloud and transfer paths are schematic.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="condensate-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">09 / COLLECTIVE FIELD</p>
+        <h3>Occupation, density, and phase</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Psi equals square root of mode occupation times normalized profile times exponential of i phi; density equals absolute psi squared"
+          >
+            <mrow>
+              <mi>ψ</mi>
+              <mo>=</mo>
+              <msqrt>
+                <msub><mi>n</mi><mi>c</mi></msub>
+              </msqrt>
+              <msub><mi>u</mi><mi>ℓ</mi></msub>
+              <msup>
+                <mi>e</mi>
+                <mrow><mi>i</mi><mi>φ</mi></mrow>
+              </msup>
+              <mo>,</mo>
+              <mspace width=".4em"/>
+              <mi>ρ</mi>
+              <mo>=</mo>
+              <msup>
+                <mrow><mo>|</mo><mi>ψ</mi><mo>|</mo></mrow>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Brightness follows density. Hue follows phase. A phase gradient
+          provides the direction of the displayed flow arrows.
+        </p>
+
+        <p class="card-note">
+          Population is integrated; normalized spatial profile and coherent
+          phase are prescribed. Display height is not a third fluid dimension.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="vortex-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card">
+        <p class="card-kicker">10 / INTEGER WINDING</p>
+        <h3>A prescribed quantum vortex</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Closed integral of the phase gradient dotted into a path element equals two pi times integer winding"
+          >
+            <mrow>
+              <mo>∮</mo>
+              <mi>∇</mi><mi>φ</mi>
+              <mo>·</mo>
+              <mi>d</mi><mi mathvariant="bold">s</mi>
+              <mo>=</mo>
+              <mn>2</mn><mi>π</mi><mi>ℓ</mi>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Phase wraps around the depleted core. Reversing the integer
+          charge reverses circulation. Phase is undefined at the center.
+        </p>
+
+        <p class="card-note">
+          An imposed analytic field with ℓ = ±1.
+          The population equations do not generate vortices.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="emission-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">11 / RADIATIVE READOUT</p>
+        <h3>Light leaving the cavity</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Relative optical emission equals the photon fraction at zero momentum times mode occupation"
+          >
+            <mrow>
+              <msub><mi>J</mi><mtext>opt</mtext></msub>
+              <mo>=</mo>
+              <msup>
+                <mrow>
+                  <mo>|</mo>
+                  <msub><mi>C</mi><mn>0</mn></msub>
+                  <mo>|</mo>
+                </mrow>
+                <mn>2</mn>
+              </msup>
+              <msub><mi>n</mi><mi>c</mi></msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Escaping cavity light samples the photonic component. It can
+          carry information about the condensate without being the entire
+          internal hybrid field.
+        </p>
+
+        <p class="card-note">
+          Relative emission proxy with fixed assumed outcoupling.
+          Paths and time scale are schematic.
+        </p>
+      </article>
+    </div>
+  </template>
+</body>
+</html>

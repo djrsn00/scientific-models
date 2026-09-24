@@ -1,0 +1,168 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#010105">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A cinematic logarithmic journey from quantum geometry through atoms, planets, galaxies, and the cosmic web to a speculative hypersphere multiverse.">
+
+  <title>The Grand Scale Ascension: To The Multiverse Hypersphere</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container"></div>
+
+  <aside class="info-panel" id="info-panel" aria-labelledby="scene-title">
+    <header class="panel-header">
+      <p class="eyebrow">SIX REGIMES / ONE CONTINUOUS ASCENT</p>
+      <h1 id="scene-title">The Grand Scale<br><span>Ascension</span></h1>
+      <p class="subtitle">To the multiverse hypersphere</p>
+      <div class="spectrum-rule"></div>
+    </header>
+
+    <section class="scale-readout" aria-label="Current scale">
+      <p class="section-label" id="scale-label">ILLUSTRATIVE SCALE CURSOR</p>
+
+      <div class="metric-value" id="metric-value">
+        <span id="metric-coefficient">1.62</span>
+        <span class="metric-times">×</span>
+        <span>10<sup id="metric-exponent">−35</sup></span>
+        <span class="metric-unit" id="metric-unit">m</span>
+      </div>
+
+      <div class="unknown-scale" id="unknown-scale" hidden>
+        Scale unknown
+        <span>SPECULATIVE BULK</span>
+      </div>
+
+      <div class="zoom-readout">
+        <span>VISUAL ZOOM MULTIPLIER</span>
+        <span id="zoom-value">×1.00</span>
+      </div>
+    </section>
+
+    <section class="current-regime" aria-label="Current regime">
+      <p class="section-label">CURRENT REGIME</p>
+      <h2 id="regime-title">The Planck basement</h2>
+      <p id="regime-description">
+        Vibrating curves and a roiling particle grid illustrate quantum geometry.
+      </p>
+    </section>
+
+    <ol class="scale-timeline" aria-label="Nested scale regimes">
+      <li class="active" data-tier="0" aria-current="step">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Planck basement</strong>
+          <small>Quantum geometry · 11D M-theory motif</small>
+        </div>
+      </li>
+      <li data-tier="1">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Atomic lattice</strong>
+          <small>Hydrogen orbitals · molecular framework</small>
+        </div>
+      </li>
+      <li data-tier="2">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Macro neighborhood</strong>
+          <small>Planets · star clusters · nebulae</small>
+        </div>
+      </li>
+      <li data-tier="3">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Galactic swirl</strong>
+          <small>Logarithmic spiral structures</small>
+        </div>
+      </li>
+      <li data-tier="4">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Cosmic web hierarchy</strong>
+          <small>Observable diameter ≈92 Gly</small>
+        </div>
+      </li>
+      <li data-tier="5">
+        <span class="timeline-marker"></span>
+        <div>
+          <strong>Hypersphere / speculative bulk</strong>
+          <small>Mathematical embedding · unknown scale</small>
+        </div>
+      </li>
+    </ol>
+
+    <section class="equation-panel" aria-label="Current mathematical relation">
+      <p class="section-label" id="equation-heading">NATURAL QUANTUM-GRAVITY SCALE</p>
+      <div class="equation" id="equation-value">
+        ℓ<sub>P</sub> = √(ℏG/c<sup>3</sup>)
+      </div>
+      <p class="equation-caption" id="equation-caption">
+        A characteristic scale, not an established smallest length.
+      </p>
+    </section>
+
+    <footer class="panel-footer">
+      <div class="node-readout">
+        <span class="node-light"></span>
+        <span><strong id="node-count">0</strong> procedural particle nodes</span>
+      </div>
+      <p>
+        Visual zoom is logarithmically compressed; individual motifs are
+        normalized for readability. Quantum-gravity structures, S³ topology,
+        and the multiverse are illustrative hypotheses.
+      </p>
+    </footer>
+  </aside>
+
+  <div class="flight-overlay" id="flight-overlay">
+    <div class="flight-state">
+      <span class="flight-light"></span>
+      <span id="flight-state">AUTOMATED ASCENSION</span>
+    </div>
+
+    <div
+      class="ascension-progress"
+      id="ascension-progress"
+      role="progressbar"
+      aria-label="Progress through the scale journey"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <span id="ascension-fill"></span>
+    </div>
+
+    <p class="direction-label">QUANTUM GEOMETRY → COSMIC STRUCTURE → SPECULATIVE BULK</p>
+
+    <p class="control-help">
+      WHEEL / SCALE IN FLIGHT · DRAG / ORBIT<br>
+      SPACE / PAUSE · R / RESUME · H / PANEL · HOME / RESTART
+    </p>
+  </div>
+
+  <div class="render-status" id="render-status" role="status">
+    Constructing nested realities
+  </div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

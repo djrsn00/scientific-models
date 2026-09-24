@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" data-engine-state="loading" data-motion="full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#010704">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="An interactive exploration of six compact dimensions through Calabi–Yau geometry, spectral flux, and a guided cinematic projection.">
+  <title>6D Calabi-Yau Geometry &amp; Quantum State Engine</title>
+
+  <!-- Critical shell defaults prevent a white flash while the stylesheet loads. -->
+  <style>
+    html { color-scheme: dark; background: #010704; color: #00ff66; }
+    body { margin: 0; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    [hidden] { display: none !important; }
+  </style>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="./styles/styles.css">
+
+  <!-- Core and every addon resolve to exactly the same pinned Three.js release. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+        "katex": "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.mjs"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <a class="qe-skip-link" href="#qe-controls">Skip to simulation controls</a>
+
+  <noscript>
+    <section class="qe-notice qe-notice--error" role="alert">
+      <h1>JavaScript is required</h1>
+      <p>Enable JavaScript and reload to initialize the interactive WebGL visualization.</p>
+    </section>
+  </noscript>
+
+  <main id="qe-app" class="qe-app" aria-labelledby="qe-title" aria-busy="true">
+    <section id="qe-stage" class="qe-stage" aria-label="Calabi–Yau visualization">
+      <canvas id="qe-canvas" class="qe-canvas" width="1280" height="720"
+        tabindex="0" role="img" aria-label="Interactive three-dimensional projection of a Calabi–Yau cross-section"
+        aria-describedby="qe-scene-description qe-navigation-help">
+        Your browser must support canvas and WebGL 2 to display this visualization.
+      </canvas>
+
+      <p id="qe-scene-description" class="qe-sr-only">
+        A spectral projection of a section of the Fermat quintic threefold.
+        Camera and simulation controls are available below. The equation panels
+        provide a text description of the underlying geometric model.
+      </p>
+
+      <div class="qe-stage-frame" aria-hidden="true">
+        <span class="qe-frame-corner qe-frame-corner--tl"></span>
+        <span class="qe-frame-corner qe-frame-corner--tr"></span>
+        <span class="qe-frame-corner qe-frame-corner--bl"></span>
+        <span class="qe-frame-corner qe-frame-corner--br"></span>
+        <span class="qe-reticle"></span>
+      </div>
+
+      <section id="qe-waypoint" class="qe-waypoint" aria-labelledby="qe-waypoint-title" hidden>
+        <p id="qe-waypoint-index" class="qe-overline">Cinematic waypoint</p>
+        <h2 id="qe-waypoint-title">Macro approach</h2>
+        <div id="qe-waypoint-equation" class="qe-equation" data-display="true"
+          data-latex="M_{10}=M_{3,1}\times X_6">
+          M₁₀ = M₃,₁ × X₆
+        </div>
+        <p id="qe-waypoint-description">
+          Explore a projection of the compact internal geometry.
+        </p>
+      </section>
+    </section>
+
+    <div class="qe-crt-overlay" aria-hidden="true">
+      <div class="qe-crt-overlay__scanlines"></div>
+      <div class="qe-crt-overlay__vignette"></div>
+      <div class="qe-crt-overlay__scan-flash"></div>
+    </div>
+
+    <div id="qe-hud" class="qe-hud">
+      <header class="qe-header">
+        <div class="qe-brand">
+          <p class="qe-overline">Six compact dimensions / geometric visualization</p>
+          <h1 id="qe-title">
+            <span class="qe-title__primary">6D CALABI–YAU</span>
+            <span class="qe-title__secondary">Geometry &amp; Quantum State Engine</span>
+          </h1>
+        </div>
+        <div class="qe-system-indicator">
+          <span id="qe-status-light" class="qe-status-light" data-state="loading" aria-hidden="true"></span>
+          <span id="qe-system-status" role="status" aria-live="polite" aria-atomic="true">Preparing engine</span>
+        </div>
+      </header>
+
+      <aside id="qe-theory-panel" class="qe-panel qe-panel--theory" aria-labelledby="qe-theory-title">
+        <header class="qe-panel__header">
+          <p class="qe-overline">01 / geometric reference</p>
+          <h2 id="qe-theory-title">Compactification atlas</h2>
+        </header>
+
+        <div class="qe-equation-card">
+          <h3>Product compactification</h3>
+          <div id="qe-equation-spacetime" class="qe-equation" data-display="true"
+            data-latex="M_{10}=M_{3,1}\times X_6">M₁₀ = M₃,₁ × X₆</div>
+          <p>Unwarped product ansatz: four spacetime dimensions and six compact internal dimensions.</p>
+        </div>
+
+        <div class="qe-equation-card">
+          <h3>Fermat quintic threefold</h3>
+          <div id="qe-equation-quintic" class="qe-equation" data-display="true"
+            data-latex="z_1^5+z_2^5+z_3^5+z_4^5+z_5^5=0">
+            z₁⁵ + z₂⁵ + z₃⁵ + z₄⁵ + z₅⁵ = 0
+          </div>
+          <div id="qe-equation-projective" class="qe-equation qe-equation--compact" data-display="false"
+            data-latex="[z_1:z_2:z_3:z_4:z_5]\in\mathbb{CP}^{4}">
+            [z₁ : z₂ : z₃ : z₄ : z₅] ∈ ℂP⁴
+          </div>
+          <p>Homogeneous projective coordinates; three complex dimensions, equivalent to six real dimensions.</p>
+        </div>
+
+        <details class="qe-disclosure" open>
+          <summary>Geometric conditions</summary>
+          <dl class="qe-equation-list">
+            <div>
+              <dt>Ricci-flat metric condition</dt>
+              <dd id="qe-equation-ricci" class="qe-equation" data-display="false"
+                data-latex="R_{mn}=0">Rₘₙ = 0</dd>
+            </div>
+            <div>
+              <dt>Vanishing first Chern class</dt>
+              <dd id="qe-equation-chern" class="qe-equation" data-display="false"
+                data-latex="c_1(X_6)=0">c₁(X₆) = 0</dd>
+            </div>
+            <div>
+              <dt>Closed Kähler form</dt>
+              <dd id="qe-equation-kahler" class="qe-equation" data-display="false"
+                data-latex="dJ=0">dJ = 0</dd>
+            </div>
+            <div>
+              <dt>Closed holomorphic volume form</dt>
+              <dd id="qe-equation-volume" class="qe-equation" data-display="false"
+                data-latex="d\Omega=0">dΩ = 0</dd>
+            </div>
+            <div>
+              <dt>Flux period · normalized convention</dt>
+              <dd id="qe-equation-flux" class="qe-equation" data-display="false"
+                data-latex="\int_{\Sigma_p}F_p=N,\quad N\in\mathbb{Z}">
+                ∫Σₚ Fₚ = N, N ∈ ℤ
+              </dd>
+            </div>
+            <div>
+              <dt>Projection phase</dt>
+              <dd id="qe-equation-phase" class="qe-equation" data-display="false"
+                data-latex="e^{i\theta}=\cos\theta+i\sin\theta">
+                eⁱᶿ = cos θ + i sin θ
+              </dd>
+            </div>
+          </dl>
+        </details>
+
+        <details class="qe-disclosure">
+          <summary>Reading the projection</summary>
+          <p>
+            The displayed shape represents a section and projection of the
+            higher-dimensional geometry. Color, glow, and particle motion
+            provide visual encodings. The geometric conditions above are
+            mathematical references; rendering the surface alone does not
+            compute its Ricci-flat metric. Closure of Ω does not specify a
+            gravitational force law for the particles.
+          </p>
+          <a class="qe-text-link" href="https://www.claymath.org/library/monographs/cmim-1.pdf"
+            target="_blank" rel="noopener noreferrer">Mathematical background: Mirror Symmetry</a>
+        </details>
+      </aside>
+
+      <aside id="qe-diagnostics-panel" class="qe-panel qe-panel--diagnostics"
+        aria-labelledby="qe-diagnostics-title">
+        <header class="qe-panel__header">
+          <p class="qe-overline">02 / live instrumentation</p>
+          <h2 id="qe-diagnostics-title">Engine diagnostics</h2>
+        </header>
+
+        <!-- These fields are populated from actual runtime measurements. -->
+        <dl class="qe-readout-grid">
+          <div><dt>WebGL context</dt><dd id="qe-webgl-status">Not initialized</dd></div>
+          <div><dt>Renderer</dt><dd id="qe-renderer-name">Not queried</dd></div>
+          <div><dt>Frame rate</dt><dd id="qe-fps">Unmeasured</dd></div>
+          <div><dt>Frame time</dt><dd id="qe-frame-time">Unmeasured</dd></div>
+          <div><dt>Drawing buffer</dt><dd id="qe-resolution">Unmeasured</dd></div>
+          <div><dt>Pixel ratio</dt><dd id="qe-pixel-ratio">Unmeasured</dd></div>
+          <div><dt>Context antialiasing</dt><dd id="qe-antialias">Not queried</dd></div>
+          <div><dt>Shader precision</dt><dd id="qe-shader-precision">Not queried</dd></div>
+          <div><dt>Float render targets</dt><dd id="qe-float-targets">Not queried</dd></div>
+          <div><dt>Active flux particles</dt><dd id="qe-particle-count">Not initialized</dd></div>
+          <div><dt>Draw calls / frame</dt><dd id="qe-draw-calls">Unmeasured</dd></div>
+          <div><dt>Triangles / frame</dt><dd id="qe-triangle-count">Unmeasured</dd></div>
+          <div><dt>Projection phase</dt><dd id="qe-phase-value">Not initialized</dd></div>
+          <div><dt>Camera mode</dt><dd id="qe-camera-mode">Standby</dd></div>
+          <div><dt>Camera distance</dt><dd id="qe-camera-distance">Unmeasured</dd></div>
+          <div><dt>Simulation time</dt><dd id="qe-simulation-time">Not started</dd></div>
+        </dl>
+
+        <section class="qe-terminal" aria-labelledby="qe-terminal-title">
+          <h3 id="qe-terminal-title">System stream</h3>
+          <ol id="qe-terminal-log" class="qe-terminal__log" role="log"
+            aria-live="off" aria-label="Engine event history">
+            <li class="qe-terminal__entry">Graphics initialization pending.</li>
+          </ol>
+        </section>
+      </aside>
+
+      <section id="qe-controls" class="qe-panel qe-panel--controls" tabindex="-1"
+        aria-labelledby="qe-controls-title">
+        <header class="qe-panel__header">
+          <p class="qe-overline">03 / navigation &amp; field controls</p>
+          <h2 id="qe-controls-title">Observer console</h2>
+        </header>
+
+        <!-- Telemetry binds these controls during init; bootstrap enables them after Core.start. -->
+        <fieldset id="qe-transport-controls" class="qe-control-group" data-qe-runtime-controls disabled>
+          <legend class="qe-sr-only">Playback and camera</legend>
+          <div class="qe-button-row">
+            <button id="qe-toggle-simulation" class="qe-button" type="button"
+              aria-controls="qe-canvas" aria-keyshortcuts="Space">Pause simulation</button>
+            <button id="qe-toggle-tour" class="qe-button" type="button" aria-pressed="true"
+              aria-controls="qe-canvas" aria-keyshortcuts="C">Guided tour</button>
+            <button id="qe-reset-view" class="qe-button" type="button"
+              aria-controls="qe-canvas" aria-keyshortcuts="R">Reset view &amp; tour</button>
+            <button id="qe-toggle-fullscreen" class="qe-button" type="button"
+              aria-controls="qe-app" aria-keyshortcuts="F">Enter fullscreen</button>
+          </div>
+
+          <label class="qe-control-label" for="qe-tour-progress">Tour position</label>
+          <progress id="qe-tour-progress" class="qe-progress" max="1" value="0">0%</progress>
+          <p id="qe-tour-status" class="qe-control-note">Tour awaiting initialization.</p>
+        </fieldset>
+
+        <fieldset id="qe-field-controls" class="qe-control-group" data-qe-runtime-controls disabled>
+          <legend>Projection &amp; light</legend>
+          <div class="qe-slider-control">
+            <label for="qe-phase-speed">Phase speed</label>
+            <input id="qe-phase-speed" name="phase-speed" type="range"
+              min="0" max="2" step="0.01" value="1" aria-describedby="qe-phase-speed-value">
+            <output id="qe-phase-speed-value" for="qe-phase-speed">1.00×</output>
+          </div>
+          <div class="qe-slider-control">
+            <label for="qe-flux-intensity">Flux intensity</label>
+            <input id="qe-flux-intensity" name="flux-intensity" type="range"
+              min="0" max="3" step="0.05" value="1.5" aria-describedby="qe-flux-intensity-value">
+            <output id="qe-flux-intensity-value" for="qe-flux-intensity">1.50×</output>
+          </div>
+          <div class="qe-slider-control">
+            <label for="qe-bloom-strength">Bloom strength</label>
+            <input id="qe-bloom-strength" name="bloom-strength" type="range"
+              min="0" max="3" step="0.05" value="1.25" aria-describedby="qe-bloom-strength-value">
+            <output id="qe-bloom-strength-value" for="qe-bloom-strength">1.25×</output>
+          </div>
+          <div class="qe-select-control">
+            <label for="qe-motion-mode">Motion</label>
+            <select id="qe-motion-mode" name="motion-mode">
+              <option value="full">Full cinematic motion</option>
+              <option value="reduced">Reduced motion</option>
+            </select>
+          </div>
+          <label class="qe-checkbox-control" for="qe-crt-enabled">
+            <input id="qe-crt-enabled" name="crt-enabled" type="checkbox" checked>
+            CRT optics
+          </label>
+        </fieldset>
+
+        <details class="qe-disclosure qe-disclosure--help">
+          <summary>Navigation &amp; keyboard</summary>
+          <p id="qe-navigation-help">
+            Drag to orbit; scroll or pinch to move closer or farther away.
+            Direct camera interaction pauses the guided tour. Activate
+            Guided tour to resume, or Reset view &amp; tour to return to
+            the opening viewpoint.
+          </p>
+          <dl class="qe-shortcut-list">
+            <div><dt><kbd>Space</kbd></dt><dd>Pause or resume the simulation</dd></div>
+            <div><dt><kbd>C</kbd></dt><dd>Toggle the guided camera tour</dd></div>
+            <div><dt><kbd>R</kbd></dt><dd>Reset the view and tour</dd></div>
+            <div><dt><kbd>F</kbd></dt><dd>Toggle fullscreen</dd></div>
+          </dl>
+          <p class="qe-control-note">
+            Keyboard shortcuts apply when the visualization canvas has focus.
+            Reduced motion disables automatic camera travel and scan flashes.
+          </p>
+        </details>
+      </section>
+
+      <footer class="qe-footer">
+        <p>Fermat quintic / six real dimensions / projected cross-section</p>
+        <p class="qe-spectral-key" aria-label="Spectral palette: violet, cobalt, emerald, yellow, orange, red">
+          <span class="qe-spectral-key__bar" aria-hidden="true"></span>
+          Pride spectrum
+        </p>
+      </footer>
+    </div>
+
+    <section id="qe-boot" class="qe-boot" aria-labelledby="qe-boot-title">
+      <div class="qe-boot__card">
+        <p class="qe-overline">QuantumEngine / startup</p>
+        <h2 id="qe-boot-title">Initializing the observer</h2>
+        <p id="qe-boot-message" role="status" aria-live="polite" aria-atomic="true">
+          Preparing dependencies and the graphics pipeline.
+        </p>
+        <progress id="qe-boot-progress" class="qe-progress" max="100" value="0"
+          aria-label="Engine startup progress">0%</progress>
+        <p class="qe-control-note">Controls become available when initialization completes.</p>
+      </div>
+    </section>
+
+    <section id="qe-error" class="qe-notice qe-notice--error" tabindex="-1"
+      role="alert" aria-labelledby="qe-error-title" hidden>
+      <h2 id="qe-error-title">Engine startup interrupted</h2>
+      <p id="qe-error-message"></p>
+      <details class="qe-disclosure">
+        <summary>Diagnostic details</summary>
+        <pre id="qe-error-detail" class="qe-error-detail"></pre>
+      </details>
+      <a class="qe-button" href="./index.html">Reload engine</a>
+    </section>
+  </main>
+
+  <p id="qe-announcement" class="qe-sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+  <!--
+    PUBLIC CONTRACT
+    QuantumEngine.DOM: frozen lookup of the initial document's element IDs.
+    QuantumEngine.Dependencies: frozen vendor-module registry.
+    QuantumEngine.Boot: state getter and fail(error) for fatal engine errors.
+
+    Each project file is an IIFE that only registers its public API under
+    window.QuantumEngine. Importing a project file must not start rendering.
+
+    Every module exposes init() and dispose(). Core also exposes start().
+    Core.init() initializes the other five modules in manifest order.
+    Core.start() owns the single animation loop.
+    Core.dispose() stops the loop and disposes initialized modules in reverse order.
+    dispose() must immediately cancel pending startup, tolerate partial
+    initialization, and be safe on repeated calls. Async init/start work must
+    check cancellation after awaits and release resources created after disposal.
+
+    Telemetry.init() binds the declared UI controls. Runtime modules update
+    measurement fields using actual values and keep accessibility state in sync.
+  -->
+  <script type="module">
+    (async function bootstrapQuantumEngine() {
+      "use strict";
+
+      const dom = Object.freeze(Object.fromEntries(
+        Array.from(document.querySelectorAll("[id]"), function (element) {
+          return [element.id, element];
+        })
+      ));
+      const controls = Array.from(document.querySelectorAll("[data-qe-runtime-controls]"));
+      const manifest = Object.freeze([
+        Object.freeze({ name: "Core", path: "./scripts/QuantumEngine.Core.js" }),
+        Object.freeze({ name: "Manifold", path: "./scripts/QuantumEngine.Manifold.js" }),
+        Object.freeze({ name: "TopologicalFlux", path: "./scripts/QuantumEngine.TopologicalFlux.js" }),
+        Object.freeze({ name: "CRTCompositor", path: "./scripts/QuantumEngine.CRTCompositor.js" }),
+        Object.freeze({ name: "Cinematography", path: "./scripts/QuantumEngine.Cinematography.js" }),
+        Object.freeze({ name: "Telemetry", path: "./scripts/QuantumEngine.Telemetry.js?v=20260916-2" })
+      ]);
+
+      let engine;
+      let state = "loading";
+      let phase = "Checking the browser";
+
+      function log(message, level) {
+        const entry = document.createElement("li");
+        entry.className = "qe-terminal__entry";
+        entry.dataset.level = level || "info";
+        entry.textContent = message;
+        dom["qe-terminal-log"].appendChild(entry);
+        while (dom["qe-terminal-log"].children.length > 120) {
+          dom["qe-terminal-log"].firstElementChild.remove();
+        }
+      }
+
+      function progress(message, value) {
+        phase = message;
+        dom["qe-boot-message"].textContent = message;
+        dom["qe-boot-progress"].value = value;
+        dom["qe-boot-progress"].textContent = String(value) + "%";
+        log(message);
+      }
+
+      async function fail(reason) {
+        if (state === "failed") return;
+        const wasRunning = state === "running";
+        state = "failed";
+        document.documentElement.dataset.engineState = state;
+        const error = reason instanceof Error ? reason : new Error(String(reason));
+        controls.forEach(function (control) { control.disabled = true; });
+        dom["qe-app"].setAttribute("aria-busy", "false");
+        dom["qe-boot"].hidden = true;
+        dom["qe-waypoint"].hidden = true;
+        dom["qe-system-status"].textContent = "Engine interrupted";
+        dom["qe-status-light"].dataset.state = "failed";
+        dom["qe-error-title"].textContent = wasRunning ? "Engine interrupted" : "Engine startup interrupted";
+        dom["qe-error-message"].textContent = error.message;
+        dom["qe-error-detail"].textContent = "Phase: " + phase + "\n\n" + (error.stack || error.message);
+        dom["qe-error"].hidden = false;
+        dom["qe-error"].focus();
+        log(error.message, "error");
+        console.error("[QuantumEngine]", error);
+
+        if (engine && engine.Core && typeof engine.Core.dispose === "function") {
+          try {
+            await engine.Core.dispose();
+          } catch (cleanupError) {
+            console.error("[QuantumEngine] Cleanup failed:", cleanupError);
+            dom["qe-error-detail"].textContent += "\n\nCleanup: " + String(cleanupError);
+          }
+        }
+      }
+
+      async function loadModule(specifier) {
+        let timeoutId;
+        try {
+          return await Promise.race([
+            import(specifier),
+            new Promise(function (resolve, reject) {
+              timeoutId = window.setTimeout(function () {
+                reject(new Error("Module request timed out: " + specifier));
+              }, 30000);
+            })
+          ]);
+        } catch (error) {
+          throw new Error("Could not load " + specifier + ": " +
+            (error instanceof Error ? error.message : String(error)));
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }
+
+      try {
+        if (window.QuantumEngine !== undefined) {
+          throw new Error("window.QuantumEngine already exists. Load the application bootstrap only once.");
+        }
+        engine = window.QuantumEngine = Object.create(null);
+        engine.DOM = dom;
+        engine.Boot = Object.freeze({
+          get state() { return state; },
+          fail: fail
+        });
+
+        window.addEventListener("error", function (event) {
+          if (event instanceof ErrorEvent) {
+            void fail(event.error || new Error(event.message));
+          }
+        });
+        window.addEventListener("unhandledrejection", function (event) {
+          void fail(event.reason);
+        });
+
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        dom["qe-motion-mode"].value = reducedMotion ? "reduced" : "full";
+        document.documentElement.dataset.motion = reducedMotion ? "reduced" : "full";
+
+        if (window.location.protocol !== "http:" && window.location.protocol !== "https:") {
+          throw new Error("Serve this project over HTTP or HTTPS, then open its address in your browser. Local file URLs cannot reliably load the engine modules.");
+        }
+        if (typeof HTMLScriptElement.supports !== "function" ||
+            !HTMLScriptElement.supports("importmap")) {
+          throw new Error("This browser needs native import-map support. Open the project in a current browser.");
+        }
+
+        progress("Loading graphics and equation libraries", 5);
+
+        const libraries = await Promise.all([
+          loadModule("three"),
+          loadModule("three/addons/controls/OrbitControls.js"),
+          loadModule("three/addons/misc/GPUComputationRenderer.js"),
+          loadModule("three/addons/postprocessing/EffectComposer.js"),
+          loadModule("three/addons/postprocessing/RenderPass.js"),
+          loadModule("three/addons/postprocessing/ShaderPass.js"),
+          loadModule("three/addons/postprocessing/UnrealBloomPass.js"),
+          loadModule("three/addons/postprocessing/OutputPass.js"),
+          loadModule("three/addons/postprocessing/Pass.js"),
+          loadModule("katex")
+        ]);
+        if (state === "failed") return;
+
+        engine.Dependencies = Object.freeze({
+          THREE: libraries[0],
+          OrbitControls: libraries[1].OrbitControls,
+          GPUComputationRenderer: libraries[2].GPUComputationRenderer,
+          EffectComposer: libraries[3].EffectComposer,
+          RenderPass: libraries[4].RenderPass,
+          ShaderPass: libraries[5].ShaderPass,
+          UnrealBloomPass: libraries[6].UnrealBloomPass,
+          OutputPass: libraries[7].OutputPass,
+          Pass: libraries[8].Pass,
+          FullScreenQuad: libraries[8].FullScreenQuad,
+          katex: libraries[9].default
+        });
+
+        if (typeof engine.Dependencies.THREE.WebGLRenderer !== "function" ||
+            !engine.Dependencies.katex ||
+            typeof engine.Dependencies.katex.render !== "function") {
+          throw new Error("The graphics or equation library did not expose its required API.");
+        }
+
+        progress("Rendering geometric reference equations", 25);
+        document.querySelectorAll("[data-latex]").forEach(function (element) {
+          engine.Dependencies.katex.render(element.dataset.latex, element, {
+            displayMode: element.dataset.display === "true",
+            output: "htmlAndMathml",
+            throwOnError: true,
+            strict: "error",
+            trust: false
+          });
+        });
+
+        for (let index = 0; index < manifest.length; index += 1) {
+          if (state === "failed") return;
+          const item = manifest[index];
+          progress("Loading " + item.path, 30 + index * 9);
+          await loadModule(item.path);
+          if (state === "failed") return;
+          const api = engine[item.name];
+          if (!api || typeof api.init !== "function" || typeof api.dispose !== "function") {
+            throw new Error(item.path + " must register QuantumEngine." +
+              item.name + " with init() and dispose().");
+          }
+        }
+
+        if (typeof engine.Core.start !== "function") {
+          throw new Error("QuantumEngine.Core.start() is missing.");
+        }
+
+        progress("Initializing the renderer and simulation subsystems", 88);
+        await engine.Core.init();
+        if (state === "failed") return;
+        progress("Starting the frame loop", 96);
+        await engine.Core.start();
+        if (state === "failed") return;
+
+        state = "running";
+        phase = "Runtime";
+        document.documentElement.dataset.engineState = state;
+        dom["qe-app"].setAttribute("aria-busy", "false");
+        dom["qe-status-light"].dataset.state = state;
+        dom["qe-system-status"].textContent = "Engine online";
+        dom["qe-boot-progress"].value = 100;
+        dom["qe-boot-progress"].textContent = "100%";
+        dom["qe-boot"].hidden = true;
+        controls.forEach(function (control) { control.disabled = false; });
+        dom["qe-announcement"].textContent = "Engine ready. Simulation controls are available.";
+        log("All six modules initialized. Engine online.");
+      } catch (error) {
+        await fail(error);
+      }
+    })();
+  </script>
+
+  <script nomodule>
+    (function reportUnsupportedBrowser() {
+      "use strict";
+      document.documentElement.dataset.engineState = "failed";
+      document.getElementById("qe-app").setAttribute("aria-busy", "false");
+      document.getElementById("qe-boot").hidden = true;
+      document.getElementById("qe-system-status").textContent = "Unsupported browser";
+      document.getElementById("qe-status-light").dataset.state = "failed";
+      document.getElementById("qe-error-message").textContent =
+        "This visualization requires a browser with JavaScript modules, import maps, and WebGL 2.";
+      document.getElementById("qe-error").hidden = false;
+    })();
+  </script>
+</body>
+</html>

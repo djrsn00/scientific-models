@@ -1,0 +1,163 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020105">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A cinematic journey backward through cosmic history, from planets and galaxies to the hot primordial universe.">
+
+  <title>Cosmic Time-Evolution: To The Big Bang</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container"></div>
+
+  <aside class="info-panel" id="info-panel" aria-labelledby="scene-title">
+    <header class="panel-header">
+      <p class="eyebrow">COSMIC TIME-EVOLUTION</p>
+      <h1 id="scene-title">To The<br><span>Big Bang</span></h1>
+      <p class="subtitle">A journey toward earlier cosmic time</p>
+      <div class="spectrum-line"></div>
+    </header>
+
+    <section class="current-epoch" aria-label="Current cosmic epoch">
+      <p class="section-label">CURRENT EPOCH</p>
+      <h2 id="epoch-title">Modern cosmos</h2>
+      <p class="epoch-age" id="epoch-age">Age ≈13.8 billion years</p>
+      <p class="epoch-description" id="epoch-description">
+        Planets, mature star clusters, and luminous nebulae.
+      </p>
+    </section>
+
+    <ol class="epoch-timeline" aria-label="Cosmic history in reverse chronological order">
+      <li class="active" data-epoch="0" aria-current="step">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>Modern cosmos</strong>
+          <small>Planets · clusters · nebulae</small>
+        </div>
+      </li>
+      <li data-epoch="1">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>Galaxy assembly</strong>
+          <small>Billions of years of structure formation</small>
+        </div>
+      </li>
+      <li data-epoch="2">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>Cosmic dawn</strong>
+          <small>First stars · roughly 100–200 million years</small>
+        </div>
+      </li>
+      <li data-epoch="3">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>The dark ages</strong>
+          <small>Neutral gas before the first stars</small>
+        </div>
+      </li>
+      <li data-epoch="4">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>Last scattering</strong>
+          <small>≈380,000 years · CMB redshift ≈1,100</small>
+        </div>
+      </li>
+      <li data-epoch="5">
+        <span class="epoch-marker"></span>
+        <div>
+          <strong>Hot primordial universe</strong>
+          <small>First minutes and earlier</small>
+        </div>
+      </li>
+    </ol>
+
+    <section class="mathematics" aria-label="Cosmological relations">
+      <p class="section-label">EXPANSION & REDSHIFT</p>
+
+      <div class="equation">
+        1 + z =
+        <span class="fraction">
+          <span>λ<sub>obs</sub></span>
+          <span>λ<sub>emit</sub></span>
+        </span>
+        =
+        <span class="fraction">
+          <span>a(t<sub>obs</sub>)</span>
+          <span>a(t<sub>emit</sub>)</span>
+        </span>
+      </div>
+
+      <div class="equation temperature">
+        T<sub>CMB</sub>(z) = T<sub>0</sub>(1 + z)
+      </div>
+
+      <p class="math-note">
+        T<sub>0</sub> ≈ 2.725 K · standard adiabatic CMB evolution
+      </p>
+    </section>
+
+    <footer class="panel-footer">
+      <div class="node-readout">
+        <span class="node-light"></span>
+        <span><strong id="node-count">18,700</strong> luminous particle nodes</span>
+      </div>
+
+      <p>
+        A compressed timeline, not a spatial route. The Big Bang occurred
+        everywhere; the luminous core is symbolic. Depth colors illustrate
+        redshift rather than a calculated observed spectrum.
+      </p>
+    </footer>
+  </aside>
+
+  <div class="flight-overlay" id="flight-overlay">
+    <div class="flight-status">
+      <span class="flight-light"></span>
+      <span id="flight-mode">AUTOMATED FLIGHT</span>
+    </div>
+
+    <div
+      class="journey-progress"
+      id="journey-progress"
+      role="progressbar"
+      aria-label="Journey toward earlier cosmic time"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <span id="journey-fill"></span>
+    </div>
+
+    <p class="direction-label">FORWARD FLIGHT / EARLIER COSMIC TIME</p>
+    <p class="control-help">
+      WHEEL / TIME IN FLIGHT · DRAG / ORBIT<br>
+      SPACE / PAUSE · R / RESUME FLIGHT · H / PANEL
+    </p>
+  </div>
+
+  <div class="render-status" id="render-status" role="status">
+    Constructing cosmic history
+  </div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>
