@@ -1,0 +1,196 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020208">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A cinematic conceptual visualization of amplituhedron geometry, scattering amplitudes, and emergent spacetime.">
+
+  <title>The Amplituhedron — Emergent Quantum Spacetime</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="canvas-container"></div>
+
+  <aside class="info-panel" id="info-panel" aria-labelledby="scene-title">
+    <header class="panel-header">
+      <p class="eyebrow">POSITIVE GEOMETRY / SCATTERING THEORY</p>
+      <h1 id="scene-title">The<br><span>Amplituhedron</span></h1>
+      <p class="subtitle">Emergent quantum spacetime</p>
+      <div class="spectrum-rule"></div>
+    </header>
+
+    <section class="panel-section">
+      <h2><span>01</span> The geometric jewel</h2>
+      <p>
+        Positive geometry organizes scattering amplitudes in planar
+        <span class="math-inline">𝒩 = 4</span> super Yang–Mills theory.
+      </p>
+
+      <div class="equation">
+        𝒜<sub>n,k,4</sub>(Z) =
+        {Y = CZ | C ∈ G<sub>+</sub>(k,n)}
+      </div>
+
+      <p class="annotation">
+        Tree geometry · positive bosonized external data
+      </p>
+
+      <div class="legend-row">
+        <span class="legend-dot jewel"></span>
+        <span><strong id="facet-count">—</strong> independently displaced facets</span>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h2><span>02</span> Scattering amplitudes</h2>
+
+      <div class="equation">
+        𝒜<sub>n,k</sub> =
+        𝒜<sub>n</sub><sup>MHV</sup> ℛ<sub>n,k</sub>
+      </div>
+
+      <div class="equation">
+        ℛ<sub>n,k</sub> =
+        ∮<sub>Γ</sub>
+        <span class="fraction">
+          <span>d<sup>k×n</sup>D</span>
+          <span>vol GL(k)</span>
+        </span>
+        <span class="fraction">
+          <span>δ<sup>4k|4k</sup>(D · 𝒵)</span>
+          <span>∏<sub>a=1</sub><sup>n</sup> Δ<sub>a</sub>(D)</span>
+        </span>
+      </div>
+
+      <p class="annotation">
+        Δ<sub>a</sub>: cyclic k × k minors.
+        The tree contour Γ selects the amplitude.
+      </p>
+
+      <div class="legend-row">
+        <span class="legend-dot amber"></span>
+        <span>Internal branching web · schematic tree channels</span>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h2><span>03</span> The S-matrix</h2>
+
+      <div class="equation">
+        S = I + iT
+        <span class="equation-divider">·</span>
+        S<sup>†</sup>S = I
+      </div>
+
+      <div class="timeline">
+        <div>
+          <time>1943</time>
+          <p>Heisenberg develops the S-matrix program.</p>
+        </div>
+        <div>
+          <time>2013</time>
+          <p>Arkani-Hamed and Trnka introduce the amplituhedron.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h2><span>04</span> Locality + unitarity</h2>
+      <p>
+        Locality and unitarity are encoded by the positive geometry.
+        The canonical form Ω has logarithmic boundary poles, with
+        residues encoding factorization.
+      </p>
+      <p class="scope-note">
+        This construction does not demonstrate that locality or unitarity
+        disappears at the Planck scale.
+      </p>
+    </section>
+
+    <section class="panel-section emergence-section">
+      <h2><span>05</span> Coordinate emergence</h2>
+
+      <div class="legend-row">
+        <span class="legend-dot cyan"></span>
+        <span><strong id="particle-count">10,712</strong> particles → Cartesian lattice</span>
+      </div>
+
+      <div class="emergence-readout">
+        <span id="emergence-state">UNSTRUCTURED CLOUD</span>
+        <span id="emergence-percent">0%</span>
+      </div>
+
+      <div
+        class="emergence-meter"
+        id="emergence-meter"
+        role="progressbar"
+        aria-label="Illustrative lattice assembly"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span id="emergence-fill"></span>
+      </div>
+
+      <p class="annotation">
+        Scene coordinates are illustrative and carry no physical length scale.
+      </p>
+    </section>
+
+    <footer class="panel-footer">
+      The jewel and assembling grid are conceptual artwork, not a calculated
+      amplituhedron or a demonstrated mechanism for quantum spacetime.
+    </footer>
+  </aside>
+
+  <nav class="scene-controls" aria-label="Visualization controls">
+    <div class="flight-state">
+      <span class="status-light"></span>
+      <span id="camera-state">CINEMATIC ORBIT</span>
+    </div>
+
+    <div class="control-buttons">
+      <button id="flight-button" type="button" aria-pressed="true">
+        Orbit
+      </button>
+      <button id="pause-button" type="button" aria-pressed="false">
+        Pause
+      </button>
+      <button id="reset-button" type="button">
+        Reset
+      </button>
+      <button
+        id="panel-button"
+        type="button"
+        aria-controls="info-panel"
+        aria-expanded="true"
+      >
+        Panel
+      </button>
+    </div>
+
+    <p>DRAG TO EXPLORE · SCROLL TO ZOOM · SPACE TO PAUSE</p>
+  </nav>
+
+  <div class="loading-state" id="render-status" role="status">
+    <span class="loading-mark"></span>
+    <p>Constructing positive geometry</p>
+  </div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

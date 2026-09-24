@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#02040a">
+
+  <meta
+    name="description"
+    content="Explore hydrogen wavefunctions, probability clouds, nodes, phase, and energy levels in an interactive quantum atlas."
+  >
+
+  <title>
+    Hydrogen Atom Quantum Atlas · Raw Code Visualizing Nature
+  </title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body>
+  <!--
+    Model contract:
+
+    Six real spatial eigenstates:
+    1s, 2s, 2p_z, 3s, 3p_z, 3d_z².
+
+    Every state has m = 0 relative to the fixed +z axis.
+
+    Length unit a_mu uses the electron-proton reduced mass.
+
+    Central states share a physical scale.
+    The camera changes framing between states.
+
+    Atlas thumbnails use individually disclosed display scales.
+
+    Points sample probability, not electron trajectories.
+
+    State fades are presentation effects,
+    not simulated quantum dynamics.
+  -->
+
+  <main
+    id="canvas-container"
+    aria-label="Hydrogen atom quantum atlas"
+    aria-busy="true"
+  ></main>
+
+  <div
+    id="render-notice"
+    role="status"
+    aria-live="polite"
+  >
+    <span class="notice-kicker">
+      QUANTUM ATLAS / INITIALIZING
+    </span>
+
+    <p>Preparing the probability fields…</p>
+
+    <small>
+      If this message remains, check that all three files
+      are together and the Three.js CDN is reachable.
+    </small>
+  </div>
+
+  <noscript>
+    <div class="noscript-notice">
+      This atlas needs JavaScript to generate and display
+      its probability clouds.
+    </div>
+  </noscript>
+
+  <aside
+    id="sidebar-ui"
+    class="instrument-panel"
+    aria-labelledby="atlas-title"
+  >
+    <header class="panel-header">
+      <p class="project-mark">
+        RAW CODE <span>/</span> VISUALIZING NATURE
+      </p>
+
+      <div class="instrument-meta">
+        <span class="dimension-badge">
+          3D QUANTUM STATE
+        </span>
+
+        <span class="instrument-number">
+          ATLAS / H–01
+        </span>
+      </div>
+
+      <h1 id="atlas-title">
+        <span>Hydrogen Atom</span>
+        <strong>Quantum Atlas</strong>
+      </h1>
+
+      <p class="subtitle">
+        Wavefunctions, orbitals, nodes &amp; energy states
+      </p>
+
+      <div class="mode-line">
+        <span
+          class="status-dot"
+          aria-hidden="true"
+        ></span>
+
+        <span id="flight-mode">
+          PREPARING AUTOMATIC DRONE
+        </span>
+      </div>
+
+      <p class="header-note">
+        One electron. Alternative quantum states.
+        Each cloud shows probability, not a path.
+      </p>
+    </header>
+
+    <div
+      id="sidebar-content"
+      class="panel-scroll"
+    >
+      <section
+        class="panel-section"
+        aria-labelledby="state-heading"
+      >
+        <div class="section-heading">
+          <h2 id="state-heading">State selector</h2>
+          <span class="section-index">6 STATES</span>
+        </div>
+
+        <div
+          class="orbital-picker"
+          role="group"
+          aria-label="Choose a hydrogen orbital"
+        >
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="1s"
+            data-engine-control
+            disabled
+            aria-pressed="true"
+            aria-label="1s state, n 1, l 0, m 0"
+          >
+            <span class="orbital-name">1s</span>
+            <span class="orbital-meta">n 1 · ℓ 0 · m 0</span>
+          </button>
+
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="2s"
+            data-engine-control
+            disabled
+            aria-pressed="false"
+            aria-label="2s state, n 2, l 0, m 0"
+          >
+            <span class="orbital-name">2s</span>
+            <span class="orbital-meta">n 2 · ℓ 0 · m 0</span>
+          </button>
+
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="2p"
+            data-engine-control
+            disabled
+            aria-pressed="false"
+            aria-label="2 p z state, n 2, l 1, m 0"
+          >
+            <span class="orbital-name">
+              2p<sub>z</sub>
+            </span>
+
+            <span class="orbital-meta">n 2 · ℓ 1 · m 0</span>
+          </button>
+
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="3s"
+            data-engine-control
+            disabled
+            aria-pressed="false"
+            aria-label="3s state, n 3, l 0, m 0"
+          >
+            <span class="orbital-name">3s</span>
+            <span class="orbital-meta">n 3 · ℓ 0 · m 0</span>
+          </button>
+
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="3p"
+            data-engine-control
+            disabled
+            aria-pressed="false"
+            aria-label="3 p z state, n 3, l 1, m 0"
+          >
+            <span class="orbital-name">
+              3p<sub>z</sub>
+            </span>
+
+            <span class="orbital-meta">n 3 · ℓ 1 · m 0</span>
+          </button>
+
+          <button
+            class="orbital-button"
+            type="button"
+            data-orbital="3d"
+            data-engine-control
+            disabled
+            aria-pressed="false"
+            aria-label="3 d z squared state, n 3, l 2, m 0"
+          >
+            <span class="orbital-name">
+              3d<sub>z²</sub>
+            </span>
+
+            <span class="orbital-meta">n 3 · ℓ 2 · m 0</span>
+          </button>
+        </div>
+
+        <p class="micro-note">
+          Selecting a state pauses the tour and frames that
+          orbital. All six use the +z quantization axis.
+        </p>
+
+        <div
+          class="state-readout"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span>ACTIVE ORBITAL</span>
+          <strong id="active-orbital">Preparing</strong>
+        </div>
+
+        <p
+          id="transition-status"
+          class="transition-status"
+          role="status"
+          hidden
+        >
+          Display change · not quantum time evolution
+        </p>
+
+        <div class="display-controls">
+          <label
+            class="select-control"
+            for="color-mode"
+          >
+            <span>Cloud color</span>
+
+            <select
+              id="color-mode"
+              data-engine-control
+              disabled
+            >
+              <option value="phase">
+                Wavefunction sign
+              </option>
+
+              <option value="density">
+                Density only
+              </option>
+            </select>
+          </label>
+
+          <label
+            class="check-control"
+            for="nodes-toggle"
+          >
+            <input
+              id="nodes-toggle"
+              type="checkbox"
+              checked
+              data-engine-control
+              disabled
+            >
+
+            <span>Show node guides</span>
+
+            <span
+              class="tiny-swatch gold"
+              aria-hidden="true"
+            ></span>
+          </label>
+        </div>
+      </section>
+
+      <section
+        class="panel-section"
+        aria-labelledby="telemetry-heading"
+      >
+        <div class="section-heading">
+          <h2 id="telemetry-heading">State telemetry</h2>
+          <span class="section-tag">REFERENCE SCALES</span>
+        </div>
+
+        <dl class="quantum-numbers">
+          <div>
+            <dt>n <span>principal</span></dt>
+            <dd id="n-value">—</dd>
+          </div>
+
+          <div>
+            <dt>ℓ <span>orbital</span></dt>
+            <dd id="l-value">—</dd>
+          </div>
+
+          <div>
+            <dt>m <span>magnetic</span></dt>
+            <dd id="m-value">—</dd>
+          </div>
+        </dl>
+
+        <dl class="telemetry-grid">
+          <div>
+            <dt>Energy Eₙ <span>eV</span></dt>
+            <dd id="energy-value">—</dd>
+          </div>
+
+          <div>
+            <dt>Whole-space norm</dt>
+            <dd id="normalization-value">—</dd>
+          </div>
+
+          <div>
+            <dt>Radial nodes</dt>
+            <dd id="radial-nodes-value">—</dd>
+          </div>
+
+          <div>
+            <dt>Angular nodes</dt>
+            <dd id="angular-nodes-value">—</dd>
+          </div>
+
+          <div>
+            <dt>Shown probability</dt>
+            <dd id="captured-value">—</dd>
+          </div>
+
+          <div>
+            <dt>
+              Cutoff r<sub>max</sub> / a<sub>μ</sub>
+            </dt>
+
+            <dd id="cutoff-value">—</dd>
+          </div>
+        </dl>
+
+        <p class="micro-note">
+          Energy uses the rounded Coulomb model,
+          Eₙ ≈ −13.6/n² eV. The finite cloud omits
+          a small probability tail.
+        </p>
+
+        <div class="probe-box">
+          <div class="probe-heading">
+            <span
+              class="probe-icon"
+              aria-hidden="true"
+            ></span>
+
+            <span id="probe-status">
+              PROBE / PREPARING
+            </span>
+          </div>
+
+          <dl class="probe-values">
+            <div>
+              <dt>
+                Local density ρa<sub>μ</sub>³
+              </dt>
+
+              <dd id="density-value">—</dd>
+            </div>
+
+            <div>
+              <dt>Reference phase</dt>
+              <dd id="phase-value">—</dd>
+            </div>
+          </dl>
+
+          <p
+            id="probe-position-value"
+            class="probe-position"
+          >
+            Position / —
+          </p>
+
+          <p class="micro-note">
+            The cyan marker identifies the sampled location.
+            Phase is undefined at a node.
+          </p>
+        </div>
+      </section>
+
+      <section
+        class="panel-section"
+        aria-labelledby="radial-heading"
+      >
+        <div class="section-heading">
+          <h2 id="radial-heading">
+            Read the radial structure
+          </h2>
+
+          <span class="section-tag">R × Y</span>
+        </div>
+
+        <figure
+          class="radial-figure"
+          data-inspection-ui
+        >
+          <svg
+            id="radial-chart"
+            viewBox="0 0 300 156"
+            role="img"
+            aria-labelledby="radial-chart-title radial-chart-desc"
+          >
+            <title id="radial-chart-title">
+              Radial wavefunction and radial probability
+            </title>
+
+            <desc id="radial-chart-desc">
+              The upper plot shows the signed radial factor.
+              The lower plot shows radial probability.
+              Curves appear when the model is ready.
+            </desc>
+
+            <g class="chart-grid" fill="none">
+              <path
+                d="M34 12V134H284 M34 42H284 M34 78H284 M34 104H284"
+              ></path>
+            </g>
+
+            <g
+              id="radial-node-markers"
+              class="chart-nodes"
+            ></g>
+
+            <path
+              id="radial-amplitude-path"
+              class="chart-amplitude"
+              d=""
+            ></path>
+
+            <path
+              id="radial-probability-path"
+              class="chart-probability"
+              d=""
+            ></path>
+
+            <g class="chart-labels">
+              <text x="8" y="29">R</text>
+              <text x="8" y="102">P</text>
+              <text x="31" y="150">0</text>
+              <text x="147" y="150">r / aμ</text>
+
+              <text
+                id="radial-axis-max"
+                x="283"
+                y="150"
+                text-anchor="end"
+              >—</text>
+            </g>
+          </svg>
+
+          <figcaption>
+            Separate vertical scales. The lower curve is
+            <span class="nowrap">P(r) = r²|Rₙℓ(r)|²</span>,
+            the probability per unit radial distance.
+          </figcaption>
+        </figure>
+
+        <p
+          id="node-description"
+          class="node-description"
+        >
+          Node geometry will follow the selected state.
+        </p>
+      </section>
+
+      <section
+        class="panel-section"
+        aria-labelledby="journey-heading"
+      >
+        <div class="section-heading">
+          <h2 id="journey-heading">Guided inspection</h2>
+          <span class="section-tag">11 CHAPTERS</span>
+        </div>
+
+        <ol
+          id="journey-stages"
+          class="journey-stages"
+        >
+          <li
+            data-stage="ground"
+            class="is-active"
+            aria-current="step"
+          >
+            <span>01</span> Ground state
+          </li>
+
+          <li data-stage="radial">
+            <span>02</span> Radial structure
+          </li>
+
+          <li data-stage="angular">
+            <span>03</span> Angular structure
+          </li>
+
+          <li data-stage="phase">
+            <span>04</span> Wavefunction phase
+          </li>
+
+          <li data-stage="three-s">
+            <span>05</span> 3s / radial shells
+          </li>
+
+          <li data-stage="three-p">
+            <span>06</span> 3p / combined nodes
+          </li>
+
+          <li data-stage="three-d">
+            <span>07</span> 3d / conical nodes
+          </li>
+
+          <li data-stage="atlas">
+            <span>08</span> Orbital comparison
+          </li>
+
+          <li data-stage="energy">
+            <span>09</span> Energy ladder
+          </li>
+
+          <li data-stage="photon">
+            <span>10</span> Photon transition
+          </li>
+
+          <li data-stage="overview">
+            <span>11</span> Full quantum atlas
+          </li>
+        </ol>
+      </section>
+
+      <section
+        class="panel-section equations-section"
+        aria-labelledby="equations-heading"
+      >
+        <div class="section-heading">
+          <h2 id="equations-heading">
+            Equations &amp; interpretation
+          </h2>
+
+          <span class="section-tag">INSPECT</span>
+        </div>
+
+        <details open data-inspection-ui>
+          <summary>One spatial wavefunction</summary>
+
+          <div class="disclosure-body">
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="Psi n l m equals R n l of r times Y l m of theta phi"
+              >
+                <msub>
+                  <mi>ψ</mi>
+                  <mrow>
+                    <mi>n</mi>
+                    <mi>ℓ</mi>
+                    <mi>m</mi>
+                  </mrow>
+                </msub>
+
+                <mo>=</mo>
+
+                <msub>
+                  <mi>R</mi>
+                  <mrow>
+                    <mi>n</mi>
+                    <mi>ℓ</mi>
+                  </mrow>
+                </msub>
+
+                <mo>(</mo>
+                <mi>r</mi>
+                <mo>)</mo>
+
+                <msubsup>
+                  <mi>Y</mi>
+                  <mi>ℓ</mi>
+                  <mi>m</mi>
+                </msubsup>
+
+                <mo>(</mo>
+                <mi>θ</mi>
+                <mo>,</mo>
+                <mi>φ</mi>
+                <mo>)</mo>
+              </math>
+            </div>
+
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="Rho equals absolute psi squared; the integral of rho over space equals one"
+              >
+                <mi>ρ</mi>
+                <mo>=</mo>
+
+                <msup>
+                  <mrow>
+                    <mo>|</mo>
+                    <mi>ψ</mi>
+                    <mo>|</mo>
+                  </mrow>
+                  <mn>2</mn>
+                </msup>
+
+                <mo>,</mo>
+                <mspace width="0.6em"/>
+
+                <mo>∫</mo>
+                <mi>ρ</mi>
+
+                <msup>
+                  <mi mathvariant="normal">d</mi>
+                  <mn>3</mn>
+                </msup>
+
+                <mi>r</mi>
+                <mo>=</mo>
+                <mn>1</mn>
+              </math>
+            </div>
+
+            <p>
+              R sets the radial structure; Y sets the angular
+              structure. The cloud samples their full probability
+              density. Each dot is a sample of the distribution
+              of one electron.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>
+            Quantum numbers &amp; angular momentum
+          </summary>
+
+          <div class="disclosure-body">
+            <p>
+              <strong>n = 1, 2, …</strong> sets the principal
+              energy level. <strong>ℓ = 0, …, n − 1</strong>
+              labels orbital angular momentum.
+              <strong>m = −ℓ, …, +ℓ</strong> labels its
+              z component.
+            </p>
+
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="L squared has eigenvalue l times l plus one hbar squared; L z has eigenvalue m hbar"
+              >
+                <msup>
+                  <mi>L</mi>
+                  <mn>2</mn>
+                </msup>
+
+                <mo>:</mo>
+                <mi>ℓ</mi>
+                <mo>(</mo>
+                <mi>ℓ</mi>
+                <mo>+</mo>
+                <mn>1</mn>
+                <mo>)</mo>
+
+                <msup>
+                  <mi>ℏ</mi>
+                  <mn>2</mn>
+                </msup>
+
+                <mo>,</mo>
+                <mspace width="0.6em"/>
+
+                <msub>
+                  <mi>L</mi>
+                  <mi>z</mi>
+                </msub>
+
+                <mo>:</mo>
+                <mi>m</mi>
+                <mi>ℏ</mi>
+              </math>
+            </div>
+
+            <p>
+              This atlas selects m = 0. That means
+              L<sub>z</sub> = 0, not zero total orbital angular
+              momentum for p and d states. Electron spin
+              s = ½ is separate from these spatial wavefunctions.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>Radial and angular nodes</summary>
+
+          <div class="disclosure-body">
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="Radial nodes equal n minus l minus one; angular nodes equal l for these selected real states"
+              >
+                <msub>
+                  <mi>N</mi>
+                  <mtext>radial</mtext>
+                </msub>
+
+                <mo>=</mo>
+                <mi>n</mi>
+                <mo>−</mo>
+                <mi>ℓ</mi>
+                <mo>−</mo>
+                <mn>1</mn>
+
+                <mo>,</mo>
+                <mspace width="0.6em"/>
+
+                <msub>
+                  <mi>N</mi>
+                  <mtext>angular</mtext>
+                </msub>
+
+                <mo>=</mo>
+                <mi>ℓ</mi>
+              </math>
+            </div>
+
+            <p>
+              A node is a zero of the wavefunction. The gold
+              surfaces locate nodes of the selected real m = 0
+              states; they are guides, not material shells.
+            </p>
+
+            <table class="node-table">
+              <caption>
+                Node locations, u = r/a<sub>μ</sub>
+              </caption>
+
+              <thead>
+                <tr>
+                  <th scope="col">State</th>
+                  <th scope="col">Radial</th>
+                  <th scope="col">Angular</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <th scope="row">1s</th>
+                  <td>None</td>
+                  <td>None</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">2s</th>
+                  <td>u = 2</td>
+                  <td>None</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">2p<sub>z</sub></th>
+                  <td>None</td>
+                  <td>z = 0</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">3s</th>
+                  <td>u ≈ 1.902, 7.098</td>
+                  <td>None</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">3p<sub>z</sub></th>
+                  <td>u = 6</td>
+                  <td>z = 0</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">3d<sub>z²</sub></th>
+                  <td>None</td>
+                  <td>Two conical sheets</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p>
+              The 3s radii are exactly (9 ± 3√3)/2.
+              Zeros at the origin for ℓ &gt; 0 are not
+              counted as radial nodes.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>
+            Sign, phase &amp; a stationary density
+          </summary>
+
+          <div class="disclosure-body">
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="Psi of r t equals psi of r times exponential of minus i E n t over hbar"
+              >
+                <mi>Ψ</mi>
+                <mo>(</mo>
+                <mi mathvariant="bold">r</mi>
+                <mo>,</mo>
+                <mi>t</mi>
+                <mo>)</mo>
+
+                <mo>=</mo>
+
+                <mi>ψ</mi>
+                <mo>(</mo>
+                <mi mathvariant="bold">r</mi>
+                <mo>)</mo>
+
+                <msup>
+                  <mi mathvariant="normal">e</mi>
+
+                  <mrow>
+                    <mo>−</mo>
+                    <mi>i</mi>
+
+                    <msub>
+                      <mi>E</mi>
+                      <mi>n</mi>
+                    </msub>
+
+                    <mi>t</mi>
+                    <mo>/</mo>
+                    <mi>ℏ</mi>
+                  </mrow>
+                </msup>
+              </math>
+            </div>
+
+            <p>
+              The time factor changes a common phase, leaving
+              |Ψ|² unchanged. For these real states, cyan and
+              magenta show opposite signs at one chosen phase
+              reference: 0 and π.
+            </p>
+
+            <p>
+              Opposite colors do not mean opposite charge.
+              A common sign reversal changes neither density
+              nor the relative π phase between regions.
+              Display fades do not simulate a physical transition.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>Coulomb model &amp; length scale</summary>
+
+          <div class="disclosure-body">
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="The Coulomb Hamiltonian acting on psi equals E psi"
+              >
+                <mrow>
+                  <mo>[</mo>
+                  <mo>−</mo>
+
+                  <mfrac>
+                    <msup>
+                      <mi>ℏ</mi>
+                      <mn>2</mn>
+                    </msup>
+
+                    <mrow>
+                      <mn>2</mn>
+                      <mi>μ</mi>
+                    </mrow>
+                  </mfrac>
+
+                  <msup>
+                    <mo>∇</mo>
+                    <mn>2</mn>
+                  </msup>
+
+                  <mo>−</mo>
+
+                  <mfrac>
+                    <msup>
+                      <mi>e</mi>
+                      <mn>2</mn>
+                    </msup>
+
+                    <mrow>
+                      <mn>4</mn>
+                      <mi>π</mi>
+
+                      <msub>
+                        <mi>ε</mi>
+                        <mn>0</mn>
+                      </msub>
+
+                      <mi>r</mi>
+                    </mrow>
+                  </mfrac>
+
+                  <mo>]</mo>
+                </mrow>
+
+                <mi>ψ</mi>
+                <mo>=</mo>
+                <mi>E</mi>
+                <mi>ψ</mi>
+              </math>
+            </div>
+
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="a mu equals four pi epsilon zero hbar squared over mu e squared"
+              >
+                <msub>
+                  <mi>a</mi>
+                  <mi>μ</mi>
+                </msub>
+
+                <mo>=</mo>
+
+                <mfrac>
+                  <mrow>
+                    <mn>4</mn>
+                    <mi>π</mi>
+
+                    <msub>
+                      <mi>ε</mi>
+                      <mn>0</mn>
+                    </msub>
+
+                    <msup>
+                      <mi>ℏ</mi>
+                      <mn>2</mn>
+                    </msup>
+                  </mrow>
+
+                  <mrow>
+                    <mi>μ</mi>
+
+                    <msup>
+                      <mi>e</mi>
+                      <mn>2</mn>
+                    </msup>
+                  </mrow>
+                </mfrac>
+              </math>
+            </div>
+
+            <p>
+              μ = m<sub>e</sub>m<sub>p</sub>/
+              (m<sub>e</sub> + m<sub>p</sub>) is the reduced
+              mass. Here a<sub>μ</sub> ≈ 0.05295 nm; the
+              conventional Bohr radius a₀ uses m<sub>e</sub>
+              instead of μ.
+            </p>
+
+            <p>
+              Coordinates describe electron–proton separation.
+              The central proton marker is enlarged for visibility.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>
+            Energy levels &amp; one allowed transition
+          </summary>
+
+          <div class="disclosure-body">
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="E n approximately equals minus 13.6 electron volts divided by n squared"
+              >
+                <msub>
+                  <mi>E</mi>
+                  <mi>n</mi>
+                </msub>
+
+                <mo>≈</mo>
+                <mo>−</mo>
+
+                <mfrac>
+                  <mrow>
+                    <mn>13.6</mn>
+                    <mtext> eV</mtext>
+                  </mrow>
+
+                  <msup>
+                    <mi>n</mi>
+                    <mn>2</mn>
+                  </msup>
+                </mfrac>
+              </math>
+            </div>
+
+            <div class="formula">
+              <math
+                display="block"
+                aria-label="Emitted photon energy equals initial energy minus final energy equals h nu equals h c over lambda"
+              >
+                <msub>
+                  <mi>E</mi>
+                  <mi>i</mi>
+                </msub>
+
+                <mo>−</mo>
+
+                <msub>
+                  <mi>E</mi>
+                  <mi>f</mi>
+                </msub>
+
+                <mo>=</mo>
+                <mi>h</mi>
+                <mi>ν</mi>
+                <mo>=</mo>
+
+                <mfrac>
+                  <mrow>
+                    <mi>h</mi>
+                    <mi>c</mi>
+                  </mrow>
+
+                  <mi>λ</mi>
+                </mfrac>
+              </math>
+            </div>
+
+            <p>
+              The photon exhibit uses
+              <strong>2p, m = 0 → 1s, m = 0</strong>:
+              an allowed electric-dipole transition with
+              Δℓ = −1 and Δm = 0. Its approximate energy
+              is 10.2 eV and wavelength 121.6 nm.
+            </p>
+
+            <p>
+              The energy arrow and photon glyph are schematic.
+              They do not trace an electron moving between clouds.
+            </p>
+          </div>
+        </details>
+
+        <details data-inspection-ui>
+          <summary>What this atlas represents</summary>
+
+          <div class="disclosure-body">
+            <p>
+              Analytic, nonrelativistic spatial eigenstates
+              of isolated hydrogen. Fine structure, Lamb shifts,
+              hyperfine structure, external fields, and radiative
+              dynamics are omitted.
+            </p>
+
+            <p>
+              Point concentration represents probability.
+              Brightness and bloom aid visibility. The analytic
+              state is normalized over all space; the finite
+              sampling window and its captured probability
+              are reported separately.
+            </p>
+
+            <p>
+              The main orbital keeps a common physical length
+              scale while the camera changes framing. Comparison
+              thumbnails are individually fitted and display
+              their physical cutoff radii.
+            </p>
+
+            <div class="source-links">
+              <a
+                href="https://ocw.mit.edu/courses/5-111sc-principles-of-chemical-science-fall-2014/pages/unit-i-the-atom/lecture-6-hydrogen-atom-wavefunctions-orbitals/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                MIT / hydrogen wavefunctions ↗
+              </a>
+
+              <a
+                href="https://www.physics.nist.gov/PhysRefData/Handbook/Tables/hydrogentable5_a.htm"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                NIST / measured hydrogen levels ↗
+              </a>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section
+        class="panel-section controls-reference"
+        aria-label="Navigation help"
+      >
+        <p>
+          <span>Drag</span> orbit
+          <span>Scroll / pinch</span> zoom
+        </p>
+
+        <p>
+          <span>Right drag</span> pan
+          <kbd>Space</kbd> pause
+          <kbd>R</kbd> drone
+          <kbd>H</kbd> HUD
+        </p>
+
+        <p class="micro-note">
+          Open a reading panel to pause for inspection.
+          Resume Drone returns smoothly to the tour.
+        </p>
+      </section>
+    </div>
+
+    <footer class="panel-footer">
+      <div class="progress-caption">
+        <span>GUIDED FLIGHT</span>
+        <span id="tour-time">— / —</span>
+      </div>
+
+      <div
+        id="journey-progress"
+        class="journey-progress"
+        role="progressbar"
+        aria-label="Guided tour progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <div id="flight-progress"></div>
+      </div>
+
+      <div class="footer-signature">
+        <span>H / ONE-ELECTRON ATLAS</span>
+        <span>RCVN</span>
+      </div>
+    </footer>
+  </aside>
+
+  <nav
+    id="flight-controls"
+    class="flight-controls"
+    aria-label="Scene controls"
+  >
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="sidebar-ui scene-caption reference-legend"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+      data-engine-control
+      disabled
+    >
+      Hide HUD
+    </button>
+
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space"
+      data-engine-control
+      disabled
+    >
+      Pause
+    </button>
+
+    <button
+      id="resume-flight"
+      type="button"
+      aria-keyshortcuts="R"
+      data-engine-control
+      disabled
+    >
+      Resume Drone
+    </button>
+  </nav>
+
+  <section
+    id="scene-caption"
+    class="scene-caption"
+    aria-label="Current tour chapter"
+  >
+    <p
+      id="chapter-value"
+      class="chapter-value"
+    >
+      01 / GROUND STATE
+    </p>
+
+    <h2 id="scene-title">
+      An orbital is a probability distribution.
+    </h2>
+
+    <p id="scene-description">
+      Begin with 1s: one spherically symmetric spatial state.
+      The electron is not following a hidden planetary orbit.
+    </p>
+  </section>
+
+  <aside
+    id="reference-legend"
+    class="reference-legend"
+    aria-label="Visual interpretation"
+  >
+    <h2>Read the field</h2>
+
+    <div id="phase-legend">
+      <div class="legend-row">
+        <span
+          class="legend-dot cyan"
+          aria-hidden="true"
+        ></span>
+
+        <span>
+          ψ &gt; 0 <small>phase 0</small>
+        </span>
+      </div>
+
+      <div class="legend-row">
+        <span
+          class="legend-dot magenta"
+          aria-hidden="true"
+        ></span>
+
+        <span>
+          ψ &lt; 0 <small>phase π</small>
+        </span>
+      </div>
+
+      <p>
+        Signs at a chosen global phase.<br>
+        Both regions describe the same electron.
+      </p>
+    </div>
+
+    <div id="density-legend" hidden>
+      <div class="legend-row">
+        <span
+          class="legend-dot blue"
+          aria-hidden="true"
+        ></span>
+
+        <span>Probability samples</span>
+      </div>
+
+      <p>
+        Concentration follows |ψ|².<br>
+        Sign information is hidden.
+      </p>
+    </div>
+
+    <div class="legend-divider"></div>
+
+    <div class="legend-row">
+      <span
+        class="legend-line gold"
+        aria-hidden="true"
+      ></span>
+
+      <span>
+        Node guides <small>ρ = 0</small>
+      </span>
+    </div>
+
+    <div class="legend-row">
+      <span
+        class="legend-diamond"
+        aria-hidden="true"
+      ></span>
+
+      <span>Local field probe</span>
+    </div>
+
+    <p class="legend-scale">
+      Main: common length scale.<br>
+      Atlas: individual display scales.
+    </p>
+  </aside>
+
+  <template id="density-label-template">
+    <article
+      class="world-card world-card--cyan"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        01 / PROBABILITY FIELD
+      </p>
+
+      <h2>1s · the ground state</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Psi one zero zero equals exponential of minus r over a mu divided by square root of pi a mu cubed"
+        >
+          <msub>
+            <mi>ψ</mi>
+            <mn>100</mn>
+          </msub>
+
+          <mo>=</mo>
+
+          <mfrac>
+            <msup>
+              <mi mathvariant="normal">e</mi>
+
+              <mrow>
+                <mo>−</mo>
+                <mi>r</mi>
+                <mo>/</mo>
+
+                <msub>
+                  <mi>a</mi>
+                  <mi>μ</mi>
+                </msub>
+              </mrow>
+            </msup>
+
+            <msqrt>
+              <mrow>
+                <mi>π</mi>
+
+                <msubsup>
+                  <mi>a</mi>
+                  <mi>μ</mi>
+                  <mn>3</mn>
+                </msubsup>
+              </mrow>
+            </msqrt>
+          </mfrac>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A spherically symmetric probability amplitude with
+        no radial or angular nodes. More samples appear
+        where |ψ|² is larger.
+      </p>
+
+      <p class="card-footnote">
+        The dots sample one electron’s possible position.
+        They are not separate electrons.
+      </p>
+    </article>
+  </template>
+
+  <template id="separation-label-template">
+    <article
+      class="world-card world-card--blue"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        STRUCTURE / RADIAL × ANGULAR
+      </p>
+
+      <h2>Two factors, one state</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Psi n l zero equals R n l times Y l zero"
+        >
+          <msub>
+            <mi>ψ</mi>
+
+            <mrow>
+              <mi>n</mi>
+              <mi>ℓ</mi>
+              <mn>0</mn>
+            </mrow>
+          </msub>
+
+          <mo>=</mo>
+
+          <msub>
+            <mi>R</mi>
+
+            <mrow>
+              <mi>n</mi>
+              <mi>ℓ</mi>
+            </mrow>
+          </msub>
+
+          <mo>(</mo>
+          <mi>r</mi>
+          <mo>)</mo>
+
+          <msubsup>
+            <mi>Y</mi>
+            <mi>ℓ</mi>
+            <mn>0</mn>
+          </msubsup>
+
+          <mo>(</mo>
+          <mi>θ</mi>
+          <mo>,</mo>
+          <mi>φ</mi>
+          <mo>)</mo>
+        </math>
+      </div>
+
+      <p class="card-description">
+        The radial factor sets shells and radial sign changes.
+        The angular factor sets directional structure.
+        Their product determines the full cloud.
+      </p>
+
+      <p class="card-footnote">
+        The sidebar plots R(r) and P(r) = r²|R(r)|²
+        on separate vertical scales.
+      </p>
+    </article>
+  </template>
+
+  <template id="radial-label-template">
+    <article
+      class="world-card world-card--gold"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        NODE / RADIAL ZERO
+      </p>
+
+      <h2>Spherical gaps in probability</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="The number of radial nodes equals n minus l minus one"
+        >
+          <msub>
+            <mi>N</mi>
+            <mtext>radial</mtext>
+          </msub>
+
+          <mo>=</mo>
+          <mi>n</mi>
+          <mo>−</mo>
+          <mi>ℓ</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+        </math>
+      </div>
+
+      <p
+        class="card-readout"
+        data-slot="radial-radii"
+      >
+        2s / r = 2aμ
+      </p>
+
+      <p class="card-description">
+        At these radii, R vanishes for every direction.
+        The wavefunction changes sign across each radial node.
+      </p>
+
+      <p class="card-footnote">
+        Gold surfaces mark zeros of the wavefunction;
+        they are not solid shells or electron paths.
+      </p>
+    </article>
+  </template>
+
+  <template id="angular-label-template">
+    <article
+      class="world-card world-card--violet"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        NODE / ANGULAR ZERO
+      </p>
+
+      <h2>The p<sub>z</sub> nodal plane</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Y one zero is proportional to cosine theta and vanishes at z equals zero"
+        >
+          <msubsup>
+            <mi>Y</mi>
+            <mn>1</mn>
+            <mn>0</mn>
+          </msubsup>
+
+          <mo>∝</mo>
+          <mi mathvariant="normal">cos</mi>
+          <mi>θ</mi>
+
+          <mo>,</mo>
+          <mspace width="0.5em"/>
+
+          <mi>z</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+          <mo>⇒</mo>
+          <mi>ψ</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+        </math>
+      </div>
+
+      <p class="card-description">
+        The two lobes lie on opposite sides of the xy plane.
+        The angular factor changes sign across that plane.
+      </p>
+
+      <p class="card-footnote">
+        These p states have ℓ = 1 and m = 0 relative to +z.
+        Lz = 0 does not mean L² = 0.
+      </p>
+    </article>
+  </template>
+
+  <template id="phase-label-template">
+    <article
+      class="world-card world-card--magenta"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        PHASE / RELATIVE SIGN
+      </p>
+
+      <h2>Opposite phase, same charge</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Absolute psi squared equals absolute minus psi squared"
+        >
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <mi>ψ</mi>
+              <mo>|</mo>
+            </mrow>
+
+            <mn>2</mn>
+          </msup>
+
+          <mo>=</mo>
+
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <mo>−</mo>
+              <mi>ψ</mi>
+              <mo>|</mo>
+            </mrow>
+
+            <mn>2</mn>
+          </msup>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Cyan and magenta encode signs of a real wavefunction
+        at one phase reference. Opposite signs correspond
+        to a relative phase of π.
+      </p>
+
+      <p class="card-footnote">
+        Probability density is nonnegative. Both colors
+        describe an electron with charge −e; neither
+        color is positive charge.
+      </p>
+    </article>
+  </template>
+
+  <template id="d-label-template">
+    <article
+      class="world-card world-card--violet"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        3d z² / n 3 · ℓ 2 · m 0
+      </p>
+
+      <h2>Two conical nodal sheets</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="The angular nodes satisfy three cosine squared theta minus one equals zero"
+        >
+          <mn>3</mn>
+
+          <msup>
+            <mrow>
+              <mi mathvariant="normal">cos</mi>
+              <mi>θ</mi>
+            </mrow>
+
+            <mn>2</mn>
+          </msup>
+
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo>=</mo>
+          <mn>0</mn>
+        </math>
+      </div>
+
+      <p class="card-readout">
+        θ ≈ 54.736° and 125.264°
+      </p>
+
+      <p class="card-description">
+        Axial probability regions and an equatorial belt
+        carry opposite signs. The two gold cones separate them.
+      </p>
+
+      <p class="card-footnote">
+        This is one specific d eigenstate. Its equatorial
+        belt is probability structure, not a circular orbit.
+      </p>
+    </article>
+  </template>
+
+  <template id="nucleus-label-template">
+    <article
+      class="world-card world-card--gold"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        ORIGIN / NUCLEAR REFERENCE
+      </p>
+
+      <h2>One proton</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="The proton charge is plus e"
+        >
+          <msub>
+            <mi>q</mi>
+            <mi>p</mi>
+          </msub>
+
+          <mo>=</mo>
+          <mo>+</mo>
+          <mi>e</mi>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Ordinary hydrogen contains one proton and one
+        electron. The probability cloud describes their
+        relative separation.
+      </p>
+
+      <p class="card-footnote">
+        <strong>NOT TO SCALE.</strong>
+        The proton marker is enlarged for orientation;
+        the nucleus is much smaller than the atomic
+        probability distribution.
+      </p>
+    </article>
+  </template>
+
+  <template id="orbital-label-template">
+    <article
+      class="world-card world-card--blue"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        ATLAS / ALTERNATIVE ONE-ELECTRON STATE
+      </p>
+
+      <h2 data-slot="orbital-name">1s</h2>
+
+      <p
+        class="card-readout"
+        data-slot="quantum-numbers"
+      >
+        n = 1 · ℓ = 0 · m = 0
+      </p>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="The spatial wavefunction is a radial factor times a spherical harmonic"
+        >
+          <mi>ψ</mi>
+          <mo>=</mo>
+
+          <msub>
+            <mi>R</mi>
+
+            <mrow>
+              <mn data-slot="equation-n">1</mn>
+              <mn data-slot="equation-l">0</mn>
+            </mrow>
+          </msub>
+
+          <msubsup>
+            <mi>Y</mi>
+            <mn data-slot="harmonic-l">0</mn>
+            <mn>0</mn>
+          </msubsup>
+        </math>
+      </div>
+
+      <p
+        class="card-description"
+        data-slot="orbital-description"
+      >
+        Spherical ground state.
+        No radial or angular nodes.
+      </p>
+
+      <p
+        class="card-readout"
+        data-slot="node-counts"
+      >
+        Radial 0 / angular 0
+      </p>
+
+      <p class="card-footnote">
+        <span data-slot="display-scale">
+          Physical cutoff: preparing.
+        </span>
+
+        Individually fitted display.
+        Compare shape here, not apparent size.
+      </p>
+    </article>
+  </template>
+
+  <template id="energy-label-template">
+    <article
+      class="world-card world-card--gold"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        SPECTRUM / COULOMB ENERGY LEVELS
+      </p>
+
+      <h2>One energy scale, many shapes</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="E n approximately equals minus 13.6 electron volts divided by n squared"
+        >
+          <msub>
+            <mi>E</mi>
+            <mi>n</mi>
+          </msub>
+
+          <mo>≈</mo>
+          <mo>−</mo>
+
+          <mfrac>
+            <mrow>
+              <mn>13.6</mn>
+              <mtext> eV</mtext>
+            </mrow>
+
+            <msup>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msup>
+          </mfrac>
+        </math>
+      </div>
+
+      <p class="card-description">
+        In this Coulomb model, states with the same n
+        share an energy. The ladder shows n = 1 through 4
+        and approaches the ionization limit E = 0.
+      </p>
+
+      <p class="card-footnote">
+        Fine structure, Lamb shifts, and hyperfine structure
+        are omitted. Measured hydrogen levels contain these
+        smaller splittings.
+      </p>
+    </article>
+  </template>
+
+  <template id="photon-label-template">
+    <article
+      class="world-card world-card--magenta"
+      tabindex="-1"
+    >
+      <span
+        class="coordinate-tick"
+        aria-hidden="true"
+      ></span>
+
+      <p class="card-eyebrow">
+        EMISSION / ALLOWED E1 EXAMPLE
+      </p>
+
+      <h2>2p → 1s</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Initial energy minus final energy equals h nu equals h c over lambda"
+        >
+          <msub>
+            <mi>E</mi>
+            <mi>i</mi>
+          </msub>
+
+          <mo>−</mo>
+
+          <msub>
+            <mi>E</mi>
+            <mi>f</mi>
+          </msub>
+
+          <mo>=</mo>
+          <mi>h</mi>
+          <mi>ν</mi>
+          <mo>=</mo>
+
+          <mfrac>
+            <mrow>
+              <mi>h</mi>
+              <mi>c</mi>
+            </mrow>
+
+            <mi>λ</mi>
+          </mfrac>
+        </math>
+      </div>
+
+      <p class="card-readout">
+        ΔE ≈ 10.2 eV · λ ≈ 121.6 nm
+      </p>
+
+      <p class="card-description">
+        For m = 0 → 0, this example has Δℓ = −1
+        and Δm = 0. The photon carries the released energy.
+      </p>
+
+      <p class="card-footnote">
+        The photon glyph, its wavelength on screen,
+        and its motion are schematic. The arrow shows
+        an energy change, not an electron trajectory.
+      </p>
+    </article>
+  </template>
+</body>
+</html>

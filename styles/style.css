@@ -1,0 +1,1696 @@
+/* =========================================================
+   MIKE MATHISON // SCIENTIFIC MODELS
+   ========================================================= */
+
+
+:root {
+
+    --matrix-green: #00ff66;
+
+    --matrix-green-soft: #88ffb1;
+
+    --matrix-black: #020403;
+
+    --panel-black: rgba(0, 8, 3, 0.82);
+
+    --white: #f0fff5;
+
+}
+
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+
+* {
+
+    box-sizing: border-box;
+
+}
+
+
+html,
+body {
+
+    margin: 0;
+
+    min-height: 100%;
+
+    background: var(--matrix-black);
+
+    color: var(--matrix-green);
+
+    font-family:
+        "Courier New",
+        Courier,
+        monospace;
+
+}
+
+
+body {
+
+    min-height: 100vh;
+
+    overflow-x: hidden;
+
+    background:
+
+        radial-gradient(
+            circle at 15% 0%,
+            rgba(0, 255, 102, 0.08),
+            transparent 40%
+        ),
+
+        radial-gradient(
+            circle at 85% 10%,
+            rgba(155, 92, 255, 0.045),
+            transparent 35%
+        ),
+
+        var(--matrix-black);
+
+}
+
+
+button,
+input {
+
+    font: inherit;
+
+}
+
+
+button:focus-visible,
+input:focus-visible {
+
+    outline: 2px solid #ffffff;
+
+    outline-offset: 3px;
+
+}
+
+
+
+/* =========================================================
+   BACKGROUND EFFECT CANVASES
+   ========================================================= */
+
+
+#matrix-rain,
+#effects-layer {
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+
+    height: 100vh;
+
+    pointer-events: none;
+
+}
+
+
+#matrix-rain {
+
+    z-index: 0;
+
+    opacity: 0.34;
+
+}
+
+
+#effects-layer {
+
+    z-index: 4;
+
+}
+
+
+
+/* =========================================================
+   LANDING PAGE SHELL
+   ========================================================= */
+
+
+#site-shell {
+
+    position: relative;
+
+    z-index: 2;
+
+    width:
+        min(
+            1180px,
+            calc(100% - 56px)
+        );
+
+    margin: 0 auto;
+
+    padding:
+        34px
+        0
+        70px;
+
+}
+
+
+
+/* =========================================================
+   MATRIX FRAME
+   ========================================================= */
+
+
+.matrix-frame {
+
+    position: relative;
+
+    border:
+        1px solid
+        rgba(0, 255, 102, 0.75);
+
+    background:
+
+        linear-gradient(
+            to bottom,
+            rgba(0, 255, 102, 0.045),
+            rgba(0, 255, 102, 0.012)
+        ),
+
+        var(--panel-black);
+
+    box-shadow:
+
+        0 0 18px
+        rgba(0, 255, 102, 0.14),
+
+        inset 0 0 22px
+        rgba(0, 255, 102, 0.04);
+
+}
+
+
+.matrix-frame::before,
+.matrix-frame::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 24px;
+
+    height: 24px;
+
+    pointer-events: none;
+
+}
+
+
+.matrix-frame::before {
+
+    top: -2px;
+
+    left: -2px;
+
+    border-top:
+        2px solid
+        var(--matrix-green);
+
+    border-left:
+        2px solid
+        var(--matrix-green);
+
+    box-shadow:
+        -3px -3px 12px
+        rgba(0, 255, 102, 0.25);
+
+}
+
+
+.matrix-frame::after {
+
+    right: -2px;
+
+    bottom: -2px;
+
+    border-right:
+        2px solid
+        var(--matrix-green);
+
+    border-bottom:
+        2px solid
+        var(--matrix-green);
+
+    box-shadow:
+        3px 3px 12px
+        rgba(0, 255, 102, 0.25);
+
+}
+
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+
+.hero {
+
+    display: grid;
+
+    grid-template-columns:
+        160px
+        minmax(0, 1fr);
+
+    gap: 28px;
+
+    align-items: center;
+
+    min-height: 190px;
+
+    padding:
+        20px
+        315px
+        20px
+        22px;
+
+}
+
+
+.hero-copy {
+
+    min-width: 0;
+
+}
+
+
+.hero-kicker {
+
+    margin-bottom: 6px;
+
+    color:
+        var(--matrix-green-soft);
+
+    font-size: 0.82rem;
+
+    letter-spacing: 0.20em;
+
+    text-transform: uppercase;
+
+    text-shadow:
+        0 0 8px
+        rgba(0, 255, 102, 0.45);
+
+}
+
+
+h1 {
+
+    margin: 0;
+
+    color:
+        var(--matrix-green);
+
+    font-size:
+        clamp(
+            1.85rem,
+            4vw,
+            3.45rem
+        );
+
+    line-height: 1;
+
+    letter-spacing: 0.14em;
+
+    text-transform: uppercase;
+
+    text-shadow:
+
+        0 0 7px
+        rgba(0, 255, 102, 0.86),
+
+        0 0 22px
+        rgba(0, 255, 102, 0.24);
+
+}
+
+
+
+/* =========================================================
+   TERMINAL TEXT
+   ========================================================= */
+
+
+.terminal-line {
+
+    display: flex;
+
+    align-items: center;
+
+    min-height: 26px;
+
+    margin-top: 18px;
+
+    color: #d8ffe6;
+
+    font-size: 0.94rem;
+
+    letter-spacing: 0.045em;
+
+    overflow-wrap: anywhere;
+
+}
+
+
+.terminal-led {
+
+    flex: 0 0 auto;
+
+    width: 9px;
+
+    height: 9px;
+
+    margin-right: 10px;
+
+    border-radius: 50%;
+
+    background:
+        var(--matrix-green);
+
+    box-shadow:
+
+        0 0 7px
+        var(--matrix-green),
+
+        0 0 15px
+        var(--matrix-green);
+
+}
+
+
+.cursor {
+
+    display: inline-block;
+
+    flex: 0 0 auto;
+
+    width: 10px;
+
+    height: 2px;
+
+    margin-left: 5px;
+
+    background:
+        var(--matrix-green);
+
+    box-shadow:
+        0 0 6px
+        rgba(0, 255, 102, 0.85);
+
+    animation:
+        cursor-blink
+        1s
+        step-end
+        infinite;
+
+}
+
+
+@keyframes cursor-blink {
+
+    0%,
+    48% {
+
+        opacity: 1;
+
+    }
+
+
+    49%,
+    100% {
+
+        opacity: 0;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   GLOWING SPHERE
+   ========================================================= */
+
+
+.orb-wrap {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 150px;
+
+    height: 150px;
+
+}
+
+
+.quantum-orb {
+
+    position: relative;
+
+    width: 142px;
+
+    height: 142px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(125, 255, 173, 0.74);
+
+    border-radius: 50%;
+
+    isolation: isolate;
+
+    background:
+
+        radial-gradient(
+            circle at 34% 27%,
+            rgba(255, 255, 255, 0.9)
+            0 1.5%,
+            transparent 4%
+        ),
+
+        radial-gradient(
+            circle at 45% 42%,
+            rgba(0, 255, 102, 0.3),
+            transparent 27%
+        ),
+
+        radial-gradient(
+            circle at 55% 60%,
+            rgba(50, 168, 255, 0.14),
+            transparent 46%
+        ),
+
+        radial-gradient(
+            circle at 50% 50%,
+            #07110a 0 34%,
+            #010302 70%,
+            #000000 100%
+        );
+
+    box-shadow:
+
+        0 0 10px
+        rgba(0, 255, 102, 0.85),
+
+        0 0 28px
+        rgba(0, 255, 102, 0.36),
+
+        0 0 50px
+        rgba(155, 92, 255, 0.14),
+
+        inset 0 0 28px
+        rgba(0, 255, 102, 0.20);
+
+}
+
+
+.quantum-orb::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: -18%;
+
+    z-index: 0;
+
+    border-radius: 50%;
+
+    background:
+
+        conic-gradient(
+            from 18deg,
+            #ff4d5a,
+            #ff9a32,
+            #ffe45e,
+            #00d66b,
+            #32a8ff,
+            #9b5cff,
+            #ff4d5a
+        );
+
+    opacity: 0.32;
+
+    filter:
+        blur(9px);
+
+    animation:
+        orb-aura
+        13s
+        linear
+        infinite;
+
+}
+
+
+.quantum-orb::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 7px;
+
+    z-index: 1;
+
+    border-radius: 50%;
+
+    background:
+
+        repeating-conic-gradient(
+
+            from 11deg,
+
+            rgba(255, 255, 255, 0)
+            0deg 13deg,
+
+            rgba(0, 255, 102, 0.14)
+            14deg 15deg,
+
+            rgba(255, 255, 255, 0)
+            16deg 31deg
+
+        );
+
+    opacity: 0.78;
+
+    mix-blend-mode: screen;
+
+    animation:
+        orb-grid
+        17s
+        linear
+        infinite
+        reverse;
+
+}
+
+
+.orb-core {
+
+    position: absolute;
+
+    z-index: 3;
+
+    left: 50%;
+
+    top: 50%;
+
+    width: 28px;
+
+    height: 28px;
+
+    transform:
+        translate(
+            -50%,
+            -50%
+        );
+
+    border-radius: 50%;
+
+    background:
+        #e8fff0;
+
+    box-shadow:
+
+        0 0 7px
+        #ffffff,
+
+        0 0 16px
+        var(--matrix-green),
+
+        0 0 34px
+        rgba(50, 168, 255, 0.42);
+
+    opacity: 0.84;
+
+}
+
+
+.orb-ring {
+
+    position: absolute;
+
+    z-index: 2;
+
+    left: 50%;
+
+    top: 50%;
+
+    border:
+        1px solid
+        rgba(134, 255, 173, 0.56);
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 8px
+        rgba(0, 255, 102, 0.18);
+
+}
+
+
+.ring-one {
+
+    width: 116px;
+
+    height: 44px;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(18deg);
+
+    animation:
+        ring-one
+        8s
+        ease-in-out
+        infinite
+        alternate;
+
+}
+
+
+.ring-two {
+
+    width: 54px;
+
+    height: 118px;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(-32deg);
+
+    animation:
+        ring-two
+        10s
+        ease-in-out
+        infinite
+        alternate;
+
+}
+
+
+.ring-three {
+
+    width: 104px;
+
+    height: 86px;
+
+    border-color:
+        rgba(50, 168, 255, 0.38);
+
+    transform:
+        translate(-50%, -50%)
+        rotate(67deg);
+
+    animation:
+        ring-three
+        11s
+        ease-in-out
+        infinite
+        alternate;
+
+}
+
+
+.orb-facet {
+
+    position: absolute;
+
+    z-index: 2;
+
+    left: 50%;
+
+    top: 50%;
+
+    width: 72px;
+
+    height: 72px;
+
+    transform-origin: center;
+
+    clip-path:
+        polygon(
+            50% 0%,
+            100% 100%,
+            0% 72%
+        );
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(0, 255, 102, 0.06),
+            rgba(50, 168, 255, 0.16),
+            rgba(155, 92, 255, 0.04)
+        );
+
+    mix-blend-mode: screen;
+
+}
+
+
+.facet-one {
+
+    transform:
+        translate(-50%, -50%)
+        rotate(8deg)
+        scale(1.08);
+
+}
+
+
+.facet-two {
+
+    transform:
+        translate(-50%, -50%)
+        rotate(126deg)
+        scale(0.88);
+
+}
+
+
+.facet-three {
+
+    transform:
+        translate(-50%, -50%)
+        rotate(244deg)
+        scale(0.72);
+
+}
+
+
+@keyframes orb-aura {
+
+    to {
+
+        transform: rotate(360deg);
+
+    }
+
+}
+
+
+@keyframes orb-grid {
+
+    to {
+
+        transform: rotate(360deg);
+
+    }
+
+}
+
+
+@keyframes ring-one {
+
+    to {
+
+        transform:
+            translate(-50%, -50%)
+            rotate(48deg)
+            scaleX(0.92);
+
+    }
+
+}
+
+
+@keyframes ring-two {
+
+    to {
+
+        transform:
+            translate(-50%, -50%)
+            rotate(-4deg)
+            scaleY(0.94);
+
+    }
+
+}
+
+
+@keyframes ring-three {
+
+    to {
+
+        transform:
+            translate(-50%, -50%)
+            rotate(92deg)
+            scale(0.94);
+
+    }
+
+}
+
+
+
+/* =========================================================
+   MODEL DIRECTORY
+   ========================================================= */
+
+
+.model-directory {
+
+    margin-top: 24px;
+
+    padding: 24px;
+
+}
+
+
+.model-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 16px;
+
+}
+
+
+
+/* =========================================================
+   MODEL BUTTONS
+   ========================================================= */
+
+
+.model-button {
+
+    position: relative;
+
+    width: 100%;
+
+    min-height: 82px;
+
+    padding:
+        18px
+        20px;
+
+    border:
+        1px solid
+        rgba(0, 255, 102, 0.74);
+
+    background:
+
+        linear-gradient(
+            to bottom,
+            rgba(0, 255, 102, 0.08),
+            rgba(0, 255, 102, 0.018)
+        ),
+
+        rgba(0, 5, 2, 0.76);
+
+    color:
+        var(--matrix-green-soft);
+
+    font-weight: bold;
+
+    font-size: 0.96rem;
+
+    letter-spacing: 0.105em;
+
+    text-transform: uppercase;
+
+    cursor: pointer;
+
+    box-shadow:
+
+        inset 0 0 14px
+        rgba(0, 255, 102, 0.045),
+
+        0 0 8px
+        rgba(0, 255, 102, 0.08);
+
+    transition:
+
+        background
+        150ms ease,
+
+        color
+        150ms ease,
+
+        box-shadow
+        150ms ease,
+
+        transform
+        150ms ease;
+
+}
+
+
+.model-button::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 10px;
+
+    top: 10px;
+
+    width: 10px;
+
+    height: 10px;
+
+    border-top:
+        1px solid
+        var(--matrix-green);
+
+    border-left:
+        1px solid
+        var(--matrix-green);
+
+    opacity: 0.7;
+
+}
+
+
+.model-button::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: 10px;
+
+    bottom: 10px;
+
+    width: 10px;
+
+    height: 10px;
+
+    border-right:
+        1px solid
+        var(--matrix-green);
+
+    border-bottom:
+        1px solid
+        var(--matrix-green);
+
+    opacity: 0.7;
+
+}
+
+
+@media (hover: hover) and (pointer: fine) {
+
+    .model-button:hover {
+
+        color: #ffffff;
+
+        background:
+            rgba(0, 255, 102, 0.12);
+
+        box-shadow:
+
+            inset 0 0 20px
+            rgba(0, 255, 102, 0.08),
+
+            0 0 16px
+            rgba(0, 255, 102, 0.22);
+
+        transform:
+            translateY(-1px);
+
+    }
+
+}
+
+
+.model-button:active {
+
+    transform:
+        translateY(1px);
+
+}
+
+.controls-toggle {
+
+    position: fixed;
+
+    z-index: 13000;
+
+    top: 4px;
+
+    right: 4px;
+
+    width: 28px;
+
+    height: 28px;
+
+    padding: 0;
+
+    border:
+        1px solid
+        rgba(0, 255, 102, 0.75);
+
+    background:
+        rgba(0, 5, 2, 0.88);
+
+    color:
+        var(--matrix-green);
+
+    font-size: 1rem;
+
+    font-weight: bold;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 0 8px
+        rgba(0, 255, 102, 0.20);
+
+}
+
+
+.controls-toggle:hover {
+
+    color: #ffffff;
+
+    border-color:
+        var(--matrix-green);
+
+    background:
+        rgba(0, 255, 102, 0.12);
+
+}
+
+
+.global-controls.controls-hidden {
+
+    display: none;
+
+}
+
+/* =========================================================
+   GLOBAL CONTROLS
+   ========================================================= */
+
+
+.global-controls {
+
+    position: fixed;
+
+    z-index: 12000;
+
+    top: 18px;
+
+    right: 18px;
+
+    width: 276px;
+
+    padding:
+        9px
+        10px
+        8px;
+
+    border:
+        1px solid
+        rgba(0, 255, 102, 0.84);
+
+    background:
+        rgba(0, 5, 2, 0.88);
+
+    box-shadow:
+
+        0 0 12px
+        rgba(0, 255, 102, 0.24),
+
+        inset 0 0 16px
+        rgba(0, 255, 102, 0.035);
+
+    backdrop-filter:
+        blur(5px);
+
+}
+
+
+.global-controls::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: -4px;
+
+    right: 17px;
+
+    width: 92px;
+
+    height: 7px;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(255, 77, 90, 0.70),
+            rgba(255, 154, 50, 0.56),
+            rgba(255, 228, 94, 0.50),
+            rgba(0, 214, 107, 0.42),
+            rgba(50, 168, 255, 0.58),
+            rgba(155, 92, 255, 0.66)
+        );
+
+    opacity: 0.42;
+
+    filter:
+        blur(3px);
+
+    transform:
+        rotate(-1.2deg);
+
+    pointer-events: none;
+
+}
+
+
+.global-controls::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: 2px;
+
+    bottom: 7px;
+
+    width: 32px;
+
+    height: 12px;
+
+    background:
+
+        radial-gradient(
+            circle at 20% 40%,
+            rgba(50, 168, 255, 0.62)
+            0 1px,
+            transparent 2px
+        ),
+
+        radial-gradient(
+            circle at 52% 66%,
+            rgba(255, 77, 90, 0.55)
+            0 1px,
+            transparent 2px
+        ),
+
+        radial-gradient(
+            circle at 78% 24%,
+            rgba(155, 92, 255, 0.62)
+            0 1px,
+            transparent 2px
+        );
+
+    opacity: 0.45;
+
+    pointer-events: none;
+
+}
+
+
+.control-row {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
+    gap: 6px;
+
+}
+
+
+.control-button {
+
+    min-width: 0;
+
+    height: 34px;
+
+    padding:
+        0
+        6px;
+
+    border:
+        1px solid
+        rgba(0, 255, 102, 0.54);
+
+    background:
+        rgba(0, 255, 102, 0.035);
+
+    color:
+        var(--matrix-green-soft);
+
+    font-size: 0.72rem;
+
+    font-weight: bold;
+
+    letter-spacing: 0.06em;
+
+    cursor: pointer;
+
+    transition:
+
+        color
+        120ms ease,
+
+        border-color
+        120ms ease,
+
+        background
+        120ms ease,
+
+        box-shadow
+        120ms ease;
+
+}
+
+
+@media (hover: hover) and (pointer: fine) {
+
+    .control-button:hover:not(:disabled) {
+
+        color: #ffffff;
+
+        border-color:
+            var(--matrix-green);
+
+        background:
+            rgba(0, 255, 102, 0.11);
+
+        box-shadow:
+            0 0 8px
+            rgba(0, 255, 102, 0.18);
+
+    }
+
+}
+
+
+.control-button:disabled {
+
+    cursor: default;
+
+    opacity: 0.35;
+
+}
+
+
+
+/* =========================================================
+   VOLUME CONTROL
+   ========================================================= */
+
+
+.volume-row {
+
+    display: grid;
+
+    grid-template-columns:
+        auto
+        1fr;
+
+    gap: 8px;
+
+    align-items: center;
+
+    margin-top: 7px;
+
+    color: #7dffad;
+
+    font-size: 0.68rem;
+
+    letter-spacing: 0.08em;
+
+}
+
+
+#volume-slider {
+
+    width: 100%;
+
+    min-width: 0;
+
+    height: 14px;
+
+    margin: 0;
+
+    accent-color:
+        var(--matrix-green);
+
+    cursor: pointer;
+
+}
+
+
+
+/* =========================================================
+   MODEL VIEW
+
+   EVERYTHING EXCEPT THE MODEL AND GLOBAL CONTROLS
+   DISAPPEARS.
+   ========================================================= */
+
+
+.model-stage {
+
+    position: fixed;
+
+    z-index: 10000;
+
+    inset: 0;
+
+    background: #000000;
+
+}
+
+
+.model-stage[hidden] {
+
+    display: none;
+
+}
+
+
+#model-frame {
+
+    display: block;
+
+    width: 100%;
+
+    height: 100%;
+
+    border: 0;
+
+    background: #000000;
+
+}
+
+
+body.model-active {
+
+    overflow: hidden;
+
+    background: #000000;
+
+}
+
+
+body.model-active #site-shell,
+body.model-active #matrix-rain,
+body.model-active #effects-layer {
+
+    display: none;
+
+}
+
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+
+.sr-only {
+
+    position: absolute !important;
+
+    width: 1px !important;
+
+    height: 1px !important;
+
+    padding: 0 !important;
+
+    margin: -1px !important;
+
+    overflow: hidden !important;
+
+    clip:
+        rect(
+            0,
+            0,
+            0,
+            0
+        ) !important;
+
+    white-space: nowrap !important;
+
+    border: 0 !important;
+
+}
+
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+
+@media (max-width: 900px) {
+
+    #site-shell {
+
+        width:
+            min(
+                calc(100% - 32px),
+                760px
+            );
+
+        padding-top: 94px;
+
+    }
+
+
+    .hero {
+
+        grid-template-columns:
+            120px
+            minmax(0, 1fr);
+
+        min-height: 158px;
+
+        padding: 18px;
+
+    }
+
+
+    .orb-wrap {
+
+        width: 112px;
+
+        height: 112px;
+
+    }
+
+
+    .quantum-orb {
+
+        width: 106px;
+
+        height: 106px;
+
+    }
+
+
+    .hero-kicker {
+
+        font-size: 0.72rem;
+
+    }
+
+
+    .terminal-line {
+
+        font-size: 0.82rem;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+
+@media (max-width: 680px) {
+
+    #site-shell {
+
+        width:
+            min(
+                calc(100% - 22px),
+                560px
+            );
+
+        padding-top: 96px;
+
+    }
+
+
+    .global-controls {
+
+        top: 10px;
+
+        right: 10px;
+
+        width:
+            min(
+                276px,
+                calc(100% - 20px)
+            );
+
+    }
+
+
+    .hero {
+
+        grid-template-columns:
+            88px
+            minmax(0, 1fr);
+
+        gap: 14px;
+
+    }
+
+
+    .orb-wrap {
+
+        width: 82px;
+
+        height: 82px;
+
+    }
+
+
+    .quantum-orb {
+
+        width: 78px;
+
+        height: 78px;
+
+    }
+
+
+    h1 {
+
+        letter-spacing: 0.075em;
+
+    }
+
+
+    .hero-kicker {
+
+        letter-spacing: 0.11em;
+
+    }
+
+
+    .model-directory {
+
+        padding: 15px;
+
+    }
+
+
+    .model-grid {
+
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   VERY SMALL SCREENS
+   ========================================================= */
+
+
+@media (max-width: 430px) {
+
+    .hero {
+
+        grid-template-columns: 1fr;
+
+        text-align: center;
+
+    }
+
+
+    .orb-wrap {
+
+        margin: 0 auto;
+
+    }
+
+
+    .terminal-line {
+
+        justify-content: center;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+
+        animation-duration:
+            0.001ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+    }
+
+
+    #effects-layer {
+
+        display: none;
+
+    }
+
+}

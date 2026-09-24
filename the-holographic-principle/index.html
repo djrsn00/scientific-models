@@ -1,0 +1,119 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>The Holographic Principle: Black Hole Information Horizons</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container">
+    <p id="render-notice" role="status">Initializing information field</p>
+  </div>
+
+  <aside id="info-panel" aria-label="Black hole information and flight controls">
+    <header class="panel-header">
+      <p class="eyebrow">THE HOLOGRAPHIC PRINCIPLE</p>
+      <h1>Information<br>Horizons</h1>
+      <p class="subtitle">Black hole entropy · boundary encoding</p>
+    </header>
+
+    <div class="flight-state">
+      <span class="status-light" aria-hidden="true"></span>
+      <span id="flight-mode" role="status">AUTOMATED SCALE-OUT</span>
+    </div>
+
+    <ol class="layers" aria-label="Informational layers">
+      <li data-layer="0" data-active="true" style="--layer-color: #9470ff;">
+        <span class="layer-index">01</span>
+        <span>Singularity core</span>
+        <span class="layer-dot" aria-hidden="true"></span>
+      </li>
+      <li data-layer="1" style="--layer-color: #ff7b34;">
+        <span class="layer-index">02</span>
+        <span>Accretion flux</span>
+        <span class="layer-dot" aria-hidden="true"></span>
+      </li>
+      <li data-layer="2" style="--layer-color: #ffd36b;">
+        <span class="layer-index">03</span>
+        <span>Event horizon</span>
+        <span class="layer-dot" aria-hidden="true"></span>
+      </li>
+      <li data-layer="3" style="--layer-color: #76f8ff;">
+        <span class="layer-index">04</span>
+        <span>Information boundary</span>
+        <span class="layer-dot" aria-hidden="true"></span>
+      </li>
+    </ol>
+
+    <section class="metrics" aria-label="Fixed Schwarzschild reference metrics">
+      <p class="section-label">SCHWARZSCHILD REFERENCE</p>
+
+      <dl>
+        <div>
+          <dt>Horizon radius</dt>
+          <dd>30.000 <span class="unit">km</span></dd>
+        </div>
+        <div>
+          <dt>Surface area A<sub>H</sub></dt>
+          <dd id="metric-area">1.131 × 10<sup>10</sup> <span class="unit">m²</span></dd>
+        </div>
+        <div>
+          <dt>Entropy S<sub>BH</sub>/k<sub>B</sub></dt>
+          <dd id="metric-entropy">1.082 × 10<sup>79</sup></dd>
+        </div>
+        <div>
+          <dt>Information limit</dt>
+          <dd id="metric-bits">1.562 × 10<sup>79</sup> <span class="unit">bits</span></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="equation-block" aria-label="Bekenstein-Hawking equations">
+      <p>S<sub>BH</sub>/k<sub>B</sub> = A<sub>H</sub> / (4ℓ<sub>P</sub>²)</p>
+      <p>A<sub>H</sub> = 4πr<sub>s</sub>²</p>
+      <p>N<sub>bits</sub> = S<sub>BH</sub> / (k<sub>B</sub> ln 2)</p>
+    </section>
+
+    <div class="camera-readout">
+      <span>VIRTUAL CAMERA</span>
+      <span id="camera-distance">0.000 r<sub>s</sub></span>
+    </div>
+
+    <p class="scale-note">
+      Horizon model: 1 unit = 1 km.<br>
+      Matrix: 12,672 sampled symbols.
+    </p>
+
+    <p class="scope-note">
+      Explanatory cutaway. The camera is not a physical observer;
+      interior motion, horizon shimmer and the flat information screen
+      are conceptual.
+    </p>
+
+    <footer id="control-help" class="controls">
+      <p><kbd>Drag</kbd> explore <span>·</span> <kbd>Scroll</kbd> zoom</p>
+      <p><kbd>Shift + drag</kbd> pan</p>
+      <p><kbd>Space</kbd> pause <span>·</span> <kbd>R</kbd> resume flight</p>
+      <p><kbd>Home</kbd> restart <span>·</span> <kbd>H</kbd> hide labels</p>
+    </footer>
+  </aside>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

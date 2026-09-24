@@ -1,0 +1,446 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="An interactive orthographic field map connecting condensed matter, quantum wave functions, and chromodynamics."
+  >
+
+  <title>The Quantum Hologram: From Condensed Matter to Chromodynamics</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <main
+    id="canvas-container"
+    aria-label="Interactive two-dimensional quantum field visualization"
+  ></main>
+
+  <aside id="info-panel" aria-label="Field metrics and visualization legend">
+    <header class="panel-header">
+      <p class="eyebrow">
+        <span class="signal-dot" aria-hidden="true"></span>
+        Orthographic field atlas
+      </p>
+
+      <h1>The Quantum<br>Hologram</h1>
+
+      <p class="subtitle">
+        From Condensed Matter<br>
+        to Chromodynamics
+      </p>
+    </header>
+
+    <div class="flight-status">
+      <span id="flight-mode">AUTOMATIC DRIFT</span>
+      <span class="projection-badge">2D</span>
+    </div>
+
+    <section class="scale-section" aria-labelledby="scale-heading">
+      <div class="section-heading">
+        <h2 id="scale-heading">Observation scale</h2>
+        <output id="zoom-value" class="numeric">1.00×</output>
+      </div>
+
+      <p id="scale-value">MACROSCOPIC</p>
+
+      <div
+        id="zoom-progress"
+        class="scale-track"
+        role="progressbar"
+        aria-label="Progress from macroscopic to subatomic view"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span id="zoom-progress-fill"></span>
+      </div>
+
+      <div class="scale-endpoints" aria-hidden="true">
+        <span>LATTICE</span>
+        <span>NUCLEUS</span>
+        <span>QUARKS</span>
+      </div>
+
+      <p class="micro-note">Visual magnification · illustrative scale mapping</p>
+    </section>
+
+    <section class="metrics-section" aria-labelledby="metrics-heading">
+      <h2 id="metrics-heading" class="section-label">Field readout</h2>
+
+      <dl class="metrics">
+        <div class="metric-row">
+          <dt>Active field</dt>
+          <dd id="active-field-value" class="accent-cyan">QED / GRAPHENE</dd>
+        </div>
+
+        <div class="metric-row">
+          <dt>Fermi energy <span>model parameter</span></dt>
+          <dd id="fermi-energy-value" class="numeric">+0.150 eV</dd>
+        </div>
+
+        <div class="metric-row">
+          <dt>Fractional charge <span>selected quasiparticle state</span></dt>
+          <dd id="fractional-charge-value" class="accent-gold">|q*| = e / 3</dd>
+        </div>
+
+        <div class="metric-row">
+          <dt>Color flux <span>normalized schematic</span></dt>
+          <dd id="color-flux-value" class="numeric accent-magenta">0.000 a.u.</dd>
+        </div>
+      </dl>
+
+      <div class="flux-meter" aria-hidden="true">
+        <span id="color-flux-fill"></span>
+      </div>
+    </section>
+
+    <section class="layers-section" aria-labelledby="layers-heading">
+      <h2 id="layers-heading" class="section-label">Coupled visual layers</h2>
+
+      <ol id="layer-list" class="layer-list">
+        <li data-layer="substrate">
+          <span class="layer-number">01</span>
+          <div>
+            <strong>Field substrate</strong>
+            <span>Higgs potential / Berry-curvature overlay</span>
+          </div>
+        </li>
+
+        <li data-layer="condensed" class="is-active" aria-current="step">
+          <span class="layer-number">02</span>
+          <div>
+            <strong>Condensed matter</strong>
+            <span>Graphene / quantum-Hall schematics</span>
+          </div>
+        </li>
+
+        <li data-layer="qcd">
+          <span class="layer-number">03</span>
+          <div>
+            <strong>Chromodynamic core</strong>
+            <span>Quark flavors / gluon color flux</span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="legend-section" aria-labelledby="legend-heading">
+      <h2 id="legend-heading" class="section-label">Field signatures</h2>
+
+      <ul class="legend">
+        <li>
+          <span class="legend-mark cyan" aria-hidden="true"></span>
+          <span>Graphene bonds / electron amplitudes</span>
+        </li>
+        <li>
+          <span class="legend-mark orange" aria-hidden="true"></span>
+          <span>Chiral edge flow / applied-field regime</span>
+        </li>
+        <li>
+          <span class="legend-mark violet" aria-hidden="true"></span>
+          <span>Landau guides / fractional-state braids</span>
+        </li>
+        <li>
+          <span class="legend-mark gold" aria-hidden="true"></span>
+          <span>Higgs-potential field illustration</span>
+        </li>
+        <li>
+          <span class="legend-mark white" aria-hidden="true"></span>
+          <span>Neutrino wave fronts</span>
+        </li>
+      </ul>
+    </section>
+
+    <p class="scope-note">
+      A coordinated map of selected physical regimes. Distances, motion,
+      flux brightness, and field colors are illustrative. Landau rings
+      show state structure; braids represent fractional quasiparticles.
+    </p>
+
+    <footer class="panel-footer">
+      <p>
+        <kbd>Space</kbd> pause/play
+        <kbd>R</kbd> resume drift
+        <kbd>H</kbd> toggle HUD
+      </p>
+      <p>Drag to pan · wheel or pinch to zoom</p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      class="control-button"
+      type="button"
+      aria-controls="info-panel"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+    >
+      Hide HUD
+    </button>
+
+    <button
+      id="pause-toggle"
+      class="control-button"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space"
+    >
+      Pause
+    </button>
+
+    <button
+      id="resume-flight"
+      class="control-button control-button--primary"
+      type="button"
+      aria-keyshortcuts="R"
+    >
+      Resume drift
+    </button>
+  </nav>
+
+  <section id="scene-caption" aria-label="Current scene">
+    <p id="chapter-value" class="caption-eyebrow">01 / CONDENSED MATTER</p>
+    <h2 id="scene-title">A lattice of quantum possibilities.</h2>
+    <p id="scene-description">
+      Cyan bonds, probability clouds, and chiral boundary currents.
+    </p>
+  </section>
+
+  <div id="scale-indicator" aria-label="Current visual scale">
+    <span class="scale-indicator-label">MODEL COORDINATES</span>
+    <span class="scale-bracket" aria-hidden="true"></span>
+    <output id="view-span-value" class="numeric">100 scene units</output>
+  </div>
+
+  <p id="render-notice" role="alert" hidden></p>
+
+  <noscript>
+    <div class="noscript-notice">
+      JavaScript is required to render the quantum field visualization.
+    </div>
+  </noscript>
+
+  <!--
+    World-label sources:
+    Graphene effective theory: https://arxiv.org/abs/0709.1163
+    QCD and Higgs conventions: https://www.damtp.cam.ac.uk/user/ho/SM.pdf
+    Fractional braiding: https://www.nature.com/articles/s41567-020-1019-1
+  -->
+
+  <template id="dirac-label-template">
+    <article class="world-label world-label--cyan" data-field="dirac" tabindex="0">
+      <span class="label-corner" aria-hidden="true"></span>
+
+      <header class="world-label-header">
+        <span class="world-label-index">QED / EFFECTIVE THEORY</span>
+        <h2>Graphene Dirac electrons</h2>
+      </header>
+
+      <div class="world-equation">
+        <math display="block" aria-label="Effective graphene Dirac equation">
+          <mrow>
+            <mi>i</mi>
+            <mi>ℏ</mi>
+            <msub><mo>∂</mo><mi>t</mi></msub>
+            <mi>ψ</mi>
+            <mo>=</mo>
+            <msub><mi>v</mi><mi>F</mi></msub>
+            <mo>(</mo>
+            <msub><mi>σ</mi><mi>x</mi></msub>
+            <msub><mi>π</mi><mi>x</mi></msub>
+            <mo>+</mo>
+            <msub><mi>σ</mi><mi>y</mi></msub>
+            <msub><mi>π</mi><mi>y</mi></msub>
+            <mo>)</mo>
+            <mi>ψ</mi>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="Electron kinetic momentum">
+          <mrow>
+            <mi mathvariant="bold">π</mi>
+            <mo>=</mo>
+            <mo>−</mo>
+            <mi>i</mi>
+            <mi>ℏ</mi>
+            <mi>∇</mi>
+            <mo>+</mo>
+            <mi>e</mi>
+            <mi mathvariant="bold">A</mi>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="world-label-description">
+        Low-energy quasiparticles at one valley.
+        σ acts on the A/B sublattice pseudospin; the electron charge is −e.
+      </p>
+
+      <div class="label-footnote">
+        <span class="mini-dot" aria-hidden="true"></span>
+        Quantum-Hall structures require an applied magnetic field.
+      </div>
+    </article>
+  </template>
+
+  <template id="qcd-label-template">
+    <article class="world-label world-label--magenta" data-field="qcd" tabindex="0">
+      <span class="label-corner" aria-hidden="true"></span>
+
+      <header class="world-label-header">
+        <span class="world-label-index">SU(3) / CHROMODYNAMICS</span>
+        <h2>Quarks &amp; gluon flux</h2>
+      </header>
+
+      <div class="world-equation">
+        <math display="block" aria-label="QCD gauge-field Lagrangian term">
+          <mrow>
+            <msub><mi mathvariant="script">L</mi><mtext>QCD</mtext></msub>
+            <mo>=</mo>
+            <mo>−</mo>
+            <mfrac><mn>1</mn><mn>4</mn></mfrac>
+            <msubsup>
+              <mi>G</mi>
+              <mrow><mi>μ</mi><mi>ν</mi></mrow>
+              <mi>a</mi>
+            </msubsup>
+            <msubsup>
+              <mi>G</mi>
+              <mi>a</mi>
+              <mrow><mi>μ</mi><mi>ν</mi></mrow>
+            </msubsup>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="QCD quark Lagrangian term">
+          <mrow>
+            <mo>+</mo>
+            <munder><mo>∑</mo><mi>f</mi></munder>
+            <msub>
+              <mover accent="true"><mi>q</mi><mo>¯</mo></mover>
+              <mi>f</mi>
+            </msub>
+            <mo>(</mo>
+            <mi>i</mi>
+            <msup><mi>γ</mi><mi>μ</mi></msup>
+            <msub><mi>D</mi><mi>μ</mi></msub>
+            <mo>−</mo>
+            <msub><mi>m</mi><mi>f</mi></msub>
+            <mo>)</mo>
+            <msub><mi>q</mi><mi>f</mi></msub>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="QCD covariant derivative">
+          <mrow>
+            <msub><mi>D</mi><mi>μ</mi></msub>
+            <mo>=</mo>
+            <msub><mo>∂</mo><mi>μ</mi></msub>
+            <mo>−</mo>
+            <mi>i</mi>
+            <msub><mi>g</mi><mi>s</mi></msub>
+            <msup><mi>T</mi><mi>a</mi></msup>
+            <msubsup><mi>G</mi><mi>μ</mi><mi>a</mi></msubsup>
+          </mrow>
+        </math>
+      </div>
+
+      <div class="color-charge-key" aria-label="Diagram color-charge labels">
+        <span class="charge-tag charge-tag--red">r</span>
+        <span class="charge-tag charge-tag--green">g</span>
+        <span class="charge-tag charge-tag--blue">b</span>
+        <span class="charge-key-caption">color charge</span>
+      </div>
+
+      <p class="world-label-description">
+        Flavor is identified by letters such as u and d.
+        Diagram hues distinguish color-charge labels, not optical colors.
+      </p>
+
+      <div class="label-footnote">
+        <span class="mini-dot" aria-hidden="true"></span>
+        Quark and gluon fields · natural units ℏ = c = 1
+      </div>
+    </article>
+  </template>
+
+  <template id="higgs-label-template">
+    <article class="world-label world-label--gold" data-field="higgs" tabindex="0">
+      <span class="label-corner" aria-hidden="true"></span>
+
+      <header class="world-label-header">
+        <span class="world-label-index">ELECTROWEAK / FIELD POTENTIAL</span>
+        <h2>The Mexican-hat potential</h2>
+      </header>
+
+      <div class="world-equation">
+        <math display="block" aria-label="Higgs potential">
+          <mrow>
+            <mi>V</mi>
+            <mo>(</mo><mi>Φ</mi><mo>)</mo>
+            <mo>=</mo>
+            <mo>−</mo>
+            <msup><mi>μ</mi><mn>2</mn></msup>
+            <msup><mi>Φ</mi><mo>†</mo></msup>
+            <mi>Φ</mi>
+            <mo>+</mo>
+            <mi>λ</mi>
+            <msup>
+              <mrow>
+                <mo>(</mo>
+                <msup><mi>Φ</mi><mo>†</mo></msup>
+                <mi>Φ</mi>
+                <mo>)</mo>
+              </mrow>
+              <mn>2</mn>
+            </msup>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="Symmetry-breaking parameter choices">
+          <mrow>
+            <msup><mi>μ</mi><mn>2</mn></msup>
+            <mo>&gt;</mo><mn>0</mn>
+            <mo>,</mo>
+            <mspace width="0.8em"/>
+            <mi>λ</mi><mo>&gt;</mo><mn>0</mn>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="world-label-description">
+        Φ is the electroweak Higgs doublet.
+        The golden texture is an illustrative field map.
+      </p>
+
+      <div class="label-footnote">
+        <span class="mini-dot" aria-hidden="true"></span>
+        Violet-blue shading schematically maps Berry curvature.
+      </div>
+    </article>
+  </template>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="A cinematic, interactive schematic of string dynamics and compactification.">
+
+  <title>The 10D Superstring Singularity: Metric Space Ascension</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <main id="canvas-container" aria-label="Interactive string-theory landscape"></main>
+
+  <aside id="info-panel" aria-label="Physics and flight information">
+    <header>
+      <p class="eyebrow">Theoretical geometry / D = 10</p>
+      <h1>The 10D<br>Superstring Singularity</h1>
+      <p class="subtitle">Metric Space Ascension</p>
+    </header>
+
+    <div class="status-row">
+      <span class="status-light" aria-hidden="true"></span>
+      <span id="flight-mode">AUTOMATIC DRIFT</span>
+    </div>
+
+    <dl class="telemetry">
+      <div>
+        <dt>Ambient dimensions</dt>
+        <dd>4 extended + 6 compact</dd>
+      </div>
+
+      <div>
+        <dt>Region</dt>
+        <dd id="region-value">UNDULATING HYPERSURFACE</dd>
+      </div>
+
+      <div>
+        <dt>Camera x / y / z · scene units</dt>
+        <dd id="position-value">0.0 / 0.0 / 0.0</dd>
+      </div>
+    </dl>
+
+    <section class="equation-block" aria-labelledby="ng-title">
+      <h2 id="ng-title">01 / Nambu–Goto</h2>
+
+      <math display="block" aria-label="Nambu-Goto action">
+        <mrow>
+          <msub><mi>S</mi><mtext>NG</mtext></msub>
+          <mo>=</mo>
+          <mo>−</mo>
+          <msub><mi>T</mi><mi>F</mi></msub>
+          <mo>∫</mo>
+          <msup><mi>d</mi><mn>2</mn></msup>
+          <mi>σ</mi>
+          <msqrt>
+            <mrow>
+              <mo>−</mo>
+              <mi>det</mi>
+              <msub>
+                <mi>γ</mi>
+                <mrow><mi>a</mi><mi>b</mi></mrow>
+              </msub>
+            </mrow>
+          </msqrt>
+        </mrow>
+      </math>
+
+      <p>Area of the induced world-sheet.</p>
+    </section>
+
+    <section class="equation-block" aria-labelledby="polyakov-title">
+      <h2 id="polyakov-title">02 / Polyakov</h2>
+
+      <math display="block" aria-label="Polyakov action">
+        <mrow>
+          <msub><mi>S</mi><mi>P</mi></msub>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mfrac>
+            <msub><mi>T</mi><mi>F</mi></msub>
+            <mn>2</mn>
+          </mfrac>
+          <mo>∫</mo>
+          <msup><mi>d</mi><mn>2</mn></msup>
+          <mi>σ</mi>
+          <msqrt>
+            <mrow><mo>−</mo><mi>h</mi></mrow>
+          </msqrt>
+          <msup>
+            <mi>h</mi>
+            <mrow><mi>a</mi><mi>b</mi></mrow>
+          </msup>
+          <msub>
+            <mi>γ</mi>
+            <mrow><mi>a</mi><mi>b</mi></mrow>
+          </msub>
+        </mrow>
+      </math>
+
+      <p>Independent world-sheet metric h<sub>ab</sub>.</p>
+    </section>
+
+    <div class="metric-definition">
+      <math display="block" aria-label="Induced metric definition">
+        <mrow>
+          <msub>
+            <mi>γ</mi>
+            <mrow><mi>a</mi><mi>b</mi></mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>G</mi>
+            <mrow><mi>μ</mi><mi>ν</mi></mrow>
+          </msub>
+          <msub><mo>∂</mo><mi>a</mi></msub>
+          <msup><mi>X</mi><mi>μ</mi></msup>
+          <msub><mo>∂</mo><mi>b</mi></msub>
+          <msup><mi>X</mi><mi>ν</mi></msup>
+        </mrow>
+      </math>
+
+      <math display="block" aria-label="Fundamental string tension in natural units">
+        <mrow>
+          <msub><mi>T</mi><mi>F</mi></msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>2</mn>
+              <mi>π</mi>
+              <msup><mi>α</mi><mo>′</mo></msup>
+            </mrow>
+          </mfrac>
+          <mspace width="1em"/>
+          <mi>ℏ</mi>
+          <mo>=</mo>
+          <mi>c</mi>
+          <mo>=</mo>
+          <mn>1</mn>
+        </mrow>
+      </math>
+    </div>
+
+    <ul class="legend" aria-label="Visual legend">
+      <li>
+        <span class="swatch cyan"></span>
+        Metric contours / compact fibers
+      </li>
+      <li>
+        <span class="swatch gold"></span>
+        Closed-string graviton sector
+      </li>
+      <li>
+        <span class="swatch magenta"></span>
+        Open-string gauge modes
+      </li>
+    </ul>
+
+    <p class="scope-note">
+      A 3D schematic; geometry, motion and scale are illustrative.
+      Actions show the bosonic world-sheet sector.
+      M2/C3 and F4 cards reference the 11D parent theory.
+    </p>
+
+    <footer>
+      <div class="progress-track" aria-hidden="true">
+        <span id="flight-progress"></span>
+      </div>
+
+      <p>
+        <kbd>Space</kbd> pause/play
+        <kbd>R</kbd> resume flight
+        <kbd>H</kbd> HUD
+      </p>
+
+      <p>Drag to orbit · pinch to zoom · two-finger pan</p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="info-panel"
+      aria-expanded="true"
+    >Hide HUD</button>
+
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+    >Pause</button>
+
+    <button id="resume-flight" type="button">Resume flight</button>
+  </nav>
+
+  <p id="render-notice" role="alert" hidden></p>
+
+  <noscript>This visualization requires JavaScript.</noscript>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

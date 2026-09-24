@@ -1,0 +1,174 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020208">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A cinematic, shader-driven conceptual visualization of M-theory branes, compactification, and eleven-dimensional supergravity.">
+  <title>11D Transit — Hypersurface Terrain Topology</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container"></div>
+
+  <aside class="info-panel" id="info-panel" aria-labelledby="scene-title">
+    <header class="panel-header">
+      <p class="eyebrow">ELEVEN DIMENSIONS / GEOMETRIC STUDY</p>
+      <h1 id="scene-title">Hypersurface<br><span>Transit</span></h1>
+      <p class="subtitle">M-theory terrain topology</p>
+    </header>
+
+    <section class="panel-section" aria-label="Brane geometry">
+      <h2>01 / Embedded worldvolumes</h2>
+
+      <div class="legend-row">
+        <span class="legend-dot cyan"></span>
+        <div>
+          <strong>M2-brane</strong>
+          <p>Two spatial dimensions · couples to C<sub>3</sub></p>
+          <div class="equation">
+            ξ<sup>a</sup> = (τ, σ<sup>1</sup>, σ<sup>2</sup>)
+          </div>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-dot magenta"></span>
+        <div>
+          <strong>M5-brane · spatial slice</strong>
+          <p>Two-dimensional view of five spatial dimensions</p>
+          <div class="equation small-equation">
+            ζ<sup>A</sup> =
+            (τ, σ<sup>1</sup>, σ<sup>2</sup>, σ<sup>3</sup>, σ<sup>4</sup>, σ<sup>5</sup>)
+          </div>
+        </div>
+      </div>
+
+      <p class="microcopy">
+        X<sup>M</sup>(ξ) · M = 0–10 · x<sup>0</sup> is time
+      </p>
+    </section>
+
+    <section class="panel-section" aria-label="Supergravity action">
+      <h2>02 / 11D supergravity action</h2>
+      <p class="section-note">Bosonic sector · two-derivative approximation</p>
+
+      <div class="action-equation">
+        <div>
+          S<sub>11,bos</sub> =
+          <span class="fraction">
+            <span>1</span>
+            <span>2κ<sub>11</sub><sup>2</sup></span>
+          </span>
+          ∫<sub>ℳ<sub>11</sub></sub>
+          [ R ⋆ 1 − ½ F<sub>4</sub> ∧ ⋆F<sub>4</sub>
+        </div>
+        <div class="action-continuation">
+          − ⅙ C<sub>3</sub> ∧ F<sub>4</sub> ∧ F<sub>4</sub> ]
+        </div>
+      </div>
+
+      <div class="equation cyan-text">F<sub>4</sub> = dC<sub>3</sub></div>
+    </section>
+
+    <section class="panel-section" aria-label="Brane tensions">
+      <h2>03 / Brane tensions</h2>
+
+      <div class="equation">
+        T<sub>M2</sub> =
+        <span class="fraction">
+          <span>1</span>
+          <span>(2π)<sup>2</sup> ℓ<sub>p</sub><sup>3</sup></span>
+        </span>
+        <span class="equation-separator">·</span>
+        T<sub>M5</sub> =
+        <span class="fraction">
+          <span>1</span>
+          <span>(2π)<sup>5</sup> ℓ<sub>p</sub><sup>6</sup></span>
+        </span>
+      </div>
+
+      <div class="matrix-row">
+        <div>
+          <p class="section-note">Normalized tension display</p>
+          <span class="equation">T̂ =</span>
+        </div>
+        <div class="matrix" aria-label="Diagonal matrix with entries two pi to the negative two and two pi to the negative five">
+          <span>(2π)<sup>−2</sup></span><span>0</span>
+          <span>0</span><span>(2π)<sup>−5</sup></span>
+        </div>
+      </div>
+
+      <p class="microcopy">
+        T̂ = diag(ℓ<sub>p</sub><sup>3</sup>T<sub>M2</sub>,
+        ℓ<sub>p</sub><sup>6</sup>T<sub>M5</sub>) · ℏ = c = 1
+      </p>
+    </section>
+
+    <section class="panel-section" aria-label="Compactification">
+      <h2>04 / Compact eleventh dimension</h2>
+
+      <div class="legend-row compact-row">
+        <span class="legend-dot amber"></span>
+        <div class="equation">
+          S<sup>1</sup> : x<sup>10</sup> ∼ x<sup>10</sup> + 2πR<sub>11</sub>
+        </div>
+      </div>
+
+      <div class="equation">
+        R<sub>11</sub> = g<sub>s</sub>ℓ<sub>s</sub>
+        <span class="equation-separator">·</span>
+        ℓ<sub>p</sub><sup>3</sup> = g<sub>s</sub>ℓ<sub>s</sub><sup>3</sup>
+      </div>
+
+      <div class="equation amber-text">
+        T<sub>F1</sub> = 2πR<sub>11</sub>T<sub>M2</sub>
+        = 1 / (2πℓ<sub>s</sub><sup>2</sup>)
+      </div>
+
+      <p class="section-note">Wrapped M2 → type IIA string</p>
+    </section>
+
+    <footer class="panel-footer">
+      <div class="legend-inline">
+        <span class="legend-dot green"></span>
+        <span>F<sub>4</sub> flux schematic · 6,144 moving nodes</span>
+      </div>
+      <p class="concept-note">
+        Conceptual 3D projection. Ripples and the luminous junction are
+        procedural geometry, not a computed supergravity solution.
+        The gold ring is a thickened depiction of S<sup>1</sup>.
+      </p>
+    </footer>
+  </aside>
+
+  <div class="flight-caption" aria-label="Flight controls">
+    <div class="flight-heading">
+      <span class="live-indicator"></span>
+      <span id="flight-state">CORRIDOR ENTRY</span>
+    </div>
+    <div class="flight-progress"><span id="flight-progress"></span></div>
+    <p>DRAG / EXPLORE &nbsp; SPACE / PAUSE &nbsp; R / FLIGHT &nbsp; H / PANEL</p>
+  </div>
+
+  <div id="render-status" class="render-status" role="status" hidden></div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

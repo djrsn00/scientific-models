@@ -1,0 +1,154 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+
+  <title>The Quantum Chandelier: Core Dilution Transit</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container">
+    <p id="render-notice" role="status">Initializing cryogenic transit</p>
+  </div>
+
+  <aside id="info-panel" aria-label="Cryogenic transit information">
+    <header class="panel-header">
+      <p class="eyebrow">CORE DILUTION TRANSIT</p>
+      <h1>The Quantum<br>Chandelier</h1>
+      <p class="reference-badge">
+        <span aria-hidden="true"></span>
+        ILLUSTRATIVE REFERENCE SYSTEM
+      </p>
+    </header>
+
+    <section class="current-stage" aria-label="Current thermal stage">
+      <div class="stage-heading">
+        <span id="stage-number">01 / 06</span>
+        <span id="flight-mode" role="status">AUTO DESCENT</span>
+      </div>
+
+      <h2 id="stage-title">Room-temperature flange</h2>
+      <p id="stage-description">
+        Vacuum feedthroughs and silver coaxial control lines.
+      </p>
+
+      <div class="temperature-display">
+        <span id="temperature-value">300</span>
+        <span id="temperature-unit">K</span>
+      </div>
+
+      <p class="temperature-caption">NOMINAL THERMAL REFERENCE</p>
+    </section>
+
+    <ol class="stage-list" aria-label="Cryogenic descent stages">
+      <li data-stage="0" data-active="true">
+        <span>01</span><span>Room-temperature flange</span><i></i>
+      </li>
+      <li data-stage="1">
+        <span>02</span><span>50 K / 4 K shields</span><i></i>
+      </li>
+      <li data-stage="2">
+        <span>03</span><span>Still & isotope loop</span><i></i>
+      </li>
+      <li data-stage="3">
+        <span>04</span><span>Cold plate / mixing chamber</span><i></i>
+      </li>
+      <li data-stage="4">
+        <span>05</span><span>QPU shielding</span><i></i>
+      </li>
+      <li data-stage="5">
+        <span>06</span><span>Superconducting circuit array</span><i></i>
+      </li>
+    </ol>
+
+    <section class="metrics" aria-label="Reference qubit properties">
+      <p class="section-label">REFERENCE QUBIT</p>
+
+      <dl>
+        <div>
+          <dt>Control / readout band</dt>
+          <dd>4–8 GHz</dd>
+        </div>
+        <div>
+          <dt>Selected frequency</dt>
+          <dd>5.000 GHz</dd>
+        </div>
+        <div>
+          <dt>T<sub>1</sub> relaxation</dt>
+          <dd>120 μs</dd>
+        </div>
+        <div>
+          <dt>T<sub>2</sub> coherence</dt>
+          <dd>90 μs</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="state-equation" aria-label="Qubit state equation">
+      <p>|ψ⟩ = cos(θ/2)|0⟩</p>
+      <p class="equation-indent">+ e<sup>iφ</sup> sin(θ/2)|1⟩</p>
+      <p class="equation-note">Bloch representation · motion slowed</p>
+    </section>
+
+    <div class="progress-section">
+      <div class="progress-caption">
+        <span>DESCENT PROGRESS</span>
+        <span id="progress-text">0.0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <p class="scope-note">
+      Illustrative cutaway. Geometry, signal motion and Bloch spheres
+      are enlarged. Temperatures and coherence values are reference
+      examples.
+    </p>
+
+    <footer id="control-help" class="controls">
+      <p><kbd>Drag</kbd> explore <span>·</span> <kbd>Scroll</kbd> zoom</p>
+      <p><kbd>Shift + drag</kbd> pan</p>
+      <p><kbd>Space</kbd> pause <span>·</span> <kbd>R</kbd> resume descent</p>
+      <p><kbd>Home</kbd> restart <span>·</span> <kbd>H</kbd> hide overlays</p>
+    </footer>
+  </aside>
+
+  <div id="depth-caption" aria-hidden="true">
+    <span class="caption-rule"></span>
+    <span id="caption-text">ROOM-TEMPERATURE MICROWAVE CONTROL</span>
+    <span class="caption-rule"></span>
+  </div>
+
+  <div id="end-overlay" hidden>
+    <div class="terminal-message">
+      <p class="terminal-kicker">CORE TERMINAL / CONTROL RETURN</p>
+      <p
+        class="glitch-text"
+        role="status"
+        aria-live="polite"
+        data-text="STATUS: FISSION MAILED. EMIT / CONTINENT?"
+      >STATUS: FISSION MAILED. EMIT / CONTINENT?</p>
+      <p class="terminal-controls">SPACE — HOLD &nbsp; / &nbsp; HOME — RESTART</p>
+    </div>
+  </div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

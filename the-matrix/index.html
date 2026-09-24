@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="An interactive planetary observatory of undersea fiber-optic infrastructure, orbital relays, and simulated network traffic.">
+  <title>The Global Deep-Sea Fiber-Optic Internet Backbone</title>
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body data-engine-state="waiting">
+  <main id="network-observatory" aria-labelledby="project-title">
+    <div
+      id="webgl-canvas-container"
+      role="region"
+      aria-label="Interactive globe and global network visualization"
+      aria-describedby="scene-description navigation-description"
+      tabindex="0"
+    ></div>
+
+    <div id="crt-overlay" aria-hidden="true"></div>
+
+    <div id="hud-overlay">
+      <header
+        id="system-telemetry"
+        class="glass-panel hud-component"
+        aria-label="System telemetry"
+      >
+        <div class="host-block">
+          <div class="eyebrow">
+            <span
+              id="system-status-pip"
+              class="status-pip"
+              data-state="waiting"
+              aria-hidden="true"
+            ></span>
+            Network observatory
+          </div>
+
+          <div id="host-id">NEBUCHADNEZZAR-NET-01</div>
+
+          <p
+            id="system-status"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >Standby · awaiting engine</p>
+        </div>
+
+        <dl class="telemetry-grid" aria-live="off">
+          <div class="telemetry-cell">
+            <dt>GPU profile</dt>
+            <dd>
+              <span
+                id="gpu-profile"
+                class="telemetry-value"
+                data-state="pending"
+              >Pending</span>
+            </dd>
+          </div>
+
+          <div class="telemetry-cell">
+            <dt>LEO satellites</dt>
+            <dd>
+              <span
+                id="satellite-count"
+                class="telemetry-value"
+                data-state="pending"
+              >—</span>
+              <span class="telemetry-unit">active</span>
+            </dd>
+          </div>
+
+          <div class="telemetry-cell">
+            <dt>Median route latency</dt>
+            <dd>
+              <span
+                id="median-route-latency"
+                class="telemetry-value"
+                data-state="pending"
+              >—</span>
+              <span class="telemetry-unit">ms · simulated</span>
+            </dd>
+          </div>
+        </dl>
+      </header>
+
+      <div id="hud-content" class="hud-component">
+        <section id="project-caption" aria-labelledby="project-title">
+          <p class="eyebrow">
+            <span class="caption-rule" aria-hidden="true"></span>
+            Planetary communications / 01
+          </p>
+
+          <h1 id="project-title">
+            The Global Deep-Sea<br>
+            <span>Fiber-Optic Internet Backbone</span>
+          </h1>
+
+          <p id="scene-description">
+            Undersea fiber. Orbital relays. A connected planet.
+          </p>
+        </section>
+
+        <section
+          id="terminal-widget"
+          class="glass-panel"
+          aria-labelledby="terminal-title"
+          data-position="fixed"
+          data-scroll-mode="follow"
+        >
+          <header class="panel-header terminal-header">
+            <h2 id="terminal-title">
+              <span class="terminal-glyph" aria-hidden="true">&gt;_</span>
+              Network terminal
+            </h2>
+
+            <span class="panel-status">
+              <span
+                id="terminal-status-pip"
+                class="status-pip"
+                data-state="waiting"
+                aria-hidden="true"
+              ></span>
+              <span id="terminal-status">Waiting</span>
+            </span>
+          </header>
+
+          <div
+            id="terminal-body"
+            role="log"
+            aria-label="Simulation network events"
+            aria-live="off"
+            aria-relevant="additions"
+            tabindex="0"
+          >
+            <div class="terminal-entry" data-level="info">
+              <span class="terminal-time" aria-label="No event time">—</span>
+              <span class="terminal-level">INFO</span>
+              <span class="terminal-message">Global backbone event stream.</span>
+            </div>
+
+            <div class="terminal-entry" data-level="wait">
+              <span class="terminal-time" aria-label="No event time">—</span>
+              <span class="terminal-level">WAIT</span>
+              <span class="terminal-message">No simulation events received.</span>
+            </div>
+          </div>
+
+          <footer class="terminal-footer">
+            <span><span id="terminal-event-count">0</span> events</span>
+
+            <button
+              id="terminal-follow-toggle"
+              class="text-button"
+              type="button"
+              data-action="toggle-terminal-follow"
+              aria-pressed="true"
+              disabled
+            >
+              <span class="follow-mark" aria-hidden="true">↓</span>
+              <span id="terminal-follow-label">Follow latest</span>
+            </button>
+          </footer>
+        </section>
+
+        <aside
+          id="control-panel"
+          class="glass-panel"
+          aria-labelledby="control-panel-title"
+        >
+          <header class="panel-header">
+            <h2 id="control-panel-title">Signal spectrum</h2>
+            <span class="panel-code" aria-hidden="true">01—04</span>
+          </header>
+
+          <div class="control-panel-body">
+            <div
+              id="spectrum-controls"
+              class="spectrum-grid"
+              role="group"
+              aria-label="Routing spectrum layers"
+            >
+              <button
+                id="spectrum-http"
+                class="spectrum-button route-http"
+                type="button"
+                data-spectrum-layer="http"
+                aria-pressed="true"
+                aria-keyshortcuts="1"
+                disabled
+              >
+                <span class="route-indicator" aria-hidden="true"></span>
+                <span class="spectrum-label">HTTP pings</span>
+                <kbd>1</kbd>
+              </button>
+
+              <button
+                id="spectrum-backup"
+                class="spectrum-button route-backup"
+                type="button"
+                data-spectrum-layer="backup"
+                aria-pressed="true"
+                aria-keyshortcuts="2"
+                disabled
+              >
+                <span class="route-indicator" aria-hidden="true"></span>
+                <span class="spectrum-label">Backup payloads</span>
+                <kbd>2</kbd>
+              </button>
+
+              <button
+                id="spectrum-tls"
+                class="spectrum-button route-tls"
+                type="button"
+                data-spectrum-layer="tls"
+                aria-pressed="true"
+                aria-keyshortcuts="3"
+                disabled
+              >
+                <span class="route-indicator" aria-hidden="true"></span>
+                <span class="spectrum-label">TLS handshakes</span>
+                <kbd>3</kbd>
+              </button>
+
+              <button
+                id="spectrum-leo"
+                class="spectrum-button route-leo"
+                type="button"
+                data-spectrum-layer="leo"
+                aria-pressed="true"
+                aria-keyshortcuts="4"
+                disabled
+              >
+                <span class="route-indicator" aria-hidden="true"></span>
+                <span class="spectrum-label">LEO lasers</span>
+                <kbd>4</kbd>
+              </button>
+            </div>
+
+            <div class="pride-key">
+              <span class="spectrum-pride" aria-hidden="true"></span>
+              <span>Pride chromatic encoding</span>
+            </div>
+
+            <section id="control-description" aria-labelledby="control-title">
+              <h3 id="control-title">Navigation</h3>
+
+              <dl class="keybind-list">
+                <div>
+                  <dt><kbd>SPACE</kbd></dt>
+                  <dd>Pause / Resume</dd>
+                </div>
+                <div>
+                  <dt><kbd>R</kbd></dt>
+                  <dd>Orbit reset</dd>
+                </div>
+                <div>
+                  <dt><kbd>H</kbd></dt>
+                  <dd>Toggle interface</dd>
+                </div>
+                <div>
+                  <dt><kbd>1–4</kbd></dt>
+                  <dd>Spectrum layers</dd>
+                </div>
+              </dl>
+
+              <p id="navigation-description" class="interaction-note">
+                Drag to orbit · Scroll or pinch to zoom.
+              </p>
+
+              <div class="navigation-actions">
+                <button
+                  id="pause-toggle"
+                  class="control-button"
+                  type="button"
+                  data-action="toggle-pause"
+                  aria-pressed="false"
+                  aria-keyshortcuts="Space"
+                  disabled
+                >
+                  <span id="pause-label">Pause</span>
+                  <kbd aria-hidden="true">SPACE</kbd>
+                </button>
+
+                <button
+                  id="orbit-reset"
+                  class="control-button"
+                  type="button"
+                  data-action="reset-orbit"
+                  aria-keyshortcuts="R"
+                  disabled
+                >
+                  <span>Reset orbit</span>
+                  <kbd aria-hidden="true">R</kbd>
+                </button>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </div>
+
+      <div id="targeting-reticle" class="hud-component" aria-hidden="true">
+        <span class="reticle-corner reticle-corner--tl"></span>
+        <span class="reticle-corner reticle-corner--tr"></span>
+        <span class="reticle-corner reticle-corner--bl"></span>
+        <span class="reticle-corner reticle-corner--br"></span>
+        <span class="reticle-orbit reticle-orbit--outer"></span>
+        <span class="reticle-orbit reticle-orbit--inner"></span>
+        <span class="reticle-center"></span>
+      </div>
+
+      <footer id="model-notice" class="hud-component">
+        Simulated traffic <span aria-hidden="true">/</span>
+        Schematic routes <span aria-hidden="true">/</span>
+        Color encodes signal class
+      </footer>
+
+      <section
+        id="render-error-notice"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="render-error-title"
+        aria-describedby="render-error-message"
+        tabindex="-1"
+        hidden
+      >
+        <div class="error-card glass-panel">
+          <p class="eyebrow">
+            <span class="status-pip" data-state="error" aria-hidden="true"></span>
+            Render system / interrupted
+          </p>
+
+          <h2 id="render-error-title">Visualization unavailable</h2>
+
+          <p id="render-error-message">
+            The graphics engine could not initialize. Review the diagnostic
+            information, then reload the visualization.
+          </p>
+
+          <dl class="error-metadata">
+            <div>
+              <dt>Error code</dt>
+              <dd id="render-error-code">WEBGL_INIT_FAILURE</dd>
+            </div>
+            <div>
+              <dt>Host</dt>
+              <dd>NEBUCHADNEZZAR-NET-01</dd>
+            </div>
+          </dl>
+
+          <details class="error-diagnostics" open>
+            <summary>Diagnostic information</summary>
+            <pre id="render-error-details">No diagnostic information is available.</pre>
+          </details>
+
+          <p class="error-help">
+            Check that browser hardware acceleration is available and that an
+            internet connection can load the graphics libraries.
+          </p>
+
+          <a class="control-button error-reload" href="index.html">
+            Reload visualization
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <button
+      id="hud-toggle"
+      class="control-button"
+      type="button"
+      data-action="toggle-hud"
+      aria-controls="hud-content system-telemetry targeting-reticle model-notice"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+      disabled
+    >
+      <span id="hud-label">Hide interface</span>
+      <kbd aria-hidden="true">H</kbd>
+    </button>
+
+    <p
+      id="accessibility-status"
+      class="visually-hidden"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+
+    <noscript>
+      <div class="noscript-notice">
+        <strong>JavaScript is disabled.</strong>
+        <span>
+          Enable JavaScript and reload to explore the network visualization.
+        </span>
+      </div>
+    </noscript>
+  </main>
+
+  <template id="terminal-entry-template">
+    <div class="terminal-entry" data-level="info">
+      <time class="terminal-time" data-log-time></time>
+      <span class="terminal-level" data-log-level></span>
+      <span class="terminal-message" data-log-message></span>
+    </div>
+  </template>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <script defer src="scripts/engine-core.js"></script>
+  <script defer src="scripts/network-data.js"></script>
+  <script defer src="scripts/earth-core.js"></script>
+  <script defer src="scripts/cable-matrix.js"></script>
+  <script defer src="scripts/packet-pipeline.js"></script>
+  <script defer src="scripts/satellite-orbit.js"></script>
+  <script defer src="scripts/chroma-matrix-pass.js"></script>
+  <script defer src="scripts/terminal-stream.js"></script>
+  <script defer src="scripts/interaction-controller.js"></script>
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

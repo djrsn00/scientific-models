@@ -1,0 +1,564 @@
+:root {
+  color-scheme: dark;
+
+  --color-void: #000000;
+  --color-phosphor: #33ff33;
+  --color-panel: rgba(0, 30, 0, 0.4);
+  --color-panel-solid: rgba(0, 12, 0, 0.96);
+  --color-divider: rgba(51, 255, 51, 0.24);
+  --color-selection: rgba(51, 255, 51, 0.24);
+
+  --font-terminal: "Courier New", Courier, monospace;
+  --text-glow: 0 0 5px rgba(51, 255, 51, 0.32);
+  --panel-glow: 0 0 14px rgba(51, 255, 51, 0.09);
+
+  --hud-gutter: clamp(12px, 2.4vw, 32px);
+  --hud-gap: clamp(12px, 1.8vw, 24px);
+
+  --layer-canvas: 0;
+  --layer-interface: 10;
+  --layer-notice: 100;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-void);
+}
+
+html {
+  font-family: var(--font-terminal);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  color: var(--color-phosphor);
+  font-family: var(--font-terminal);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+button:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-phosphor);
+  outline-offset: 4px;
+}
+
+::selection {
+  color: var(--color-phosphor);
+  background: var(--color-selection);
+  text-shadow: none;
+}
+
+#quantum-engine {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--color-void);
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--layer-canvas);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-void);
+}
+
+#canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  touch-action: none;
+}
+
+#ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--layer-interface);
+  display: grid;
+  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(0, 21rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--hud-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--hud-gutter);
+  padding-top: max(var(--hud-gutter), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--hud-gutter), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--hud-gutter), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--hud-gutter), env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+
+#ui-layer > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.terminal-panel,
+#telemetry-main,
+#telemetry-gallery {
+  border: 1px solid var(--color-phosphor);
+  border-radius: 0;
+  background: var(--color-panel);
+  color: var(--color-phosphor);
+  box-shadow: var(--panel-glow);
+  text-shadow: var(--text-glow);
+}
+
+.terminal-panel {
+  padding: 16px;
+}
+
+#system-header {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+  width: fit-content;
+  max-width: min(100%, 44rem);
+}
+
+.terminal-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+#engine-title {
+  margin-top: 6px;
+  font-size: clamp(1rem, 2vw, 1.375rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.025em;
+  overflow-wrap: anywhere;
+}
+
+.system-description {
+  max-width: 62ch;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.system-status {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.system-status::before {
+  content: "";
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-phosphor);
+  box-shadow: 0 0 6px rgba(51, 255, 51, 0.5);
+}
+
+#telemetry-main,
+#telemetry-gallery {
+  position: relative;
+  align-self: end;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 36vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-phosphor) rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
+}
+
+#telemetry-main {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+}
+
+#telemetry-gallery {
+  grid-column: 3;
+  grid-row: 3;
+  justify-self: end;
+}
+
+#telemetry-main > .telemetry-panel,
+#telemetry-gallery > .telemetry-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.telemetry-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.telemetry-header h2 {
+  margin-top: 5px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.telemetry-readouts {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.telemetry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.telemetry-row dt,
+.telemetry-row dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.telemetry-row dd {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetry-row [data-state="pending"] {
+  font-weight: 400;
+}
+
+.telemetry-anchors {
+  min-width: 0;
+  color: inherit;
+  text-shadow: inherit;
+  overflow-wrap: anywhere;
+}
+
+.katex {
+  color: var(--color-phosphor) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+.katex * {
+  color: inherit !important;
+  text-shadow: inherit !important;
+}
+
+.katex-display {
+  max-width: 100%;
+  margin: 0.75rem 0;
+  padding: 0.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--color-phosphor);
+  text-shadow: var(--text-glow);
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-phosphor) transparent;
+}
+
+.katex-display > .katex {
+  text-align: left;
+}
+
+#render-error-notice,
+.noscript-notice {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: var(--layer-notice);
+  width: min(42rem, calc(100% - var(--hud-gutter) - var(--hud-gutter)));
+  max-height: calc(100% - var(--hud-gutter) - var(--hud-gutter));
+  padding: clamp(16px, 3vw, 28px);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  background: var(--color-panel-solid);
+  box-shadow:
+    0 0 24px rgba(51, 255, 51, 0.12),
+    0 0 0 100vmax rgba(0, 0, 0, 0.78);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-phosphor) var(--color-void);
+  pointer-events: auto;
+}
+
+#render-error-title,
+.noscript-notice h2 {
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+#render-error-message,
+.noscript-notice p {
+  margin-top: 14px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.render-error-details {
+  max-width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-void);
+  color: inherit;
+  font-family: var(--font-terminal);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-shadow: none;
+  user-select: text;
+}
+
+.render-error-details:empty {
+  display: none;
+}
+
+.terminal-link {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 8px 10px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: var(--color-phosphor);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.terminal-link:hover,
+.terminal-link:focus-visible {
+  background: var(--color-phosphor);
+  color: var(--color-void);
+  text-shadow: none;
+}
+
+@supports (height: 100dvh) {
+  #quantum-engine,
+  #canvas-container {
+    height: 100dvh;
+  }
+
+  #telemetry-main,
+  #telemetry-gallery {
+    max-height: 36dvh;
+  }
+}
+
+@media (max-width: 900px) {
+  #ui-layer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  #telemetry-gallery {
+    grid-column: 2;
+  }
+
+  .terminal-panel {
+    padding: 12px;
+  }
+
+  .telemetry-row {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  #ui-layer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 10px;
+  }
+
+  #system-header {
+    width: 100%;
+  }
+
+  .system-description {
+    font-size: 0.6875rem;
+  }
+
+  #telemetry-main,
+  #telemetry-gallery {
+    grid-column: 1;
+    max-height: 25vh;
+    max-height: 25dvh;
+  }
+
+  #telemetry-main {
+    grid-row: 3;
+  }
+
+  #telemetry-gallery {
+    grid-row: 4;
+  }
+
+  .telemetry-header {
+    padding-bottom: 8px;
+  }
+
+  .telemetry-readouts {
+    gap: 6px;
+    margin-top: 10px;
+  }
+}
+
+@media (max-height: 520px) {
+  :root {
+    --hud-gutter: 10px;
+    --hud-gap: 10px;
+  }
+
+  .terminal-panel {
+    padding: 10px;
+  }
+
+  #system-header .terminal-kicker,
+  .system-description {
+    display: none;
+  }
+
+  #engine-title {
+    margin-top: 0;
+    font-size: 1rem;
+  }
+
+  .system-status {
+    margin-top: 6px;
+  }
+
+  .telemetry-header {
+    padding-bottom: 6px;
+  }
+
+  .telemetry-header .terminal-kicker {
+    font-size: 0.625rem;
+  }
+
+  .telemetry-header h2 {
+    margin-top: 3px;
+    font-size: 0.75rem;
+  }
+
+  .telemetry-readouts {
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .telemetry-row {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .terminal-panel,
+  #telemetry-main,
+  #telemetry-gallery,
+  #render-error-notice,
+  .noscript-notice {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  .katex {
+    color: CanvasText !important;
+    text-shadow: none !important;
+  }
+
+  .system-status::before {
+    background: CanvasText;
+    box-shadow: none;
+  }
+
+  .terminal-link {
+    border-color: LinkText;
+    color: LinkText;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

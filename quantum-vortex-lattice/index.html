@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="Explore a rotating quantum condensate through an ordered lattice of quantized vortices, phase winding, density-depleted cores, and a cinematic scientific fly-through."
+  >
+
+  <title>Quantum Vortex Lattice — Raw Code Visualizing Nature</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <!-- Matching, pinned, nonmodule Three.js components. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body>
+  <main
+    id="canvas-container"
+    aria-label="Interactive three-dimensional quantum vortex lattice"
+    aria-describedby="model-description navigation-help"
+    aria-busy="true"
+  ></main>
+
+  <aside id="sidebar-ui" aria-label="Quantum vortex lattice instrument panel">
+    <header class="sidebar-header">
+      <p class="eyebrow">
+        <span class="status-dot" aria-hidden="true"></span>
+        Raw Code Visualizing Nature
+      </p>
+
+      <h1>Quantum<br>Vortex Lattice</h1>
+
+      <p class="subtitle">
+        Quantized circulation<br>
+        in a rotating superfluid
+      </p>
+
+      <div class="flight-status">
+        <span id="flight-mode">LOADING CONDENSATE</span>
+        <span class="dimension-badge">3D</span>
+      </div>
+
+      <p id="model-description" class="model-description">
+        A reference-scaled density and phase model.
+        Bright filaments mark the axes of depleted vortex cores.
+      </p>
+    </header>
+
+    <div id="sidebar-content" class="sidebar-content">
+      <section aria-labelledby="telemetry-heading">
+        <div class="section-heading">
+          <h2 id="telemetry-heading">Condensate telemetry</h2>
+          <span class="section-note">REFERENCE SCALED</span>
+        </div>
+
+        <dl class="telemetry">
+          <div class="telemetry-row">
+            <dt>
+              Probe density
+              <span>n(rₚ) / n₀</span>
+            </dt>
+            <dd id="density-value" class="numeric accent-cyan">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Angular velocity
+              <span>Ωτ₀ · rotation about +y</span>
+            </dt>
+            <dd id="angular-value" class="numeric accent-violet">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Vortex count
+              <span>singly quantized, ℓ = +1</span>
+            </dt>
+            <dd id="vortex-count-value" class="numeric accent-cyan">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Reference healing length
+              <span>ξ₀ / R⊥</span>
+            </dt>
+            <dd id="healing-value" class="numeric accent-gold">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Lattice spacing
+              <span>nearest neighbor a / ξ₀</span>
+            </dt>
+            <dd id="spacing-value" class="numeric accent-blue">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Probe phase
+              <span>φ(rₚ), modulo 2π</span>
+            </dt>
+            <dd id="phase-value" class="numeric accent-magenta">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Selected-loop circulation
+              <span>Γ<sub>C</sub> / κ · κ = h/m</span>
+            </dt>
+            <dd id="circulation-value" class="numeric accent-gold">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Probe trap potential
+              <span>V<sub>ext</sub>(rₚ) / μ₀</span>
+            </dt>
+            <dd id="potential-value" class="numeric">—</dd>
+          </div>
+        </dl>
+
+        <div class="probe-readout" aria-label="Measurement probe">
+          <div class="probe-heading">
+            <span class="probe-dot" aria-hidden="true"></span>
+            <span id="probe-status">PROBE / PREPARING</span>
+          </div>
+          <p id="probe-position-value" class="numeric">—</p>
+        </div>
+
+        <div class="selection-strip">
+          <span>Selected vortex</span>
+          <output id="selected-vortex-value" class="numeric">—</output>
+        </div>
+
+        <p class="reference-note">
+          The cyan probe marks the sampled point. The gold contour
+          encloses one selected vortex. Phase is undefined at
+          a zero-density core.
+        </p>
+      </section>
+
+      <section class="panel-section" aria-labelledby="journey-heading">
+        <div class="section-heading">
+          <h2 id="journey-heading">Inspection sequence</h2>
+          <span class="section-note">10 CHAPTERS</span>
+        </div>
+
+        <ol id="journey-stages" class="journey-stages">
+          <li data-stage="bulk" class="is-active" aria-current="step">
+            <span class="stage-number">01</span>
+            <span>Bulk rotation</span>
+          </li>
+          <li data-stage="approach">
+            <span class="stage-number">02</span>
+            <span>Lattice approach</span>
+          </li>
+          <li data-stage="descent">
+            <span class="stage-number">03</span>
+            <span>Vortex descent</span>
+          </li>
+          <li data-stage="core">
+            <span class="stage-number">04</span>
+            <span>Core density profile</span>
+          </li>
+          <li data-stage="phase">
+            <span class="stage-number">05</span>
+            <span>Phase winding</span>
+          </li>
+          <li data-stage="flow">
+            <span class="stage-number">06</span>
+            <span>Superfluid flow</span>
+          </li>
+          <li data-stage="lattice">
+            <span class="stage-number">07</span>
+            <span>Many-vortex order</span>
+          </li>
+          <li data-stage="rotation">
+            <span class="stage-number">08</span>
+            <span>Lattice scale &amp; rotation</span>
+          </li>
+          <li data-stage="gallery">
+            <span class="stage-number">09</span>
+            <span>Field inspection</span>
+          </li>
+          <li data-stage="return">
+            <span class="stage-number">10</span>
+            <span>Final overview</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel-section" aria-labelledby="equations-heading">
+        <div class="section-heading">
+          <h2 id="equations-heading">Mathematical structure</h2>
+          <span class="section-note">EXPAND</span>
+        </div>
+
+        <details class="equation-disclosure" data-inspection-ui open>
+          <summary>Density and the order parameter</summary>
+          <div class="equation-body">
+            <math display="block" aria-label="Psi equals the square root of n times exponential of i phi">
+              <mrow>
+                <mi>Ψ</mi><mo>=</mo>
+                <msqrt><mi>n</mi></msqrt>
+                <msup>
+                  <mi>e</mi>
+                  <mrow><mi>i</mi><mi>φ</mi></mrow>
+                </msup>
+              </mrow>
+            </math>
+
+            <math display="block" aria-label="Condensate number density n equals the squared magnitude of Psi">
+              <mrow>
+                <mi>n</mi><mo>=</mo>
+                <msup>
+                  <mrow><mo>|</mo><mi>Ψ</mi><mo>|</mo></mrow>
+                  <mn>2</mn>
+                </msup>
+              </mrow>
+            </math>
+
+            <p>
+              The complex order parameter encodes condensate number
+              density and phase. Color represents phase; the sampled
+              cloud reveals the density distribution.
+            </p>
+            <p>
+              Display markers sample a field. Their count is not
+              the number of atoms in an experiment.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Gross–Pitaevskii dynamics</summary>
+          <div class="equation-body">
+            <math display="block" aria-label="i h bar times the time derivative of Psi equals H G P acting on Psi">
+              <mrow>
+                <mi>i</mi><mi>ℏ</mi>
+                <mfrac>
+                  <mrow><mo>∂</mo><mi>Ψ</mi></mrow>
+                  <mrow><mo>∂</mo><mi>t</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <msub><mi>H</mi><mtext>GP</mtext></msub>
+                <mi>Ψ</mi>
+              </mrow>
+            </math>
+
+            <div class="formula formula-stack">
+              <span>H<sub>GP</sub> = −(ℏ²/2m)∇²</span>
+              <span class="formula-indent">+ V<sub>ext</sub> + g|Ψ|²</span>
+            </div>
+
+            <p>
+              Laboratory-frame mean-field dynamics for a dilute,
+              weakly interacting condensate.
+            </p>
+            <p>
+              This visualization evaluates a prescribed density and
+              phase field. It does not numerically evolve this equation
+              or simulate lattice formation.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Healing length and depleted cores</summary>
+          <div class="equation-body">
+            <math display="block" aria-label="Reference healing length xi zero equals h bar divided by the square root of two m g n zero">
+              <mrow>
+                <msub><mi>ξ</mi><mn>0</mn></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mi>ℏ</mi>
+                  <msqrt>
+                    <mrow>
+                      <mn>2</mn><mi>m</mi><mi>g</mi>
+                      <msub><mi>n</mi><mn>0</mn></msub>
+                    </mrow>
+                  </msqrt>
+                </mfrac>
+              </mrow>
+            </math>
+
+            <p class="equation-kicker">ILLUSTRATIVE CORE FACTOR</p>
+
+            <div class="formula">
+              f²(s) = s² / (s² + ξ₀²)
+            </div>
+
+            <p>
+              s is distance from a vortex axis. This factor suppresses
+              density to zero at the axis and approaches one away
+              from it.
+            </p>
+            <p>
+              ξ₀ uses the undepleted reference density n₀.
+              The chosen profile is an approximation, and ξ₀ is
+              a reference scale rather than a sharp core boundary.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Phase gradients and superfluid flow</summary>
+          <div class="equation-body">
+            <math display="block" aria-label="Superfluid velocity equals h bar over m times the gradient of phase">
+              <mrow>
+                <msub>
+                  <mi mathvariant="bold">v</mi><mi>s</mi>
+                </msub>
+                <mo>=</mo>
+                <mfrac><mi>ℏ</mi><mi>m</mi></mfrac>
+                <mi>∇</mi><mi>φ</mi>
+              </mrow>
+            </math>
+
+            <div class="formula formula-stack">
+              <span>φ = Σ<sub>j</sub> ℓ<sub>j</sub>θ<sub>j</sub></span>
+              <span>θ<sub>j</sub> = atan2(−Δz<sub>j</sub>, Δx<sub>j</sub>)</span>
+            </div>
+
+            <p>
+              The vortex lines point along +y. Each positive winding
+              produces right-handed circulation about that axis.
+              Contributions from neighboring vortices combine.
+            </p>
+            <p>
+              The velocity relation applies away from density zeros.
+              A uniform phase offset changes the color reference
+              without changing the velocity.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Quantized circulation</summary>
+          <div class="equation-body">
+            <math display="block" aria-label="Circulation around C equals the closed integral of superfluid velocity dot displacement, equal to nu C times kappa">
+              <mrow>
+                <msub><mi>Γ</mi><mi>C</mi></msub>
+                <mo>=</mo>
+                <msub><mo>∮</mo><mi>C</mi></msub>
+                <msub>
+                  <mi mathvariant="bold">v</mi><mi>s</mi>
+                </msub>
+                <mo>·</mo><mi>d</mi>
+                <mi mathvariant="bold">l</mi>
+                <mo>=</mo>
+                <msub><mi>ν</mi><mi>C</mi></msub>
+                <mi>κ</mi>
+              </mrow>
+            </math>
+
+            <div class="formula formula-stack">
+              <span>κ = h/m</span>
+              <span>Δφ<sub>C</sub> = 2πν<sub>C</sub></span>
+            </div>
+
+            <p>
+              ν<sub>C</sub> is the total integer winding enclosed
+              by a contour that avoids zeros of Ψ.
+            </p>
+            <p>
+              The gold contour encloses one selected ℓ = +1 vortex
+              and excludes its neighbors, so Γ<sub>C</sub>/κ = +1.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Triangular order and vortex density</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>A<sub>cell</sub> = √3 a² / 2</span>
+              <span>n<sub>v</sub> = 1/A<sub>cell</sub></span>
+              <span>n<sub>v</sub> ≈ 2Ω/κ</span>
+            </div>
+
+            <p>
+              a is the nearest-neighbor spacing. Each triangular
+              lattice site occupies one primitive-cell area.
+            </p>
+            <p>
+              The Feynman relation connects mean vortex density
+              with bulk rotation. It is a many-vortex approximation;
+              a finite trapped array has edge corrections.
+            </p>
+            <p>
+              Lattice links are geometric guides. The ordered
+              arrangement is specified rather than formed dynamically.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Rotating coordinates and confinement</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>H<sub>rot</sub> = H − ΩL̂<sub>y</sub></span>
+              <span>L̂<sub>y</sub> = −iℏ(z∂<sub>x</sub> − x∂<sub>z</sub>)</span>
+            </div>
+
+            <p>
+              For a frame rotating about +y, the Gross–Pitaevskii
+              operator acquires the term −ΩL̂<sub>y</sub>.
+              The field and coordinates must be interpreted in that frame.
+            </p>
+
+            <p class="equation-kicker">COARSE-GRAINED ENVELOPE</p>
+
+            <div class="formula">
+              V<sub>eff</sub> = V<sub>ext</sub> − ½mΩ²ρ²
+            </div>
+
+            <p>
+              Here ρ² = x² + z². This effective potential describes
+              the centrifugal contribution to the bulk envelope.
+              Harmonic radial confinement requires Ω &lt; ω⊥.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Reference scales and model construction</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>μ₀ = gn₀</span>
+              <span>τ₀ = mξ₀²/ℏ</span>
+              <span>n<sub>bg</sub> = max[(μ₀ − V<sub>eff</sub>)/g, 0]</span>
+              <span>n = n<sub>bg</sub> ∏<sub>j</sub> f²(s<sub>j</sub>)</span>
+            </div>
+
+            <p>
+              A Thomas–Fermi background is multiplied by prescribed
+              core-depletion factors. The model uses repulsive
+              contact interactions, g &gt; 0, and straight vortices
+              with ℓ<sub>j</sub> = +1.
+            </p>
+            <p>
+              The reference healing scale is fixed throughout the
+              display. Boundary corrections, density evolution,
+              and a self-consistent equilibrium solution are not computed.
+            </p>
+            <p>
+              Playback speed is illustrative. Phase colors, bright
+              axes, and flow markers provide visual measurements
+              of the specified field.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel-section" aria-labelledby="gallery-heading">
+        <div class="section-heading">
+          <h2 id="gallery-heading">Independent field references</h2>
+          <span class="section-note accent-gold">05 EXHIBITS</span>
+        </div>
+
+        <ul class="gallery-list">
+          <li>
+            <span class="gallery-dot accent-blue" aria-hidden="true"></span>
+            Bosonic atom / exchange symmetry
+          </li>
+          <li>
+            <span class="gallery-dot accent-violet" aria-hidden="true"></span>
+            Order parameter / complex amplitude
+          </li>
+          <li>
+            <span class="gallery-dot accent-cyan" aria-hidden="true"></span>
+            Optical trap / confinement
+          </li>
+          <li>
+            <span class="gallery-dot accent-magenta" aria-hidden="true"></span>
+            Contact interaction / coupling g
+          </li>
+          <li>
+            <span class="gallery-dot accent-gold" aria-hidden="true"></span>
+            Rotating frame / angular momentum
+          </li>
+        </ul>
+
+        <p class="reference-note">
+          These exhibits explain ingredients of the theory.
+          Their icons, sizes, and arrangements are schematic.
+        </p>
+      </section>
+
+      <p class="scope-note">
+        A prescribed mean-field visualization for scientific inspection.
+        The luminous vortex axes indicate where condensate density
+        is depleted; the surrounding phase field carries circulation.
+      </p>
+    </div>
+
+    <footer class="sidebar-footer">
+      <div class="progress-heading">
+        <span>GUIDED EXPLORATION</span>
+        <span id="tour-time" class="numeric">— / —</span>
+      </div>
+
+      <div
+        id="journey-progress"
+        class="journey-progress"
+        role="progressbar"
+        aria-label="Guided inspection progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span id="flight-progress"></span>
+      </div>
+
+      <p class="keyboard-help">
+        <span><kbd>Space</kbd> play/pause</span>
+        <span><kbd>R</kbd> drone</span>
+        <span><kbd>H</kbd> HUD</span>
+      </p>
+
+      <p id="navigation-help" class="navigation-help">
+        Drag to orbit · scroll or pinch to zoom<br>
+        Right-drag or two-finger drag to pan
+      </p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="sidebar-ui scene-caption reference-legend"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+      data-engine-control
+      disabled
+    >Hide HUD</button>
+
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space"
+      data-engine-control
+      disabled
+    >Pause</button>
+
+    <button
+      id="resume-flight"
+      class="primary-control"
+      type="button"
+      aria-keyshortcuts="R"
+      data-engine-control
+      disabled
+    >Resume drone</button>
+  </nav>
+
+  <section id="scene-caption" aria-label="Current inspection chapter">
+    <p id="chapter-value" class="caption-eyebrow">01 / BULK ROTATION</p>
+    <h2 id="scene-title">Rotation, carried by quantized circulation.</h2>
+    <p id="scene-description">
+      An ordered lattice of depleted vortex cores pierces a rotating
+      condensate. Follow the density, phase, and flow between them.
+    </p>
+  </section>
+
+  <aside id="reference-legend" aria-label="Phase and annotation legend">
+    <p class="legend-heading">COLOR / PHASE MODULO 2π</p>
+
+    <div class="phase-spectrum" aria-hidden="true"></div>
+
+    <div class="legend-scale">
+      <span>0</span>
+      <span>π</span>
+      <span>2π</span>
+    </div>
+
+    <p class="legend-note">
+      <span class="legend-swatch legend-swatch--gold" aria-hidden="true"></span>
+      Gold: selected contour / ξ₀
+    </p>
+
+    <p class="legend-note">
+      <span class="legend-swatch legend-swatch--cyan" aria-hidden="true"></span>
+      Cyan marker: density probe
+    </p>
+
+    <p class="legend-footnote">
+      Bright axes are guides through depleted cores.
+    </p>
+  </aside>
+
+  <p
+    id="render-notice"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    Waiting for the vortex-lattice renderer. If this notice remains
+    visible, check your connection and confirm that the matching
+    script.js is saved beside index.html.
+  </p>
+
+  <noscript>
+    <div class="noscript-notice" role="alert">
+      JavaScript is required for the interactive scene.
+      The mathematical descriptions remain available in the panel.
+    </div>
+  </noscript>
+
+  <!--
+    Scientific conventions shared with script.js:
+    Rotation axis: +y. Transverse coordinates: x and z.
+    Positive phase angle: atan2(-delta z, delta x).
+    Reference time: tau0 = m xi0^2 / hbar.
+    Default triangular patch: 37 vortices, each with winding +1.
+    Reference ratios: a/xi0 = 6, Rperp/xi0 = 22, Z/xi0 = 12.
+    Omega*tau0 = 2*pi / [sqrt(3)*(a/xi0)^2].
+    Harmonic frequencies obey:
+      (omegaPerp*tau0)^2 = (Omega*tau0)^2 + (xi0/Rperp)^2
+      omegaY*tau0 = xi0/Z.
+    Core factor: f(s)^2 = s^2 / (s^2 + xi0^2).
+    These prescribed fields are not a numerical GP solution.
+  -->
+
+  <!-- Main-system world-space annotation templates. -->
+
+  <template id="bulk-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">CONDENSATE / COMPLEX ORDER PARAMETER</p>
+      <h2>One field, many circulation centers</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>Ψ = √n e<sup>iφ</sup></span>
+          <span>n = |Ψ|²</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        The cloud encodes condensate density while the color field
+        follows phase. Each vortex is a line where the order parameter
+        vanishes and the surrounding phase winds.
+      </p>
+
+      <p class="card-footnote">
+        Density and phase are prescribed. Display points sample
+        the field rather than identify individual atoms.
+      </p>
+    </article>
+  </template>
+
+  <template id="lattice-label-template">
+    <article class="world-card world-card--blue" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">COLLECTIVE ORDER / TRIANGULAR LATTICE</p>
+      <h2>A repeating pattern of vortex positions</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>A<sub>cell</sub> = √3 a² / 2</span>
+          <span>n<sub>v</sub> = 2 / (√3 a²)</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        Neighboring vortex centers define a triangular lattice.
+        The spacing a sets the area per vortex in the bulk
+        of an extended ordered array.
+      </p>
+
+      <p class="card-footnote">
+        Cell edges are geometric reference lines.
+        The finite array is prescribed; its formation is not simulated.
+      </p>
+    </article>
+  </template>
+
+  <template id="core-label-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">CORE INSPECTION / DENSITY DEPLETION</p>
+      <h2>The density falls toward the axis</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>ξ₀ = ℏ / √(2mgn₀)</span>
+          <span>f²(s) = s² / (s² + ξ₀²)</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        The selected factor falls to zero at the vortex axis.
+        A gold ruler marks the reference healing scale ξ₀
+        against the surrounding depleted-density profile.
+      </p>
+
+      <p class="card-footnote">
+        f² is an illustrative suppression factor.
+        The full density also includes the trap envelope and neighboring cores.
+      </p>
+    </article>
+  </template>
+
+  <template id="phase-label-template">
+    <article class="world-card world-card--magenta" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">TOPOLOGY / SINGLE-CORE CONTOUR</p>
+      <h2>One circuit, one full phase winding</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>Δφ<sub>C</sub> = 2π</span>
+          <span>Γ<sub>C</sub> = ∮<sub>C</sub> v<sub>s</sub> · dl = h/m</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        A positive loop around one singly quantized vortex
+        accumulates a full 2π phase winding. The order parameter
+        returns to the same complex value after the circuit.
+      </p>
+
+      <p class="card-footnote">
+        The selected contour avoids density zeros and excludes
+        neighboring cores. Phase at the central node is undefined.
+      </p>
+    </article>
+  </template>
+
+  <template id="flow-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">HYDRODYNAMIC VIEW / PHASE GRADIENT</p>
+      <h2>Flow from the surrounding phase field</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Superfluid velocity equals h bar over m times gradient of phase">
+          <mrow>
+            <msub><mi mathvariant="bold">v</mi><mi>s</mi></msub>
+            <mo>=</mo>
+            <mfrac><mi>ℏ</mi><mi>m</mi></mfrac>
+            <mi>∇</mi><mi>φ</mi>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        The local velocity combines phase gradients from the vortex
+        array. Nearby vortices reshape the flow between their cores,
+        even while the ordered pattern rotates.
+      </p>
+
+      <p class="card-footnote">
+        Markers illustrate the prescribed flow field.
+        The hydrodynamic velocity is not evaluated on zero-density axes.
+      </p>
+    </article>
+  </template>
+
+  <template id="rotation-label-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">BULK ROTATION / MANY-VORTEX LIMIT</p>
+      <h2>Circulation adds up across the lattice</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>n<sub>v</sub>κ ≈ 2Ω</span>
+          <span>κ = h/m</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        Averaging over many singly quantized vortices connects
+        their areal density to the angular velocity of the bulk flow.
+        Larger rotation rates correspond to smaller lattice spacing.
+      </p>
+
+      <p class="card-footnote">
+        A bulk approximation with finite-boundary corrections.
+        Lattice rotation and local superfluid motion are distinct.
+      </p>
+    </article>
+  </template>
+
+  <!-- Independent scientific reference gallery. -->
+
+  <template id="atom-label-template">
+    <article class="world-card world-card--blue" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / BOSE STATISTICS</p>
+      <h2>Bosonic atom · exchange symmetry</h2>
+
+      <div class="card-equation">
+        <div class="formula formula--center">
+          P̂<sub>12</sub>Φ = +Φ
+        </div>
+      </div>
+
+      <p class="card-description">
+        The many-particle state of identical bosons is symmetric
+        under exchange. This statistical property allows macroscopic
+        occupation of a single quantum state.
+      </p>
+
+      <p class="card-footnote">
+        Φ denotes the many-particle state here.
+        The atom icon is schematic and has no specified internal orbitals.
+      </p>
+    </article>
+  </template>
+
+  <template id="order-label-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / COMPLEX FIELD</p>
+      <h2>Order parameter · amplitude and phase</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>Ψ = √n e<sup>iφ</sup></span>
+          <span>Re Ψ = √n cos φ</span>
+          <span>Im Ψ = √n sin φ</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        A point in the complex plane separates the magnitude
+        of the order parameter from its phase angle.
+        The squared magnitude gives condensate number density.
+      </p>
+
+      <p class="card-footnote">
+        A mathematical amplitude diagram.
+        The rotating indicator represents a complex phase.
+      </p>
+    </article>
+  </template>
+
+  <template id="trap-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / CONFINEMENT</p>
+      <h2>Optical trap · local harmonic curvature</h2>
+
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>V<sub>ext</sub> ≈ ½m(ω⊥²ρ² + ω<sub>y</sub>²y²)</span>
+          <span>ρ² = x² + z²</span>
+        </div>
+      </div>
+
+      <p class="card-description">
+        Near a trap minimum, a harmonic potential approximates
+        confinement. Optical dipole forces can create such trapping
+        potentials for neutral atoms.
+      </p>
+
+      <p class="card-footnote">
+        The bowl represents potential energy.
+        Beam envelopes are illustrative optical guides.
+      </p>
+    </article>
+  </template>
+
+  <template id="interaction-label-template">
+    <article class="world-card world-card--magenta" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / CONTACT INTERACTION</p>
+      <h2>Coupling g · low-energy scattering</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="g equals four pi h bar squared a s divided by m">
+          <mrow>
+            <mi>g</mi><mo>=</mo>
+            <mfrac>
+              <mrow>
+                <mn>4</mn><mi>π</mi>
+                <msup><mi>ℏ</mi><mn>2</mn></msup>
+                <msub><mi>a</mi><mi>s</mi></msub>
+              </mrow>
+              <mi>m</mi>
+            </mfrac>
+          </mrow>
+        </math>
+
+        <div class="formula formula--center">
+          ε<sub>int</sub> = ½gn²
+        </div>
+      </div>
+
+      <p class="card-description">
+        The s-wave scattering length a<sub>s</sub> determines
+        the effective contact coupling in a dilute three-dimensional gas.
+        Positive g describes the repulsive case used here.
+      </p>
+
+      <p class="card-footnote">
+        A low-energy effective description.
+        Connecting guides illustrate the interaction term.
+      </p>
+    </article>
+  </template>
+
+  <template id="frame-label-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / ROTATING COORDINATES</p>
+      <h2>Energy viewed from a rotating frame</h2>
+
+      <div class="card-equation">
+        <div class="formula formula--center">
+          H<sub>rot</sub> = H − ΩL̂<sub>y</sub>
+        </div>
+      </div>
+
+      <p class="card-description">
+        A frame rotating about +y describes the system with an
+        angular-momentum term in its Hamiltonian. This is the
+        natural viewpoint for discussing a rotating lattice.
+      </p>
+
+      <p class="card-footnote">
+        The exhibit compares coordinate frames.
+        Its rotating guides are a diagram of the transformation.
+      </p>
+    </article>
+  </template>
+</body>
+</html>

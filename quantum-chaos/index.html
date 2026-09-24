@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#02040a">
+  <meta name="description" content="Explore classical instability, quantum interference, approximate stadium eigenmodes, and the signatures of quantum chaos.">
+
+  <title>Quantum Chaos | Raw Code Visualizing Nature</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body data-engine-state="loading">
+  <a class="skip-link" href="#flight-controls">Skip to flight controls</a>
+
+  <main id="observatory" aria-labelledby="project-title">
+    <div
+      id="canvas-container"
+      role="region"
+      tabindex="0"
+      aria-busy="true"
+      aria-label="Interactive quantum stadium"
+      aria-describedby="scene-description navigation-help"
+    ></div>
+
+    <div class="screen-vignette" aria-hidden="true"></div>
+
+    <aside
+      id="sidebar-ui"
+      class="instrument-panel hud-region"
+      aria-label="Quantum chaos instrument panel"
+    >
+      <header class="panel-header">
+        <p class="project-mark">
+          Raw Code <span>/</span> Visualizing Nature
+        </p>
+
+        <div class="title-row">
+          <h1 id="project-title">Quantum<br><span>Chaos</span></h1>
+
+          <svg class="stadium-mark" viewBox="0 0 92 66" aria-hidden="true">
+            <path
+              class="mark-boundary"
+              d="M29 12H63A21 21 0 0 1 63 54H29A21 21 0 0 1 29 12Z"
+            />
+            <path class="mark-orbit" d="M20 18L72 48V18L20 48Z"/>
+            <path class="mark-axis" d="M8 33H84"/>
+            <circle cx="72" cy="18" r="2.4"/>
+          </svg>
+        </div>
+
+        <p class="subtitle">
+          Classical Instability &amp;<br>Quantum Structure
+        </p>
+
+        <p class="dimension-badge">
+          2D system <span>/</span> 3D visualization
+        </p>
+
+        <div class="flight-status">
+          <span class="status-light" aria-hidden="true"></span>
+          <span id="flight-mode">Preparing instrument</span>
+          <span class="instrument-code">QC / 01</span>
+        </div>
+      </header>
+
+      <div id="sidebar-content" class="panel-scroll">
+        <section class="panel-section" aria-labelledby="telemetry-heading">
+          <div class="section-heading">
+            <h2 id="telemetry-heading">Live telemetry</h2>
+            <span id="regime-value" class="section-tag">Waiting</span>
+          </div>
+
+          <dl class="telemetry-grid" aria-live="off">
+            <div class="telemetry-cell span-two">
+              <dt>Current field</dt>
+              <dd id="state-value">Awaiting numerical model</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Sector mode index j</dt>
+              <dd id="mode-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Reflection parity x / y</dt>
+              <dd id="parity-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Energy ε</dt>
+              <dd id="energy-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Quantum time τ</dt>
+              <dd id="quantum-time-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Integrated probability</dt>
+              <dd id="norm-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell">
+              <dt>Ray separation δ / R</dt>
+              <dd id="separation-value">—</dd>
+            </div>
+
+            <div class="telemetry-cell span-two">
+              <dt>Classical orbit reference</dt>
+              <dd id="orbit-value">—</dd>
+            </div>
+          </dl>
+
+          <div class="probe-readout">
+            <p class="small-label">
+              Field probe
+              <span>(x, y) / R = (0.35, 0.20)</span>
+            </p>
+
+            <div class="probe-values">
+              <span>|ψ| <strong id="amplitude-value">—</strong></span>
+              <span>φ <strong id="phase-value">—</strong></span>
+            </div>
+
+            <p class="micro-note">
+              Dimensionless field. Phase is undefined at a node.
+            </p>
+          </div>
+        </section>
+
+        <section
+          class="panel-section"
+          aria-labelledby="field-heading"
+          data-inspection-ui
+        >
+          <div class="section-heading">
+            <h2 id="field-heading">Inspect the field</h2>
+            <span class="section-tag">Quantum</span>
+          </div>
+
+          <label class="control-label" for="state-select">
+            State preparation
+          </label>
+
+          <select id="state-select" data-engine-control disabled>
+            <option value="packet">Projected wave packet</option>
+            <option value="eigen-low">Lower numerical eigenmode</option>
+            <option value="eigen-mid">Intermediate numerical eigenmode</option>
+            <option value="eigen-high">Higher numerical eigenmode</option>
+            <option value="scar">
+              Orbit-enhanced mode / scar candidate
+            </option>
+          </select>
+
+          <div class="encoding-row">
+            <label class="control-label" for="field-select">
+              Field encoding
+            </label>
+
+            <select id="field-select" data-engine-control disabled>
+              <option value="phase">Phase + probability</option>
+              <option value="density">Probability density</option>
+              <option value="real">Real component</option>
+            </select>
+          </div>
+
+          <p id="encoding-description" class="control-note">
+            Height and brightness encode probability density; hue encodes phase.
+          </p>
+
+          <div class="button-pair">
+            <button
+              id="nodes-toggle"
+              class="small-button"
+              type="button"
+              aria-pressed="true"
+              data-engine-control
+              disabled
+            >Nodal detail</button>
+
+            <button
+              id="rays-toggle"
+              class="small-button gold-button"
+              type="button"
+              aria-pressed="true"
+              data-engine-control
+              disabled
+            >Classical rays</button>
+          </div>
+
+          <button
+            id="packet-reset"
+            class="wide-button"
+            type="button"
+            data-engine-control
+            disabled
+          >
+            Prepare wave packet
+            <span aria-hidden="true">↺</span>
+          </button>
+
+          <p
+            id="display-status"
+            class="status-note"
+            role="status"
+            aria-live="polite"
+          >
+            Building a boundary-conforming wave model.
+          </p>
+        </section>
+
+        <section
+          class="panel-section"
+          aria-labelledby="orbit-heading"
+          data-inspection-ui
+        >
+          <div class="section-heading">
+            <h2 id="orbit-heading">Periodic orbit atlas</h2>
+            <span class="section-tag gold-text">Classical</span>
+          </div>
+
+          <label class="visually-hidden" for="orbit-select">
+            Choose a periodic orbit
+          </label>
+
+          <select id="orbit-select" data-engine-control disabled>
+            <option value="horizontal">Long-axis orbit / unstable</option>
+            <option value="bowtie">Four-bounce bow-tie / unstable</option>
+            <option value="bouncing">Bouncing-ball family / marginal</option>
+          </select>
+
+          <p id="orbit-description" class="control-note">
+            The long-axis orbit reflects between the curved end caps.
+            A small transverse perturbation grows.
+          </p>
+
+          <div class="orbit-metric">
+            <span>Orbit-band enhancement</span>
+            <strong id="enhancement-value">—</strong>
+          </div>
+
+          <p class="micro-note">
+            Density in the orbit band, relative to its area fraction.
+            This diagnostic alone does not establish scarring.
+          </p>
+        </section>
+
+        <section class="panel-section" aria-labelledby="journey-heading">
+          <div class="section-heading">
+            <h2 id="journey-heading">Inspection sequence</h2>
+            <span id="stage-counter" class="section-tag">01 / 12</span>
+          </div>
+
+          <ol id="journey-stages" class="journey-list">
+            <li data-stage="0" class="is-active">
+              <button
+                type="button"
+                data-chapter="0"
+                aria-current="step"
+                data-engine-control
+                disabled
+              ><span>01</span>Classical stadium</button>
+            </li>
+
+            <li data-stage="1">
+              <button type="button" data-chapter="1" data-engine-control disabled>
+                <span>02</span>Trajectory divergence
+              </button>
+            </li>
+
+            <li data-stage="2">
+              <button type="button" data-chapter="2" data-engine-control disabled>
+                <span>03</span>Quantum transition
+              </button>
+            </li>
+
+            <li data-stage="3">
+              <button type="button" data-chapter="3" data-engine-control disabled>
+                <span>04</span>Wave packet
+              </button>
+            </li>
+
+            <li data-stage="4">
+              <button type="button" data-chapter="4" data-engine-control disabled>
+                <span>05</span>Interference
+              </button>
+            </li>
+
+            <li data-stage="5">
+              <button type="button" data-chapter="5" data-engine-control disabled>
+                <span>06</span>Eigenstate
+              </button>
+            </li>
+
+            <li data-stage="6">
+              <button type="button" data-chapter="6" data-engine-control disabled>
+                <span>07</span>Higher modes
+              </button>
+            </li>
+
+            <li data-stage="7">
+              <button type="button" data-chapter="7" data-engine-control disabled>
+                <span>08</span>Quantum scar candidate
+              </button>
+            </li>
+
+            <li data-stage="8">
+              <button type="button" data-chapter="8" data-engine-control disabled>
+                <span>09</span>Integrable vs chaotic
+              </button>
+            </li>
+
+            <li data-stage="9">
+              <button type="button" data-chapter="9" data-engine-control disabled>
+                <span>10</span>Spectral statistics
+              </button>
+            </li>
+
+            <li data-stage="10">
+              <button type="button" data-chapter="10" data-engine-control disabled>
+                <span>11</span>Periodic orbits
+              </button>
+            </li>
+
+            <li data-stage="11">
+              <button type="button" data-chapter="11" data-engine-control disabled>
+                <span>12</span>Full overview
+              </button>
+            </li>
+          </ol>
+
+          <div
+            id="journey-progress"
+            class="progress-track"
+            role="progressbar"
+            aria-label="Guided tour progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="flight-progress"></span>
+          </div>
+
+          <div class="progress-meta">
+            <span>Guided flight</span>
+            <span id="tour-time">00:00 / —</span>
+          </div>
+        </section>
+
+        <details class="panel-disclosure" data-inspection-ui>
+          <summary>Read the spectrum</summary>
+
+          <div class="disclosure-body">
+            <p class="small-label">Theoretical spacing references</p>
+
+            <figure class="spacing-figure">
+              <canvas
+                id="spacing-chart"
+                width="560"
+                height="300"
+                role="img"
+                aria-label="The Poisson spacing density decreases from one at zero spacing. The GOE Wigner surmise begins at zero, peaks, then decays. These are reference curves, not measured histograms."
+              >
+                Poisson: P(s) = exp(−s).
+                GOE: P(s) = (π/2)s exp(−πs²/4).
+              </canvas>
+
+              <figcaption>
+                <span class="legend-poisson">Poisson</span>
+                <span class="legend-goe">GOE surmise</span>
+              </figcaption>
+            </figure>
+
+            <p>
+              Poisson-like behavior is a generic integrable reference.
+              Level repulsion is characteristic of many chaotic systems
+              with the appropriate symmetries.
+            </p>
+
+            <p>
+              GOE applies here as a spinless, time-reversal-invariant reference.
+              Statistical comparisons require unfolded levels within one
+              reflection-parity sector.
+            </p>
+
+            <dl class="compact-readouts">
+              <div>
+                <dt>Displayed spectral sector</dt>
+                <dd id="spectrum-sector">—</dd>
+              </div>
+              <div>
+                <dt>Mean-scaled spacing s</dt>
+                <dd id="spacing-value">—</dd>
+              </div>
+            </dl>
+
+            <p class="micro-note">
+              The energy ladder uses approximate Ritz levels.
+              The curves are theoretical references, not a fit to this
+              small spectrum. Mean-scaled gaps are descriptive; they
+              are not a full unfolding analysis.
+            </p>
+          </div>
+        </details>
+
+        <details class="panel-disclosure" data-inspection-ui>
+          <summary>Physics &amp; numerical scope</summary>
+
+          <div class="disclosure-body">
+            <p class="small-label">Hard-wall stadium</p>
+
+            <p>
+              Cap radius R; straight-region half-length a = R.
+              Motion is two-dimensional. Field height, glow, and the
+              surrounding chamber are display encodings.
+            </p>
+
+            <div class="equation-box">
+              <math
+                display="block"
+                aria-label="Potential is zero inside; the wavefunction is zero on the boundary."
+              >
+                <mrow>
+                  <mi>V</mi><mo>=</mo><mn>0</mn>
+                  <mspace width="0.6em"/>
+                  <mtext>inside</mtext>
+                </mrow>
+              </math>
+
+              <math
+                display="block"
+                aria-label="Psi on the boundary of Omega equals zero."
+              >
+                <mrow>
+                  <msub>
+                    <mi>ψ</mi>
+                    <mrow><mo>∂</mo><mi>Ω</mi></mrow>
+                  </msub>
+                  <mo>=</mo><mn>0</mn>
+                </mrow>
+              </math>
+            </div>
+
+            <p class="small-label">Numerical approximation</p>
+
+            <p>
+              Boundary-conforming Rayleigh–Ritz modes.
+              The trial functions vanish on the stadium wall; interior
+              eigenfunctions and energies are approximate.
+            </p>
+
+            <dl class="compact-readouts">
+              <div>
+                <dt>Trial functions</dt>
+                <dd id="basis-size">—</dd>
+              </div>
+              <div>
+                <dt>Matrix eigenpair residual</dt>
+                <dd id="residual-value">—</dd>
+              </div>
+            </dl>
+
+            <p>
+              The matrix residual checks the projected eigenproblem.
+              It is not an error bound for the continuum wavefunction.
+              Higher modes are more sensitive to basis truncation.
+            </p>
+
+            <p>
+              A wave packet is projected into the retained modes.
+              Its evolution conserves probability within that finite model.
+              Crossfades between selected states are display transitions.
+            </p>
+
+            <p class="small-label">Dimensionless units</p>
+
+            <div class="equation-box">
+              <math
+                display="block"
+                aria-label="Epsilon equals two m R squared E over h bar squared."
+              >
+                <mrow>
+                  <mi>ε</mi><mo>=</mo>
+                  <mfrac>
+                    <mrow>
+                      <mn>2</mn><mi>m</mi>
+                      <msup><mi>R</mi><mn>2</mn></msup>
+                      <mi>E</mi>
+                    </mrow>
+                    <msup><mi>ℏ</mi><mn>2</mn></msup>
+                  </mfrac>
+                </mrow>
+              </math>
+
+              <math
+                display="block"
+                aria-label="Tau equals h bar t over two m R squared."
+              >
+                <mrow>
+                  <mi>τ</mi><mo>=</mo>
+                  <mfrac>
+                    <mrow><mi>ℏ</mi><mi>t</mi></mrow>
+                    <mrow>
+                      <mn>2</mn><mi>m</mi>
+                      <msup><mi>R</mi><mn>2</mn></msup>
+                    </mrow>
+                  </mfrac>
+                </mrow>
+              </math>
+            </div>
+
+            <p>
+              Classical ray time and quantum time are separate clocks.
+              The trajectory-separation readout is a measured spatial
+              distance, not a numerical Lyapunov exponent.
+            </p>
+
+            <p>
+              For a stationary real mode, phase colors show its sign
+              in a fixed global-phase convention. Probability density
+              remains stationary.
+            </p>
+
+            <p>
+              Scars are associated with some unstable periodic orbits.
+              The straight-wall bouncing-ball family is marginally
+              stable and is labeled separately.
+            </p>
+
+            <div class="source-links">
+              <a
+                href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.53.1515"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Heller / original scar paper ↗</a>
+
+              <a
+                href="https://arxiv.org/abs/nlin/0004024"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Scars, symmetry &amp; stadium modes ↗</a>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <footer class="panel-footer">
+        <p id="navigation-help">
+          Drag to orbit · Wheel / pinch to zoom<br>
+          Right-drag / two fingers to pan
+        </p>
+
+        <p class="footer-note">
+          Inspecting a chapter or control interrupts the drone.
+        </p>
+
+        <div class="keyboard-guide">
+          <span><kbd>Space</kbd> Pause</span>
+          <span><kbd>R</kbd> Drone</span>
+          <span><kbd>H</kbd> HUD</span>
+        </div>
+      </footer>
+    </aside>
+
+    <nav id="flight-controls" aria-label="Flight controls" tabindex="-1">
+      <button
+        id="hud-toggle"
+        class="control-button"
+        type="button"
+        aria-controls="sidebar-ui scene-caption reference-legend"
+        aria-expanded="true"
+        aria-keyshortcuts="H"
+        data-engine-control
+        disabled
+      >
+        <span id="hud-label">Hide HUD</span>
+        <kbd aria-hidden="true">H</kbd>
+      </button>
+
+      <button
+        id="pause-toggle"
+        class="control-button"
+        type="button"
+        aria-pressed="false"
+        aria-keyshortcuts="Space"
+        data-engine-control
+        disabled
+      >
+        <span id="pause-label">Pause</span>
+        <kbd aria-hidden="true">Space</kbd>
+      </button>
+
+      <button
+        id="resume-flight"
+        class="control-button primary-button"
+        type="button"
+        aria-keyshortcuts="R"
+        data-engine-control
+        disabled
+      >
+        <span>Resume drone</span>
+        <kbd aria-hidden="true">R</kbd>
+      </button>
+    </nav>
+
+    <section
+      id="scene-caption"
+      class="hud-region"
+      aria-labelledby="scene-title"
+    >
+      <p class="caption-eyebrow">
+        <span id="chapter-value">01 / Classical reference</span>
+        <span class="caption-rule"></span>
+      </p>
+
+      <h2 id="scene-title">A deterministic beginning.</h2>
+
+      <p id="scene-description">
+        Specular reflections in a stadium reveal how nearby classical
+        trajectories can separate. The quantum field will tell a different
+        part of the story.
+      </p>
+
+      <p id="scene-model-note" class="caption-model-note">
+        Classical reference trajectories · two-dimensional billiard
+      </p>
+    </section>
+
+    <aside
+      id="reference-legend"
+      class="hud-region"
+      aria-label="Visual encoding"
+    >
+      <p class="small-label">Reading the chamber</p>
+
+      <div class="phase-ramp" aria-hidden="true"></div>
+
+      <div class="phase-ticks" aria-hidden="true">
+        <span>−π</span>
+        <span>0</span>
+        <span>+π</span>
+      </div>
+
+      <p id="legend-field-note">
+        Hue: phase φ<br>
+        Height / brightness: density |ψ|²
+      </p>
+
+      <div class="legend-row">
+        <span class="swatch swatch-gold" aria-hidden="true"></span>
+        <span>Classical reference</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="swatch swatch-node" aria-hidden="true"></span>
+        <span>Dark gaps: low amplitude / nodes</span>
+      </div>
+
+      <p class="micro-note">
+        Classical paths are comparison structures, not quantum particle tracks.
+      </p>
+    </aside>
+
+    <section
+      id="render-notice"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      tabindex="-1"
+    >
+      <p class="notice-code">Quantum Chaos / Initialization</p>
+      <h2 id="notice-title">Preparing the stadium</h2>
+
+      <p id="notice-message">
+        Waiting for the graphics engine and numerical wave model.
+      </p>
+
+      <p id="notice-detail">
+        Keep index.html, styles.css, and script.js together.
+        An internet connection is needed to load the Three.js libraries.
+      </p>
+
+      <a id="notice-reload" href="./index.html" hidden>
+        Reload visualization ↗
+      </a>
+    </section>
+
+    <p
+      id="accessibility-status"
+      class="visually-hidden"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+
+    <noscript>
+      <div class="noscript-notice">
+        <strong>JavaScript is required.</strong>
+        <p>Enable JavaScript and reload to explore Quantum Chaos.</p>
+      </div>
+    </noscript>
+  </main>
+
+  <template id="boundary-card-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">Geometry / Dirichlet boundary</p>
+      <h2>A stadium for waves</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="V equals zero inside Omega and tends to infinity outside."
+        >
+          <mrow>
+            <mi>V</mi><mo>=</mo><mn>0</mn>
+            <mspace width="0.4em"/>
+            <mtext>in Ω</mtext><mo>;</mo>
+            <mspace width="0.4em"/>
+            <mi>V</mi><mo>→</mo><mi>∞</mi>
+            <mspace width="0.4em"/>
+            <mtext>outside</mtext>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="Psi equals zero on the wall.">
+          <mrow>
+            <mi>ψ</mi><mo>=</mo><mn>0</mn>
+            <mspace width="0.5em"/>
+            <mtext>on the wall</mtext>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A rectangle joins two semicircular caps.
+        The hard wall confines the wave to a two-dimensional domain.
+      </p>
+
+      <p class="card-footnote">
+        Vertical relief encodes the field; it is not a third physical dimension.
+      </p>
+    </article>
+  </template>
+
+  <template id="classical-card-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">01 / Classical reference trajectories</p>
+      <h2>Close starts. Distant futures.</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Delta of t is approximately delta zero times e to lambda t."
+        >
+          <mrow>
+            <mi>δ</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>≈</mo>
+            <msub><mi>δ</mi><mn>0</mn></msub>
+            <msup>
+              <mi>e</mi>
+              <mrow><mi>λ</mi><mi>t</mi></mrow>
+            </msup>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Nearly identical rays follow deterministic, specular reflections.
+        Encounters with the curved caps amplify small differences.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Spatial separation / awaiting rays
+      </p>
+
+      <p class="card-footnote">
+        The exponential is a conceptual local-instability relation.
+        No Lyapunov exponent is inferred from this pair.
+      </p>
+    </article>
+  </template>
+
+  <template id="packet-card-template">
+    <article class="world-card world-card--blue" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">02 / Projected quantum wave packet</p>
+      <h2>One field. Many amplitudes.</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="i h bar partial psi over partial t equals H hat psi."
+        >
+          <mrow>
+            <mi>i</mi><mi>ℏ</mi>
+            <mfrac>
+              <mrow><mo>∂</mo><mi>ψ</mi></mrow>
+              <mrow><mo>∂</mo><mi>t</mi></mrow>
+            </mfrac>
+            <mo>=</mo>
+            <mover><mi>H</mi><mo>^</mo></mover>
+            <mi>ψ</mi>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="Rho equals absolute psi squared.">
+          <mrow>
+            <mi>ρ</mi><mo>=</mo>
+            <msup>
+              <mrow><mo>|</mo><mi>ψ</mi><mo>|</mo></mrow>
+              <mn>2</mn>
+            </msup>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A localized initial field spreads, reflects, and interferes through
+        the relative phases of its numerical modes.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Finite-basis evolution
+      </p>
+
+      <p class="card-footnote">
+        Prepared inside a closed cavity. Probability is conserved within
+        the retained numerical subspace.
+      </p>
+    </article>
+  </template>
+
+  <template id="eigenstate-card-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">03 / Approximate stadium eigenstate</p>
+      <h2>Still density. Structured phase.</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="H hat psi j equals E j psi j.">
+          <mrow>
+            <mover><mi>H</mi><mo>^</mo></mover>
+            <msub><mi>ψ</mi><mi>j</mi></msub>
+            <mo>=</mo>
+            <msub><mi>E</mi><mi>j</mi></msub>
+            <msub><mi>ψ</mi><mi>j</mi></msub>
+          </mrow>
+        </math>
+
+        <math
+          display="block"
+          aria-label="Psi equals absolute psi times e to i phi."
+        >
+          <mrow>
+            <mi>ψ</mi><mo>=</mo><mo>|</mo><mi>ψ</mi><mo>|</mo>
+            <msup>
+              <mi>e</mi>
+              <mrow><mi>i</mi><mi>φ</mi></mrow>
+            </msup>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        For one energy eigenstate, the density is stationary.
+        Dark nodal lines separate regions of opposite sign in a real mode.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Numerical mode / awaiting solution
+      </p>
+
+      <p class="card-footnote">
+        A Ritz approximation to the stationary equation.
+        Phase is undefined where ψ = 0; global phase is fixed for inspection.
+      </p>
+    </article>
+  </template>
+
+  <template id="scar-card-template">
+    <article class="world-card world-card--magenta" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">04 / Quantum scar candidate</p>
+      <h2>An orbit leaves a signature.</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Eta is the probability in band B divided by the fraction of cavity area in band B."
+        >
+          <mrow>
+            <mi>η</mi><mo>=</mo>
+            <mfrac>
+              <mrow>
+                <msub><mo>∫</mo><mi>B</mi></msub>
+                <msup>
+                  <mrow><mo>|</mo><mi>ψ</mi><mo>|</mo></mrow>
+                  <mn>2</mn>
+                </msup>
+                <mi>d</mi><mi>A</mi>
+              </mrow>
+              <mrow>
+                <msub><mi>A</mi><mi>B</mi></msub>
+                <mo>/</mo>
+                <msub><mi>A</mi><mi>Ω</mi></msub>
+              </mrow>
+            </mfrac>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Scarring is enhanced eigenstate density associated with an unstable
+        classical periodic orbit. Here, a computed mode is selected for
+        orbit-band enhancement.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Orbit-band diagnostic / awaiting mode
+      </p>
+
+      <p class="card-footnote">
+        A numerical candidate, not proof of a scar.
+        Symmetry and finite-basis effects matter.
+        The gold path adds no density to the field.
+      </p>
+    </article>
+  </template>
+
+  <template id="comparison-card-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">05 / Integrable comparison</p>
+      <h2>The separable rectangle</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Psi p q is proportional to sine of p pi x over L x times sine of q pi y over L y."
+        >
+          <mrow>
+            <msub>
+              <mi>ψ</mi>
+              <mrow><mi>p</mi><mi>q</mi></mrow>
+            </msub>
+            <mo>∝</mo>
+            <mi>sin</mi><mo>(</mo>
+            <mfrac>
+              <mrow><mi>p</mi><mi>π</mi><mi>x</mi></mrow>
+              <msub><mi>L</mi><mi>x</mi></msub>
+            </mfrac>
+            <mo>)</mo>
+            <mi>sin</mi><mo>(</mo>
+            <mfrac>
+              <mrow><mi>q</mi><mi>π</mi><mi>y</mi></mrow>
+              <msub><mi>L</mi><mi>y</mi></msub>
+            </mfrac>
+            <mo>)</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Straight walls give separable standing waves and regular classical
+        motion. The smaller rectangle uses analytic box modes.
+      </p>
+
+      <p class="card-readout" data-slot="readout">Rectangle reference</p>
+
+      <p class="card-footnote">
+        Coordinates run from zero to each side length.
+        The displayed few modes do not establish a spacing distribution.
+      </p>
+    </article>
+  </template>
+
+  <template id="spectrum-card-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">06 / Spectral statistics</p>
+      <h2>Order in the spacings</h2>
+
+      <div class="card-equation spectrum-equations">
+        <math display="block" aria-label="s equals delta E over mean delta E.">
+          <mrow>
+            <mi>s</mi><mo>=</mo>
+            <mfrac>
+              <mrow><mi>Δ</mi><mi>E</mi></mrow>
+              <mrow><mo>⟨</mo><mi>Δ</mi><mi>E</mi><mo>⟩</mo></mrow>
+            </mfrac>
+          </mrow>
+        </math>
+
+        <math
+          display="block"
+          aria-label="Poisson reference P of s equals e to minus s."
+        >
+          <mrow>
+            <msub><mi>P</mi><mtext>P</mtext></msub>
+            <mo>(</mo><mi>s</mi><mo>)</mo><mo>=</mo>
+            <msup>
+              <mi>e</mi>
+              <mrow><mo>−</mo><mi>s</mi></mrow>
+            </msup>
+          </mrow>
+        </math>
+
+        <math
+          display="block"
+          aria-label="GOE Wigner surmise P of s equals pi over two times s times e to minus pi s squared over four."
+        >
+          <mrow>
+            <msub><mi>P</mi><mtext>GOE</mtext></msub>
+            <mo>(</mo><mi>s</mi><mo>)</mo><mo>=</mo>
+            <mfrac><mi>π</mi><mn>2</mn></mfrac>
+            <mi>s</mi>
+            <msup>
+              <mi>e</mi>
+              <mrow>
+                <mo>−</mo>
+                <mfrac>
+                  <mrow>
+                    <mi>π</mi>
+                    <msup><mi>s</mi><mn>2</mn></msup>
+                  </mrow>
+                  <mn>4</mn>
+                </mfrac>
+              </mrow>
+            </msup>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        The ladder shows numerical Ritz levels in one parity sector.
+        The curves compare theoretical spacing laws.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Single-sector spectrum
+      </p>
+
+      <p class="card-footnote">
+        GOE comparison assumes the appropriate time-reversal symmetry and
+        unfolded levels. Random-matrix statistics do not make the physical
+        Hamiltonian random.
+      </p>
+    </article>
+  </template>
+
+  <template id="orbit-card-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+
+      <p class="card-eyebrow">Classical periodic orbit</p>
+      <h2 data-slot="title">The long-axis orbit</h2>
+
+      <div class="card-equation">
+        <math
+          display="block"
+          aria-label="Outgoing velocity equals incoming velocity minus twice its projection on the wall normal."
+        >
+          <mrow>
+            <msub>
+              <mi mathvariant="bold">v</mi>
+              <mtext>out</mtext>
+            </msub>
+            <mo>=</mo>
+            <msub>
+              <mi mathvariant="bold">v</mi>
+              <mtext>in</mtext>
+            </msub>
+            <mo>−</mo><mn>2</mn><mo>(</mo>
+            <msub>
+              <mi mathvariant="bold">v</mi>
+              <mtext>in</mtext>
+            </msub>
+            <mo>·</mo>
+            <mover>
+              <mi mathvariant="bold">n</mi>
+              <mo>^</mo>
+            </mover>
+            <mo>)</mo>
+            <mover>
+              <mi mathvariant="bold">n</mi>
+              <mo>^</mo>
+            </mover>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description" data-slot="description">
+        Specular reflections return the ray to its initial position
+        and direction.
+      </p>
+
+      <p class="card-readout" data-slot="readout">
+        Two reflections / unstable
+      </p>
+
+      <p class="card-footnote" data-slot="footnote">
+        A classical comparison structure.
+        Quantum probability is carried by the wavefunction.
+      </p>
+    </article>
+  </template>
+</body>
+</html>

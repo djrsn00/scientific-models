@@ -1,0 +1,649 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="A cinematic three-dimensional scientific illustration of a quantum condensate, optical trapping, quantized vortices, and a fundamental-particle inspection array."
+  >
+
+  <title>Three-Dimensional Quantum Condensate: From Macroscopic Superfluids to Fundamental Gauge Fields</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <main
+    id="canvas-container"
+    aria-label="Interactive three-dimensional quantum condensate"
+  ></main>
+
+  <aside id="sidebar-ui" aria-label="Quantum condensate information">
+    <header class="sidebar-header">
+      <p class="eyebrow">
+        <span class="status-dot" aria-hidden="true"></span>
+        Three-dimensional field atlas
+      </p>
+
+      <h1>Quantum<br>Condensate</h1>
+
+      <p class="subtitle">
+        From Macroscopic Superfluids<br>
+        to Fundamental Gauge Fields
+      </p>
+
+      <div class="flight-status">
+        <span id="flight-mode">AUTOMATIC DRONE</span>
+        <span class="dimension-badge">3D</span>
+      </div>
+    </header>
+
+    <div id="sidebar-content" class="sidebar-content">
+      <section class="telemetry-section" aria-labelledby="telemetry-heading">
+        <div class="section-heading">
+          <h2 id="telemetry-heading">Condensate telemetry</h2>
+          <span class="section-note">REFERENCE SCALED</span>
+        </div>
+
+        <dl class="telemetry">
+          <div class="telemetry-row">
+            <dt>
+              Density
+              <span>n(r) = |Ψ(r)|²</span>
+            </dt>
+            <dd id="density-value" class="numeric accent-cyan">1.000 n₀</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Phase coherence
+              <span>prescribed phase field</span>
+            </dt>
+            <dd id="coherence-value" class="accent-cyan">COHERENT</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Healing length
+              <span>bulk-density reference</span>
+            </dt>
+            <dd id="healing-value" class="numeric accent-violet">1.000 ξ₀</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Trapping potential
+              <span>V<sub>ext</sub>(r)</span>
+            </dt>
+            <dd id="potential-value" class="numeric accent-gold">0.000 μ₀</dd>
+          </div>
+        </dl>
+
+        <p class="reference-note">
+          Reference scales: n₀, ξ₀ and μ₀ = gn₀.
+          Core size is referenced to the surrounding bulk density.
+        </p>
+      </section>
+
+      <section class="journey-section" aria-labelledby="journey-heading">
+        <h2 id="journey-heading" class="section-label">Inspection sequence</h2>
+
+        <ol id="journey-stages" class="journey-stages">
+          <li data-stage="bulk" class="is-active" aria-current="step">
+            <span class="stage-number">01</span>
+            <span>Bulk coherence</span>
+          </li>
+
+          <li data-stage="vortex">
+            <span class="stage-number">02</span>
+            <span>Vortex descent</span>
+          </li>
+
+          <li data-stage="soliton">
+            <span class="stage-number">03</span>
+            <span>Soliton interface</span>
+          </li>
+
+          <li data-stage="particles">
+            <span class="stage-number">04</span>
+            <span>Particle inspection</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="equations-section" aria-labelledby="equations-heading">
+        <div class="section-heading">
+          <h2 id="equations-heading">Mathematical structure</h2>
+          <span class="section-note">EXPAND TO INSPECT</span>
+        </div>
+
+        <details class="equation-disclosure" data-inspection-ui open>
+          <summary>Gross–Pitaevskii dynamics</summary>
+
+          <div class="equation-body">
+            <math display="block" aria-label="Gross-Pitaevskii evolution equation">
+              <mrow>
+                <mi>i</mi><mi>ℏ</mi>
+                <mfrac>
+                  <mrow><mo>∂</mo><mi>Ψ</mi></mrow>
+                  <mrow><mo>∂</mo><mi>t</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <msub><mi>H</mi><mtext>GP</mtext></msub>
+                <mi>Ψ</mi>
+              </mrow>
+            </math>
+
+            <math display="block" aria-label="Gross-Pitaevskii Hamiltonian">
+              <mrow>
+                <msub><mi>H</mi><mtext>GP</mtext></msub>
+                <mo>=</mo><mo>−</mo>
+                <mfrac>
+                  <msup><mi>ℏ</mi><mn>2</mn></msup>
+                  <mrow><mn>2</mn><mi>m</mi></mrow>
+                </mfrac>
+                <msup><mi>∇</mi><mn>2</mn></msup>
+                <mo>+</mo>
+                <msub><mi>V</mi><mtext>ext</mtext></msub>
+                <mo>+</mo><mi>g</mi>
+                <msup>
+                  <mrow><mo>|</mo><mi>Ψ</mi><mo>|</mo></mrow>
+                  <mn>2</mn>
+                </msup>
+              </mrow>
+            </math>
+
+            <p>
+              Mean-field order parameter with n = |Ψ|² and
+              ∫n d³r = N.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Interaction &amp; healing length</summary>
+
+          <div class="equation-body">
+            <math display="block" aria-label="Contact interaction strength">
+              <mrow>
+                <mi>g</mi><mo>=</mo>
+                <mfrac>
+                  <mrow>
+                    <mn>4</mn><mi>π</mi>
+                    <msup><mi>ℏ</mi><mn>2</mn></msup>
+                    <msub><mi>a</mi><mi>s</mi></msub>
+                  </mrow>
+                  <mi>m</mi>
+                </mfrac>
+              </mrow>
+            </math>
+
+            <math display="block" aria-label="Reference healing length">
+              <mrow>
+                <msub><mi>ξ</mi><mn>0</mn></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mi>ℏ</mi>
+                  <msqrt>
+                    <mrow>
+                      <mn>2</mn><mi>m</mi><mi>g</mi>
+                      <msub><mi>n</mi><mn>0</mn></msub>
+                    </mrow>
+                  </msqrt>
+                </mfrac>
+              </mrow>
+            </math>
+
+            <p>
+              Repulsive interaction g &gt; 0. The reference density n₀
+              is the bulk density, not the depleted vortex-center density.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Quantized circulation</summary>
+
+          <div class="equation-body">
+            <math display="block" aria-label="Quantized superfluid circulation">
+              <mrow>
+                <mi>Γ</mi><mo>=</mo><mo>∮</mo>
+                <msub><mi mathvariant="bold">v</mi><mi>s</mi></msub>
+                <mo>·</mo>
+                <mi>d</mi><mi mathvariant="bold">l</mi>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><mi>ℓ</mi><mi>h</mi></mrow>
+                  <mi>m</mi>
+                </mfrac>
+              </mrow>
+            </math>
+
+            <math display="block" aria-label="Integer winding number">
+              <mrow>
+                <mi>ℓ</mi><mo>∈</mo>
+                <mi mathvariant="double-struck">Z</mi>
+              </mrow>
+            </math>
+
+            <p>
+              ℓ counts phase winding. Density is denoted by n.
+              The helical traces visualize the vortex flow.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Bosonic field commutator</summary>
+
+          <div class="equation-body equation-body--compact">
+            <math display="block" aria-label="Equal-time bosonic field commutator">
+              <mtable columnalign="left" rowspacing="0.45em">
+                <mtr>
+                  <mtd>
+                    <mrow>
+                      <mo>[</mo>
+                      <mover accent="true"><mi>ψ</mi><mo>ˆ</mo></mover>
+                      <mo>(</mo><mi mathvariant="bold">r</mi><mo>)</mo>
+                      <mo>,</mo>
+                      <msup>
+                        <mover accent="true"><mi>ψ</mi><mo>ˆ</mo></mover>
+                        <mo>†</mo>
+                      </msup>
+                      <mo>(</mo>
+                      <msup><mi mathvariant="bold">r</mi><mo>′</mo></msup>
+                      <mo>)</mo>
+                      <mo>]</mo>
+                    </mrow>
+                  </mtd>
+                </mtr>
+
+                <mtr>
+                  <mtd>
+                    <mrow>
+                      <mo>=</mo>
+                      <msup><mi>δ</mi><mn>3</mn></msup>
+                      <mo>(</mo>
+                      <mi mathvariant="bold">r</mi>
+                      <mo>−</mo>
+                      <msup><mi mathvariant="bold">r</mi><mo>′</mo></msup>
+                      <mo>)</mo>
+                    </mrow>
+                  </mtd>
+                </mtr>
+              </mtable>
+            </math>
+
+            <p>
+              Equal-time field operators. The operator ψ̂ is distinct
+              from the mean-field order parameter Ψ.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Quark flavors &amp; electric charge</summary>
+
+          <div class="equation-body">
+            <math display="block" aria-label="Up-type quark electric charges">
+              <mrow>
+                <mi>Q</mi>
+                <mo>(</mo><mi>u</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>t</mi><mo>)</mo>
+                <mo>=</mo><mo>+</mo>
+                <mfrac><mn>2</mn><mn>3</mn></mfrac>
+                <mi>e</mi>
+              </mrow>
+            </math>
+
+            <math display="block" aria-label="Down-type quark electric charges">
+              <mrow>
+                <mi>Q</mi>
+                <mo>(</mo><mi>d</mi><mo>,</mo><mi>s</mi><mo>,</mo><mi>b</mi><mo>)</mo>
+                <mo>=</mo><mo>−</mo>
+                <mfrac><mn>1</mn><mn>3</mn></mfrac>
+                <mi>e</mi>
+              </mrow>
+            </math>
+
+            <div class="flavor-catalog" aria-label="Six quark flavors">
+              <span><b>u</b>up</span>
+              <span><b>d</b>down</span>
+              <span><b>s</b>strange</span>
+              <span><b>c</b>charm</span>
+              <span><b>b</b>bottom</span>
+              <span><b>t</b>top</span>
+            </div>
+
+            <p>
+              The flavor catalog is separate from the selected nucleon:
+              proton uud or neutron udd.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section class="gauge-section" aria-labelledby="gauge-heading">
+        <h2 id="gauge-heading" class="section-label">Fundamental gauge symmetry</h2>
+
+        <math id="gauge-group" display="block" aria-label="Standard Model gauge group">
+          <mrow>
+            <msub>
+              <mrow><mi mathvariant="normal">SU</mi><mo>(</mo><mn>3</mn><mo>)</mo></mrow>
+              <mi>C</mi>
+            </msub>
+            <mo>×</mo>
+            <msub>
+              <mrow><mi mathvariant="normal">SU</mi><mo>(</mo><mn>2</mn><mo>)</mo></mrow>
+              <mi>L</mi>
+            </msub>
+            <mo>×</mo>
+            <msub>
+              <mrow><mi mathvariant="normal">U</mi><mo>(</mo><mn>1</mn><mo>)</mo></mrow>
+              <mi>Y</mi>
+            </msub>
+          </mrow>
+        </math>
+      </section>
+
+      <p class="scope-note">
+        A coordinated scientific illustration: prescribed fluid motion,
+        reference-scaled telemetry, and a separate particle inspection tier.
+      </p>
+    </div>
+
+    <footer class="sidebar-footer">
+      <div
+        id="journey-progress"
+        class="journey-progress"
+        role="progressbar"
+        aria-label="Automated inspection progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span id="flight-progress"></span>
+      </div>
+
+      <p>
+        <kbd>Space</kbd> pause/play
+        <kbd>R</kbd> resume drone
+        <kbd>H</kbd> HUD
+      </p>
+
+      <p>Drag to orbit · pinch to zoom · two-finger pan</p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="sidebar-ui"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+    >Hide HUD</button>
+
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space"
+    >Pause</button>
+
+    <button
+      id="resume-flight"
+      class="primary-control"
+      type="button"
+      aria-keyshortcuts="R"
+    >Resume drone</button>
+  </nav>
+
+  <section id="scene-caption" aria-label="Current inspection region">
+    <p id="chapter-value" class="caption-eyebrow">01 / BULK CONDENSATE</p>
+    <h2 id="scene-title">One coherent field. Many scales.</h2>
+    <p id="scene-description">
+      Optical confinement, quantized circulation, and a shared phase landscape.
+    </p>
+  </section>
+
+  <div id="reference-legend" aria-label="Reference scales">
+    <span>MODEL REFERENCE SCALES</span>
+    <p>n₀ <i>·</i> ξ₀ <i>·</i> μ₀</p>
+  </div>
+
+  <p id="render-notice" role="alert" hidden></p>
+
+  <noscript>
+    <div class="noscript-notice">
+      JavaScript is required to render the quantum condensate.
+    </div>
+  </noscript>
+
+  <!--
+    Reference conventions:
+    https://arxiv.org/abs/cond-mat/9806038
+    https://arxiv.org/abs/1004.4071
+    https://pdg.lbl.gov/2025/listings/particle_properties.html
+  -->
+
+  <template id="vortex-label-template">
+    <article class="world-card world-card--cyan" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">SUPERFLUID / PHASE WINDING</p>
+      <h2>QUANTIZED VORTEX CORE (ξ)</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Vortex circulation">
+          <mrow>
+            <mi>Γ</mi><mo>=</mo>
+            <mo>∮</mo>
+            <msub><mi mathvariant="bold">v</mi><mi>s</mi></msub>
+            <mo>·</mo><mi>d</mi><mi mathvariant="bold">l</mi>
+            <mo>=</mo>
+            <mfrac><mrow><mi>ℓ</mi><mi>h</mi></mrow><mi>m</mi></mfrac>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A density-depleted core with size of order ξ.
+        Phase winds by 2πℓ around the filament.
+      </p>
+
+      <p class="card-footnote">
+        Healing length uses the surrounding bulk density.
+      </p>
+    </article>
+  </template>
+
+  <template id="soliton-label-template">
+    <article class="world-card world-card--violet" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">DENSITY DEPRESSION / PHASE SLIP</p>
+      <h2>DARK SOLITON INTERFACE</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Stationary black-soliton phase and density">
+          <mrow>
+            <mi>Δ</mi><mi>φ</mi><mo>=</mo><mi>π</mi>
+            <mspace width="1em"/>
+            <msub><mi>n</mi><mtext>min</mtext></msub><mo>=</mo><mn>0</mn>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A stationary black-soliton schematic: a dark density notch
+        separates regions with a π phase difference.
+      </p>
+
+      <p class="card-footnote">
+        The planar interface is a prescribed structure within the 3D illustration.
+      </p>
+    </article>
+  </template>
+
+  <template id="lattice-label-template">
+    <article class="world-card world-card--cyan" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">STANDING-WAVE CONFINEMENT</p>
+      <h2>OPTICAL LATTICE V<sub>ext</sub></h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Optical lattice potential">
+          <mrow>
+            <msub><mi>V</mi><mtext>ext</mtext></msub><mo>=</mo>
+            <msub><mi>V</mi><mtext>trap</mtext></msub><mo>+</mo>
+            <msub><mi>V</mi><mn>0</mn></msub>
+            <munder><mo>∑</mo><mi>j</mi></munder>
+            <msup><mi mathvariant="normal">sin</mi><mn>2</mn></msup>
+            <mo>(</mo>
+            <msub><mi>k</mi><mi>L</mi></msub>
+            <msub><mi>r</mi><mi>j</mi></msub>
+            <mo>)</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Periodic optical potential wells organized along three orthogonal axes.
+      </p>
+
+      <p class="card-footnote">j ∈ {x, y, z}</p>
+    </article>
+  </template>
+
+  <template id="gluon-label-template">
+    <article class="world-card world-card--magenta" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">QCD / COLOR-SINGLET NUCLEON</p>
+      <h2>GLUON COLOR FLUX TUBE</h2>
+
+      <div class="valence-strip" aria-label="Proton valence quark content">
+        <span class="quark-chip quark-chip--red">u</span>
+        <span class="quark-chip quark-chip--green">u</span>
+        <span class="quark-chip quark-chip--blue">d</span>
+        <span class="valence-caption">PROTON VALENCE CONTENT</span>
+      </div>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Proton electric charge">
+          <mrow>
+            <msub><mi>Q</mi><mi>p</mi></msub><mo>=</mo>
+            <mn>2</mn><mo>×</mo>
+            <mfrac><mn>2</mn><mn>3</mn></mfrac><mi>e</mi>
+            <mo>−</mo>
+            <mfrac><mn>1</mn><mn>3</mn></mfrac><mi>e</mi>
+            <mo>=</mo><mi>e</mi>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Three valence quarks connected by a schematic confining color field.
+        Flavor letters and color-charge labels represent different properties.
+      </p>
+    </article>
+  </template>
+
+  <template id="higgs-label-template">
+    <article class="world-card world-card--gold" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">SCALAR VACUUM / NEUTRAL EXCITATION</p>
+      <h2>HIGGS VACUUM H⁰</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Nonzero Higgs vacuum expectation value">
+          <mrow>
+            <mo>⟨</mo><mi>Φ</mi><mo>⟩</mo>
+            <mo>≠</mo><mn>0</mn>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        The golden web represents a scalar vacuum-field schematic.
+        ⟨Φ⟩ denotes the vacuum field; H⁰ labels a neutral Higgs excitation.
+      </p>
+    </article>
+  </template>
+
+  <template id="photon-label-template">
+    <article class="world-card world-card--gold" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">ELECTROMAGNETIC / TRANSVERSE MODE</p>
+      <h2>PHOTON γ</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Transverse electromagnetic fields">
+          <mrow>
+            <mi mathvariant="bold">E</mi><mo>·</mo><mi mathvariant="bold">k</mi>
+            <mo>=</mo>
+            <mi mathvariant="bold">B</mi><mo>·</mo><mi mathvariant="bold">k</mi>
+            <mo>=</mo><mn>0</mn>
+          </mrow>
+        </math>
+
+        <math display="block" aria-label="Vacuum electromagnetic dispersion">
+          <mrow>
+            <mi>ω</mi><mo>=</mo><mi>c</mi>
+            <mo>|</mo><mi mathvariant="bold">k</mi><mo>|</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        A localized electromagnetic wave-packet schematic.
+        The field oscillations are transverse to propagation.
+      </p>
+    </article>
+  </template>
+
+  <template id="electron-label-template">
+    <article class="world-card world-card--blue" tabindex="0">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">LEPTON / ORBITAL PROBABILITY</p>
+      <h2>ELECTRON e⁻</h2>
+
+      <div class="card-equation">
+        <math display="block" aria-label="Orbital probability density">
+          <mrow>
+            <msub><mi>ρ</mi><mi>e</mi></msub>
+            <mo>=</mo>
+            <msup>
+              <mrow>
+                <mo>|</mo><msub><mi>ψ</mi><mi>e</mi></msub><mo>|</mo>
+              </mrow>
+              <mn>2</mn>
+            </msup>
+          </mrow>
+        </math>
+      </div>
+
+      <p class="card-description">
+        Point density visualizes the orbital probability distribution.
+        Pulsating interference patterns illustrate phase evolution.
+      </p>
+    </article>
+  </template>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

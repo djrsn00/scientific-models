@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="Explore a mathematically generated 3-sphere through four-dimensional rotation, three-dimensional projection, changing cross-sections, and a cinematic guided journey."
+  >
+
+  <title>4D Hypersphere — Raw Code Visualizing Nature</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <!-- All Three.js components use the same pinned, nonmodule release. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body>
+  <main
+    id="canvas-container"
+    aria-label="Interactive three-dimensional representation of a four-dimensional hypersphere"
+    aria-describedby="model-description navigation-help"
+    aria-busy="true"
+  ></main>
+
+  <aside id="sidebar-ui" aria-label="Hypersphere scientific instrument panel">
+    <header class="sidebar-header">
+      <p class="eyebrow">
+        <span class="status-dot" aria-hidden="true"></span>
+        Raw Code Visualizing Nature
+      </p>
+
+      <h1>4D<br>Hypersphere</h1>
+
+      <p class="subtitle">
+        Projected geometry of S³<br>
+        in four-dimensional Euclidean space
+      </p>
+
+      <div class="flight-status">
+        <span id="flight-mode">LOADING GEOMETRY</span>
+        <span class="dimension-badge">4D → 3D PROJECTION</span>
+      </div>
+
+      <p id="model-description" class="model-description">
+        A 3D representation rendered onto your 2D screen.
+        The fourth coordinate <i>w</i> is spatial, not time.
+      </p>
+    </header>
+
+    <div id="sidebar-content" class="sidebar-content">
+      <section aria-labelledby="telemetry-heading">
+        <div class="section-heading">
+          <h2 id="telemetry-heading">Geometry telemetry</h2>
+          <span class="section-note">R-NORMALIZED</span>
+        </div>
+
+        <dl class="telemetry">
+          <div class="telemetry-row">
+            <dt>
+              Section coordinate
+              <span>selected w₀ / R</span>
+            </dt>
+            <dd id="w-value" class="numeric accent-gold">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Intrinsic slice radius
+              <span>ρ / R, before projection</span>
+            </dt>
+            <dd id="slice-radius-value" class="numeric accent-gold">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              4D rotation angle
+              <span>primary plane</span>
+            </dt>
+            <dd id="rotation-angle-value" class="numeric accent-violet">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>Active rotation planes</dt>
+            <dd id="rotation-plane-value" class="accent-violet">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>Projection method</dt>
+            <dd id="projection-value" class="accent-cyan">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Projection distance
+              <span>4D viewpoint d / R</span>
+            </dt>
+            <dd id="projection-distance-value" class="numeric accent-cyan">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Geodesic parameter
+              <span>τ / 2π</span>
+            </dt>
+            <dd id="geodesic-value" class="numeric accent-blue">—</dd>
+          </div>
+
+          <div class="telemetry-row">
+            <dt>
+              Observer distance
+              <span>3D camera to model center</span>
+            </dt>
+            <dd id="distance-value" class="numeric">—</dd>
+          </div>
+        </dl>
+
+        <p class="reference-note">
+          w₀ and ρ describe the separate, unrotated gold section.
+          Observer distance uses display units; d describes the
+          four-dimensional projection viewpoint.
+        </p>
+      </section>
+
+      <section class="panel-section" aria-labelledby="journey-heading">
+        <div class="section-heading">
+          <h2 id="journey-heading">Inspection sequence</h2>
+          <span class="section-note">08 CHAPTERS</span>
+        </div>
+
+        <ol id="journey-stages" class="journey-stages">
+          <li data-stage="exterior" class="is-active" aria-current="step">
+            <span class="stage-number">01</span>
+            <span>Exterior geometry</span>
+          </li>
+          <li data-stage="slice">
+            <span class="stage-number">02</span>
+            <span>Fourth-coordinate slice</span>
+          </li>
+          <li data-stage="coordinates">
+            <span class="stage-number">03</span>
+            <span>Hyperspherical coordinates</span>
+          </li>
+          <li data-stage="rotation">
+            <span class="stage-number">04</span>
+            <span>Rotation through w</span>
+          </li>
+          <li data-stage="geodesic">
+            <span class="stage-number">05</span>
+            <span>Great-circle transit</span>
+          </li>
+          <li data-stage="projection">
+            <span class="stage-number">06</span>
+            <span>Projection chamber</span>
+          </li>
+          <li data-stage="particles">
+            <span class="stage-number">07</span>
+            <span>Particle &amp; field gallery</span>
+          </li>
+          <li data-stage="return">
+            <span class="stage-number">08</span>
+            <span>Return to the whole</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel-section" aria-labelledby="equations-heading">
+        <div class="section-heading">
+          <h2 id="equations-heading">Mathematical structure</h2>
+          <span class="section-note">EXPAND</span>
+        </div>
+
+        <details class="equation-disclosure" data-inspection-ui open>
+          <summary>The 3-sphere in four dimensions</summary>
+          <div class="equation-body">
+            <div class="formula formula--center">S³ ⊂ ℝ⁴</div>
+
+            <math display="block" aria-label="x squared plus y squared plus z squared plus w squared equals R squared">
+              <mrow>
+                <msup><mi>x</mi><mn>2</mn></msup>
+                <mo>+</mo>
+                <msup><mi>y</mi><mn>2</mn></msup>
+                <mo>+</mo>
+                <msup><mi>z</mi><mn>2</mn></msup>
+                <mo>+</mo>
+                <msup><mi>w</mi><mn>2</mn></msup>
+                <mo>=</mo>
+                <msup><mi>R</mi><mn>2</mn></msup>
+              </mrow>
+            </math>
+
+            <p>
+              S³ is a three-dimensional curved surface embedded in ℝ⁴.
+              It is the boundary of a four-dimensional ball.
+            </p>
+            <p>
+              The luminous grids and points sample this geometry.
+              Their glow, thickness, and color are visual encodings.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Hyperspherical coordinates</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>x = R sin χ sin θ cos φ</span>
+              <span>y = R sin χ sin θ sin φ</span>
+              <span>z = R sin χ cos θ</span>
+              <span>w = R cos χ</span>
+            </div>
+            <p class="equation-domain">
+              0 ≤ χ, θ ≤ π<br>
+              0 ≤ φ &lt; 2π
+            </p>
+            <p>
+              Three angles locate a point on S³. Varying one angle
+              while holding the others fixed traces a coordinate curve.
+              Not every coordinate curve is a great circle.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Fixing the fourth coordinate</summary>
+          <div class="equation-body">
+            <div class="formula formula--center">
+              x² + y² + z² = R² − w₀²
+            </div>
+
+            <math display="block" aria-label="Slice radius rho equals the square root of R squared minus w zero squared">
+              <mrow>
+                <mi>ρ</mi><mo>=</mo>
+                <msqrt>
+                  <mrow>
+                    <msup><mi>R</mi><mn>2</mn></msup>
+                    <mo>−</mo>
+                    <msup>
+                      <msub><mi>w</mi><mn>0</mn></msub>
+                      <mn>2</mn>
+                    </msup>
+                  </mrow>
+                </msqrt>
+              </mrow>
+            </math>
+
+            <p>
+              For |w₀| &lt; R, the section is an ordinary sphere
+              surface S². At w₀ = ±R it contracts to a point.
+              For |w₀| &gt; R there is no section.
+            </p>
+            <p>
+              The gold guide isolates this section without 4D rotation.
+              Its intrinsic radius differs from its apparent radius
+              after projection.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Mapping four dimensions into three</summary>
+          <div class="equation-body">
+            <p class="equation-kicker">FINITE PERSPECTIVE</p>
+            <div class="formula formula-stack">
+              <span>p = d(x′, y′, z′) / (d − w′)</span>
+              <span>d &gt; R</span>
+            </div>
+            <p>
+              The rotated point q′ = (x′, y′, z′, w′) is projected
+              from (0, 0, 0, d) onto the hyperplane w = 0.
+              Keeping d &gt; R avoids a projection singularity on S³.
+            </p>
+
+            <p class="equation-kicker">ORTHOGRAPHIC REFERENCE</p>
+            <div class="formula">p = (x′, y′, z′)</div>
+            <p>
+              Orthographic projection discards w′. It is also the
+              limit of the perspective expression as d tends to infinity.
+              The resulting 3D scene is then rendered by a separate
+              camera onto the screen.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Rotation in an XW plane</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>x′ = x cos α − w sin α</span>
+              <span>w′ = x sin α + w cos α</span>
+              <span>y′ = y, &nbsp; z′ = z</span>
+            </div>
+            <div class="formula formula--center">
+              QᵀQ = I &nbsp; · &nbsp; det Q = 1
+            </div>
+            <p>
+              These rotations preserve x² + y² + z² + w².
+              The six coordinate planes are XY, XZ, XW, YZ, YW, and ZW.
+            </p>
+            <p>
+              S³ itself is unchanged by rotation. Its marked grid,
+              circles, and reference points reveal motion through
+              the fourth coordinate as their projections change.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Great circles and geodesics</summary>
+          <div class="equation-body">
+            <div class="formula formula-stack">
+              <span>γ(τ) = R(u cos τ + v sin τ)</span>
+              <span>u, v ∈ ℝ⁴</span>
+              <span>‖u‖ = ‖v‖ = 1, &nbsp; u · v = 0</span>
+            </div>
+            <p>
+              A plane through the origin intersects S³ in a great circle.
+              Its arcs are geodesics of the round 3-sphere.
+            </p>
+            <p>
+              Projection generally changes lengths and curvature.
+              A projected geodesic need not be straight in the 3D view.
+              The drone follows an illustrative viewing path.
+            </p>
+          </div>
+        </details>
+
+        <details class="equation-disclosure" data-inspection-ui>
+          <summary>Stereographic projection — reference</summary>
+          <div class="equation-body">
+            <div class="formula">
+              p = R(x, y, z) / (R − w)
+            </div>
+            <p>
+              Projection from the north pole (0, 0, 0, R) maps
+              S³ with that pole removed onto ℝ³.
+              It preserves angles locally, but changes lengths.
+            </p>
+            <p>
+              The omitted pole corresponds to infinity.
+              This is a mathematical reference; the main guided
+              view uses a finite projection viewpoint outside S³.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel-section" aria-labelledby="gallery-heading">
+        <div class="section-heading">
+          <h2 id="gallery-heading">Independent reference gallery</h2>
+          <span class="section-note accent-gold">05 EXHIBITS</span>
+        </div>
+
+        <ul class="gallery-list">
+          <li><span class="gallery-dot gallery-dot--blue"></span>Electron / hydrogen 1s state</li>
+          <li><span class="gallery-dot gallery-dot--cyan"></span>Photon / electromagnetic mode</li>
+          <li><span class="gallery-dot gallery-dot--magenta"></span>Proton / valence-quark content</li>
+          <li><span class="gallery-dot gallery-dot--violet"></span>Neutrino / flavor mixing</li>
+          <li><span class="gallery-dot gallery-dot--gold"></span>Higgs / scalar excitation</li>
+        </ul>
+
+        <p class="reference-note">
+          These are separate scientific exhibits. Their sizes, colors,
+          and illustrative shapes are not to scale, and they do not
+          constitute the hypersphere.
+        </p>
+      </section>
+
+      <p class="scope-note">
+        Mathematical geometry with cinematic presentation.
+        Illumination and tracer motion encode structure;
+        this is not a simulation of matter forming a hypersphere.
+      </p>
+    </div>
+
+    <footer class="sidebar-footer">
+      <div class="progress-heading">
+        <span>GUIDED EXPLORATION</span>
+        <span id="tour-time" class="numeric">— / —</span>
+      </div>
+
+      <div
+        id="journey-progress"
+        class="journey-progress"
+        role="progressbar"
+        aria-label="Guided inspection progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span id="flight-progress"></span>
+      </div>
+
+      <p class="keyboard-help">
+        <span><kbd>Space</kbd> play/pause</span>
+        <span><kbd>R</kbd> drone</span>
+        <span><kbd>H</kbd> HUD</span>
+      </p>
+
+      <p id="navigation-help" class="navigation-help">
+        Drag to orbit · scroll or pinch to zoom<br>
+        Right-drag or two-finger drag to pan
+      </p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="sidebar-ui scene-caption reference-legend"
+      aria-expanded="true"
+      aria-keyshortcuts="H"
+      data-engine-control
+      disabled
+    >Hide HUD</button>
+
+    <button
+      id="pause-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-keyshortcuts="Space"
+      data-engine-control
+      disabled
+    >Pause</button>
+
+    <button
+      id="resume-flight"
+      class="primary-control"
+      type="button"
+      aria-keyshortcuts="R"
+      data-engine-control
+      disabled
+    >Resume drone</button>
+  </nav>
+
+  <section id="scene-caption" aria-label="Current inspection chapter">
+    <p id="chapter-value" class="caption-eyebrow">01 / EXTERIOR GEOMETRY</p>
+    <h2 id="scene-title">A sphere beyond three coordinates.</h2>
+    <p id="scene-description">
+      Explore the projected grid of S³, a curved three-dimensional
+      space embedded in four-dimensional Euclidean space.
+    </p>
+  </section>
+
+  <aside id="reference-legend" aria-label="Geometry color reference">
+    <p class="legend-heading">GRID COLOR / ORIGINAL w</p>
+    <div class="coordinate-spectrum" aria-hidden="true"></div>
+    <div class="legend-scale">
+      <span>−R</span>
+      <span>0</span>
+      <span>+R</span>
+    </div>
+    <p class="legend-note">
+      <span class="legend-swatch" aria-hidden="true"></span>
+      Gold: fixed-w reference section
+    </p>
+  </aside>
+
+  <p
+    id="render-notice"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    Waiting for the 3D renderer. If this notice remains visible,
+    check your connection and confirm that the matching script.js
+    is saved beside index.html.
+  </p>
+
+  <noscript>
+    <div class="noscript-notice" role="alert">
+      JavaScript is required for the interactive scene.
+      The mathematical descriptions remain available in the panel.
+    </div>
+  </noscript>
+
+  <!--
+    Geometry annotation templates.
+    script.js attaches these DOM cards to projected world anchors.
+    Hidden cards start outside the keyboard tab order.
+  -->
+
+  <template id="hypersphere-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">GEOMETRY / S³ ⊂ ℝ⁴</p>
+      <h2>The projected 3-sphere</h2>
+      <div class="card-equation">
+        <div class="formula formula--center">
+          x² + y² + z² + w² = R²
+        </div>
+      </div>
+      <p class="card-description">
+        Every sampled point lies on the same 3-sphere in four dimensions.
+        The luminous structure shows selected coordinate curves and
+        reference points after projection into three dimensions.
+      </p>
+      <p class="card-footnote">
+        A geometric representation, with illustrative light and color.
+      </p>
+    </article>
+  </template>
+
+  <template id="slice-label-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">CROSS-SECTION / w = w₀</p>
+      <h2>One coordinate held fixed</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>x² + y² + z² = R² − w₀²</span>
+          <span>ρ = √(R² − w₀²)</span>
+        </div>
+      </div>
+      <p class="card-description">
+        The gold guide is an unrotated S² reference section.
+        Its intrinsic radius grows toward w₀ = 0 and vanishes
+        at either pole, w₀ = ±R.
+      </p>
+      <p class="card-footnote">
+        A sphere surface. Projection changes its apparent radius.
+      </p>
+    </article>
+  </template>
+
+  <template id="coordinates-label-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">COORDINATE ATLAS / χ, θ, φ</p>
+      <h2>Three angles on S³</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>x = R sin χ sin θ cos φ</span>
+          <span>y = R sin χ sin θ sin φ</span>
+          <span>z = R sin χ cos θ</span>
+          <span>w = R cos χ</span>
+        </div>
+      </div>
+      <p class="card-description">
+        The grid traces changes in one angle at a time.
+        Motion in χ changes the original fourth coordinate;
+        θ and φ locate a point within its sphere section.
+      </p>
+      <p class="card-footnote">
+        0 ≤ χ, θ ≤ π; 0 ≤ φ &lt; 2π. Coordinates precede 4D rotation.
+      </p>
+    </article>
+  </template>
+
+  <template id="rotation-label-template">
+    <article class="world-card world-card--magenta" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">SO(4) / ROTATION THROUGH w</p>
+      <h2>Turning through a fourth direction</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>x′ = x cos α − w sin α</span>
+          <span>w′ = x sin α + w cos α</span>
+        </div>
+      </div>
+      <p class="card-description">
+        An XW rotation exchanges contributions from x and w.
+        Because projection depends on w, the marked grid changes
+        in ways a simple 3D camera orbit cannot reproduce.
+      </p>
+      <p class="card-footnote">
+        The 4D radius is preserved. S³ itself does not deform.
+      </p>
+    </article>
+  </template>
+
+  <template id="geodesic-label-template">
+    <article class="world-card world-card--blue" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">INTRINSIC GEOMETRY / GREAT CIRCLE</p>
+      <h2>A geodesic before projection</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>γ(τ) = R(u cos τ + v sin τ)</span>
+          <span>‖u‖ = ‖v‖ = 1, &nbsp; u · v = 0</span>
+        </div>
+      </div>
+      <p class="card-description">
+        The highlighted path lies in a two-dimensional plane
+        through the center of ℝ⁴. Its arcs are geodesics on S³,
+        even when the projected curve bends across the view.
+      </p>
+      <p class="card-footnote">
+        The moving light marks τ; it is not a physical particle.
+      </p>
+    </article>
+  </template>
+
+  <template id="projection-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">PROJECTION / FOUR COORDINATES TO THREE</p>
+      <h2>Depth from a hidden coordinate</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>p = d(x′, y′, z′) / (d − w′)</span>
+          <span>d &gt; R</span>
+        </div>
+      </div>
+      <p class="card-description">
+        A point closer to the 4D projection viewpoint receives
+        a larger scale factor. Changing d alters the projected
+        structure while its original 4D geometry remains intact.
+      </p>
+      <p class="card-footnote">
+        Projection viewpoint d and the 3D drone camera are distinct.
+      </p>
+    </article>
+  </template>
+
+  <!-- Independent scientific reference exhibits. -->
+
+  <template id="electron-label-template">
+    <article class="world-card world-card--blue" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / BOUND ELECTRON</p>
+      <h2>Electron · hydrogen 1s state</h2>
+      <div class="card-equation">
+        <math display="block" aria-label="Hydrogen 1s probability density equals exponential of minus two r over a zero, divided by pi a zero cubed">
+          <mrow>
+            <msub><mi>ρ</mi><mtext>1s</mtext></msub>
+            <mo>(</mo><mi>r</mi><mo>)</mo>
+            <mo>=</mo>
+            <mfrac>
+              <msup>
+                <mi>e</mi>
+                <mrow>
+                  <mo>−</mo><mn>2</mn><mi>r</mi><mo>/</mo>
+                  <msub><mi>a</mi><mn>0</mn></msub>
+                </mrow>
+              </msup>
+              <mrow>
+                <mi>π</mi>
+                <msup>
+                  <msub><mi>a</mi><mn>0</mn></msub>
+                  <mn>3</mn>
+                </msup>
+              </mrow>
+            </mfrac>
+          </mrow>
+        </math>
+      </div>
+      <p class="card-description">
+        Point density samples the stationary probability distribution
+        of a hydrogen ground-state electron. The cloud describes
+        possible position measurements, not an electron surface.
+      </p>
+      <p class="card-footnote">
+        Nonrelativistic hydrogen with a fixed nucleus; a₀ is the
+        Bohr radius. Display size and brightness are illustrative.
+      </p>
+    </article>
+  </template>
+
+  <template id="photon-label-template">
+    <article class="world-card world-card--cyan" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / ELECTROMAGNETISM</p>
+      <h2>Photon · transverse field mode</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>E = ℏω = pc</span>
+          <span>E⃗ · k⃗ = B⃗ · k⃗ = 0</span>
+        </div>
+      </div>
+      <p class="card-description">
+        A photon is a quantum of the electromagnetic field.
+        The transverse curves illustrate a classical vacuum
+        field mode associated with its propagation direction.
+      </p>
+      <p class="card-footnote">
+        Wave curves are field schematics, not a photon's trajectory.
+        Scalar E denotes energy; E⃗ denotes electric field.
+      </p>
+    </article>
+  </template>
+
+  <template id="proton-label-template">
+    <article class="world-card world-card--magenta" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / QUANTUM CHROMODYNAMICS</p>
+      <h2>Proton · valence-quark content</h2>
+      <div class="valence-strip" aria-label="Two up valence quarks and one down valence quark">
+        <span class="quark-chip quark-chip--red">u</span>
+        <span class="quark-chip quark-chip--green">u</span>
+        <span class="quark-chip quark-chip--blue">d</span>
+        <span class="valence-caption">VALENCE CONTENT</span>
+      </div>
+      <div class="card-equation">
+        <div class="formula formula--center">
+          Q<sub>p</sub> = 2(⅔e) − ⅓e = e
+        </div>
+      </div>
+      <p class="card-description">
+        Two up valence quarks and one down valence quark give the
+        proton its net electric charge. Its full quantum state
+        also includes gluons and quark–antiquark pairs.
+      </p>
+      <p class="card-footnote">
+        Beads and connections are schematic. Color charge is
+        distinct from visible color and from quark flavor.
+      </p>
+    </article>
+  </template>
+
+  <template id="neutrino-label-template">
+    <article class="world-card world-card--violet" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / QUANTUM MIXING</p>
+      <h2>Neutrino · flavor and mass</h2>
+      <div class="card-equation">
+        <math display="block" aria-label="Flavor state nu alpha equals the sum over i of complex conjugate U alpha i times mass state nu i">
+          <mrow>
+            <mo>|</mo><msub><mi>ν</mi><mi>α</mi></msub><mo>⟩</mo>
+            <mo>=</mo>
+            <munder><mo>∑</mo><mi>i</mi></munder>
+            <msubsup>
+              <mi>U</mi>
+              <mrow><mi>α</mi><mi>i</mi></mrow>
+              <mo>∗</mo>
+            </msubsup>
+            <mo>|</mo><msub><mi>ν</mi><mi>i</mi></msub><mo>⟩</mo>
+          </mrow>
+        </math>
+      </div>
+      <p class="card-description">
+        A flavor state combines mass eigenstates. Their relative
+        phases change during propagation, allowing the probability
+        of detecting each flavor to change.
+      </p>
+      <p class="card-footnote">
+        α ∈ {e, μ, τ}; i ∈ {1, 2, 3}. Colored traces illustrate
+        mixing conceptually; they are not calculated oscillation data.
+      </p>
+    </article>
+  </template>
+
+  <template id="higgs-label-template">
+    <article class="world-card world-card--gold" tabindex="-1">
+      <span class="coordinate-tick" aria-hidden="true"></span>
+      <p class="card-eyebrow">REFERENCE EXHIBIT / SCALAR FIELD</p>
+      <h2>Higgs · excitation about a vacuum</h2>
+      <div class="card-equation">
+        <div class="formula formula-stack">
+          <span>V(h) ≈ ½m<sub>H</sub>²h²</span>
+          <span>(∂<sub>t</sub>² − ∇² + m<sub>H</sub>²)h = 0</span>
+        </div>
+      </div>
+      <p class="card-description">
+        Near the vacuum, the radial Higgs excitation h behaves
+        approximately as a massive scalar field. The gold surface
+        illustrates the local quadratic potential.
+      </p>
+      <p class="card-footnote">
+        Free, linearized approximation; ℏ = c = 1.
+        The surface is a potential diagram, not a spatial image
+        of the Higgs field.
+      </p>
+    </article>
+  </template>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+
+  <title>The Jovian Odyssey: Atmospheric Insertion & Core Transcendence</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+
+<body>
+  <div id="canvas-container">
+    <p id="render-notice" role="status">Initializing Jovian transit</p>
+  </div>
+
+  <aside id="info-panel" aria-label="Jovian flight information">
+    <header class="panel-header">
+      <p class="eyebrow">ATMOSPHERIC INSERTION / CORE TRANSCENDENCE</p>
+      <h1>The Jovian<br>Odyssey</h1>
+      <p class="profile-badge">
+        <span aria-hidden="true"></span>
+        ILLUSTRATIVE PLANETARY PROFILE
+      </p>
+    </header>
+
+    <section class="current-phase" aria-label="Current flight phase">
+      <div class="phase-heading">
+        <span id="phase-number">01 / 06</span>
+        <span id="flight-mode" role="status">AUTO FLIGHT</span>
+      </div>
+
+      <h2 id="phase-title">Orbital cruise</h2>
+      <p id="phase-description">
+        A rotating gas giant against a schematic solar-system backdrop.
+      </p>
+    </section>
+
+    <ol class="phase-list" aria-label="Flight sequence">
+      <li data-phase="0" data-active="true">
+        <span>01</span><span>Orbital cruise</span><i></i>
+      </li>
+      <li data-phase="1">
+        <span>02</span><span>Great Red Spot insertion</span><i></i>
+      </li>
+      <li data-phase="2">
+        <span>03</span><span>Ascent escape</span><i></i>
+      </li>
+      <li data-phase="3">
+        <span>04</span><span>Layered atmospheric plunge</span><i></i>
+      </li>
+      <li data-phase="4">
+        <span>05</span><span>Hydrogen abyss</span><i></i>
+      </li>
+      <li data-phase="5">
+        <span>06</span><span>Core payload</span><i></i>
+      </li>
+    </ol>
+
+    <section class="metrics" aria-label="Reference atmospheric profile">
+      <p class="section-label">REFERENCE PROFILE AT PLAYHEAD</p>
+
+      <dl>
+        <div>
+          <dt>Altitude h</dt>
+          <dd id="metric-altitude">+150,000 km</dd>
+        </div>
+        <div>
+          <dt>Pressure</dt>
+          <dd id="metric-pressure">Vacuum</dd>
+        </div>
+        <div>
+          <dt>Temperature</dt>
+          <dd id="metric-temperature">No ambient gas</dd>
+        </div>
+        <div>
+          <dt>Active layer</dt>
+          <dd id="metric-layer">Orbital context</dd>
+        </div>
+      </dl>
+
+      <p class="datum-note">h = 0 at Jupiter’s 1-bar reference level</p>
+    </section>
+
+    <section class="interior-note">
+      <p>2 million bar = 200 GPa</p>
+      <p>Metallization is pressure- and temperature-dependent.</p>
+    </section>
+
+    <div class="progress-section">
+      <div class="progress-caption">
+        <span>MISSION TIMELINE</span>
+        <span id="timeline-readout">00:00 / 02:00</span>
+      </div>
+      <div class="progress-track">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <p class="scope-note">
+      Compressed distance and time; illustrative pressure–temperature
+      profile. Cloud layers, deep-fluid colors and the core payload
+      are schematic.
+    </p>
+
+    <footer id="control-help" class="keyboard-controls">
+      <p><kbd>Drag</kbd> explore <span>·</span> <kbd>Scroll</kbd> zoom</p>
+      <p><kbd>Shift + drag</kbd> pan</p>
+      <p><kbd>Space</kbd> pause <span>·</span> <kbd>R</kbd> resume flight</p>
+      <p><kbd>Home</kbd> restart <span>·</span> <kbd>H</kbd> toggle HUD</p>
+    </footer>
+  </aside>
+
+  <nav id="flight-controls" aria-label="Visualization controls">
+    <button
+      id="hud-toggle"
+      type="button"
+      aria-controls="info-panel"
+      aria-expanded="true"
+    >Hide HUD</button>
+    <button id="pause-toggle" type="button" aria-pressed="false">Pause</button>
+    <button id="restart-button" type="button">Restart</button>
+  </nav>
+
+  <div id="scene-caption" aria-hidden="true">
+    <span class="caption-rule"></span>
+    <span id="caption-text">JUPITER / SCHEMATIC SOLAR-SYSTEM CONTEXT</span>
+    <span class="caption-rule"></span>
+  </div>
+
+  <script defer src="scripts/script.js"></script>
+</body>
+</html>

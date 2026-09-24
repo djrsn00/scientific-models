@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="color-scheme"
+        content="dark"
+    >
+
+    <title>Mike Mathison || Scientific Models</title>
+
+    <link
+        rel="stylesheet"
+        href="styles/style.css"
+    >
+
+    <script
+        defer
+        src="scripts/app.js"
+    ></script>
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         LANDING PAGE VISUAL EFFECTS
+         ===================================================== -->
+
+
+    <canvas
+        id="matrix-rain"
+        aria-hidden="true"
+    ></canvas>
+
+
+    <canvas
+        id="effects-layer"
+        aria-hidden="true"
+    ></canvas>
+
+
+
+    <!-- =====================================================
+         LANDING PAGE
+         ===================================================== -->
+
+
+    <div id="site-shell">
+
+
+        <!-- =================================================
+             HEADER
+             ================================================= -->
+
+
+        <header
+            class="hero matrix-frame"
+            data-effect-border
+        >
+
+
+            <!-- =============================================
+                 GLOWING COMPUTATIONAL SPHERE
+                 ============================================= -->
+
+
+            <div
+                class="orb-wrap"
+                aria-hidden="true"
+            >
+
+
+                <div class="quantum-orb">
+
+
+                    <span class="orb-core"></span>
+
+
+                    <span
+                        class="orb-ring ring-one"
+                    ></span>
+
+
+                    <span
+                        class="orb-ring ring-two"
+                    ></span>
+
+
+                    <span
+                        class="orb-ring ring-three"
+                    ></span>
+
+
+                    <span
+                        class="orb-facet facet-one"
+                    ></span>
+
+
+                    <span
+                        class="orb-facet facet-two"
+                    ></span>
+
+
+                    <span
+                        class="orb-facet facet-three"
+                    ></span>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =============================================
+                 HEADER TEXT
+                 ============================================= -->
+
+
+            <div class="hero-copy">
+
+
+                <div class="hero-kicker">
+
+                    MIKE MATHISON //
+
+                </div>
+
+
+                <h1>
+
+                    SCIENTIFIC MODELS
+
+                </h1>
+
+
+
+                <!-- =========================================
+                     ROTATING MATRIX TEXT
+                     ========================================= -->
+
+
+                <div
+                    class="terminal-line"
+                    aria-live="polite"
+                >
+
+
+                    <span
+                        class="terminal-led"
+                    ></span>
+
+
+                    <span id="matrix-text">
+
+                        Scientific model directory online...
+
+                    </span>
+
+
+                    <span
+                        class="cursor"
+                        aria-hidden="true"
+                    ></span>
+
+
+                </div>
+
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =================================================
+             SCIENTIFIC MODEL BUTTONS
+
+             TO ADD A NEW MODEL LATER:
+
+             Copy one button.
+             Change data-model.
+             Change data-title.
+             Change button text.
+
+             DONE.
+
+             ================================================= -->
+
+
+ <main class="model-directory matrix-frame" data-effect-border>
+
+
+    <div class="model-grid" aria-label="Scientific model directory">
+
+
+                      <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/quantum-chaos/index.html"
+        data-title="Quantum Chaos">Quantum Chaos</button>
+
+
+              <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/1d-thermal-system/index.html"
+        data-title="1D Thermal System">1D Thermal System</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/two-dimensional-quantum-matter/index.html"
+        data-title="2D Quantum Matter">2D Quantum Matter</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/three-dimensional-quantum-condensate/index.html"
+        data-title="3D Quantum Condensate">3D Quantum Condensate</button>
+
+
+                        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/10-dimensional-superstring-system/index.html"
+        data-title="11D Transmit">10D Transmit</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/11d-m-theory-model/index.html"
+        data-title="11D Transmit">11D Transmit</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/the-geometric-amplituhedron/index.html"
+        data-title="The Geometric Amplituhedron">The Geometric Amplituhedron</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/four-dimensional-hypersphere/index.html"
+        data-title="4D Hypersphere">4D Hypersphere</button>
+
+
+        <button class="model-button" type="button" 
+        data-model="https://mikemathison.com/scientific-models/models/calabi-yau-geometry/index.html" 
+        data-title="6D Yau-Geometry">6D Yau-Geometry</button>
+
+
+                <button class="model-button"
+        type="button" data-model="https://mikemathison.com/scientific-models/models/grand-scale-ascension/index.html"
+        data-title="Grand Scale Ascension">Grand Scale Ascension</button>
+
+
+                <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/cosmic-time-evolution/index.html"
+        data-title="Cosmic Time Evolution">Cosmic Time Evolution</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/hydrogen-atom-quantum-atlas/index.html"
+        data-title="Hydrogen Atom Quantum Atlas">Hydrogen Atom Quantum Atlas</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/the-higgs-continuum/index.html"
+        data-title="Higgs Field">Higgs Field</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/polariton-condensate/index.html"
+        data-title="Polariton Condensate">Polariton Condensate</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/the-matrix/index.html"
+        data-title="Internet Backbone">Internet Backbone</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/quantum-computer-expressway/index.html"
+        data-title="Quantum Computer Expressway">Quantum Computer Expressway</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/the-computer-expressway/index.html"
+        data-title="Computer Expressway">Computer Expressway</button>
+
+
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/universe/index.html"
+        data-title="Cosmic Horizons">Cosmic Horizons</button>
+
+
+        <button class="model-button" type="button"
+        data-model="https://mikemathison.com/scientific-models/models/jupiter-descent/index.html"
+        data-title="Jupiter Descent">Jupiter Descent</button>
+
+
+            </div>
+
+
+        </main>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODEL VIEWER
+
+         NOTHING surrounding the model survives here except
+         the global HOME / AUDIO controls.
+         ===================================================== -->
+
+
+    <section
+        id="model-stage"
+        class="model-stage"
+        hidden
+        aria-label="Scientific model viewer"
+    >
+
+
+        <iframe
+            id="model-frame"
+            title="Scientific model"
+            src="about:blank"
+            allow="fullscreen"
+        ></iframe>
+
+
+    </section>
+
+
+
+    <!-- =====================================================
+         GLOBAL CONTROLS
+         ===================================================== -->
+
+    <button
+      id="controls-toggle"
+      class="controls-toggle"
+      type="button"
+      aria-label="Hide controls"
+      title="Hide controls">
+    </button>
+
+    <nav
+        class="global-controls"
+        aria-label="Site and music controls"
+    >
+
+
+        <div class="control-row">
+
+
+            <button
+                id="home-button"
+                class="control-button"
+                type="button"
+            >
+
+                HOME
+
+            </button>
+
+
+            <button
+                id="play-button"
+                class="control-button"
+                type="button"
+            >
+
+                PLAY
+
+            </button>
+
+
+            <button
+                id="stop-button"
+                class="control-button"
+                type="button"
+            >
+
+                STOP
+
+            </button>
+
+
+            <button
+                id="next-button"
+                class="control-button"
+                type="button"
+            >
+
+                NEXT
+
+            </button>
+
+
+        </div>
+
+
+
+        <div class="volume-row">
+
+
+            <label for="volume-slider">
+
+                VOL
+
+            </label>
+
+
+            <input
+                id="volume-slider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.30"
+                aria-label="Music volume"
+            >
+
+
+        </div>
+
+
+    </nav>
+
+
+
+    <!-- =====================================================
+         GLOBAL AUDIO
+         ===================================================== -->
+
+
+    <audio
+        id="site-audio"
+        preload="metadata"
+    ></audio>
+
+
+
+    <!-- =====================================================
+         ACCESSIBILITY STATUS
+         ===================================================== -->
+
+
+    <div
+        id="sr-status"
+        class="sr-only"
+        aria-live="polite"
+    ></div>
+
+
+</body>
+
+</html>

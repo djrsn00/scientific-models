@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#03060c">
+  <meta name="description" content="An optical-lattice observatory exploring tunneling, interactions, coherence, and the Bose–Hubbard model.">
+
+  <title>Optical Lattice · Bose–Hubbard System</title>
+
+  <link rel="stylesheet" href="styles/styles.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script defer src="scripts/script.js"></script>
+</head>
+
+<body class="is-loading" data-regime="loading" data-view="coherence">
+  <a class="skip-link" href="#sidebar-content">
+    Skip to instrument controls
+  </a>
+
+  <main id="observatory" aria-label="Optical lattice observatory">
+    <div
+      id="canvas-container"
+      tabindex="0"
+      role="region"
+      aria-label="Interactive three-dimensional optical lattice"
+      aria-describedby="navigation-help"
+    ></div>
+
+    <div class="scene-vignette" aria-hidden="true"></div>
+    <div class="frame-corner corner-tl" aria-hidden="true"></div>
+    <div class="frame-corner corner-br" aria-hidden="true"></div>
+
+    <p id="navigation-help" class="sr-only">
+      Drag to orbit, scroll or pinch to zoom, and right-drag or use two
+      fingers to pan. Manual interaction interrupts the guided camera.
+      Space pauses, R resumes the drone, and H toggles the interface when
+      a form control is not focused. Chapter and reference buttons provide
+      guided inspection views.
+    </p>
+
+    <aside
+      id="sidebar-ui"
+      class="instrument-panel hud-region"
+      aria-labelledby="project-title"
+    >
+      <header class="panel-header">
+        <div class="project-line">
+          <svg
+            class="project-mark"
+            viewBox="0 0 36 36"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 10h24M6 18h24M6 26h24M10 6v24M18 6v24M26 6v24"
+              stroke="currentColor"
+              opacity=".3"
+            />
+            <path
+              d="M6 18c4-13 8 13 12 0s8 13 12 0"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <circle cx="10" cy="10" r="2" fill="currentColor"/>
+            <circle cx="26" cy="26" r="2" fill="currentColor"/>
+          </svg>
+
+          <span>
+            RAW CODE<br>
+            <strong>VISUALIZING NATURE</strong>
+          </span>
+
+          <span class="edition-tag">BH / 01</span>
+        </div>
+
+        <h1 id="project-title">
+          <span>Optical Lattice</span>
+          <small>Bose–Hubbard System</small>
+        </h1>
+
+        <p class="subtitle">
+          Tunneling, Interactions &amp; Quantum Phase Transition
+        </p>
+
+        <div class="badge-row">
+          <span class="dimension-badge">3D LATTICE</span>
+          <span
+            id="flight-mode"
+            class="mode-badge"
+            data-mode="loading"
+          >INITIALIZING</span>
+        </div>
+
+        <p class="header-note">
+          Cubic · homogeneous · zero-temperature mean field
+        </p>
+      </header>
+
+      <div id="sidebar-content" class="panel-scroll" tabindex="-1">
+        <section
+          class="instrument-section regime-section"
+          aria-labelledby="regime-heading"
+        >
+          <div class="section-heading">
+            <h2 id="regime-heading">Collective state</h2>
+            <span>GUTZWILLER REFERENCE</span>
+          </div>
+
+          <div id="regime-value" class="regime-value">
+            INITIALIZING
+          </div>
+
+          <p id="regime-note" class="micro-note">
+            Preparing the equilibrium state calculation.
+          </p>
+
+          <div class="meter-label">
+            <span>Mean-field coherent fraction</span>
+            <strong id="coherence-value">—</strong>
+          </div>
+
+          <div class="coherence-track" aria-hidden="true">
+            <span id="coherence-fill"></span>
+          </div>
+
+          <p class="micro-note">
+            |ψ|² / ⟨n⟩ · computed order, not a measured superfluid fraction
+          </p>
+
+          <div class="preset-row" aria-label="Reference parameter presets">
+            <button
+              type="button"
+              data-preset="superfluid"
+              data-engine-control
+              disabled
+            >Superfluid</button>
+
+            <button
+              type="button"
+              data-preset="boundary"
+              data-engine-control
+              disabled
+            >Boundary</button>
+
+            <button
+              type="button"
+              data-preset="mott"
+              data-engine-control
+              disabled
+            >Mott n = 1</button>
+          </div>
+
+          <p class="micro-note">
+            Presets use μ / U = 0.40. “Intermediate” marks a display band
+            near the mean-field boundary, not a third phase.
+          </p>
+        </section>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="parameter-heading"
+        >
+          <div class="section-heading">
+            <h2 id="parameter-heading">Lattice controls</h2>
+            <span>REFERENCE UNITS</span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="depth-control">
+                Depth s = V₀ / E<sub>R</sub>
+              </label>
+
+              <output id="depth-setting" for="depth-control">
+                6.50
+              </output>
+            </div>
+
+            <input
+              id="depth-control"
+              type="range"
+              min="6"
+              max="22"
+              step="0.01"
+              value="6.5"
+              aria-describedby="depth-help"
+              data-engine-control
+              disabled
+            >
+
+            <div class="range-endpoints" aria-hidden="true">
+              <span>6 · SHALLOWER</span>
+              <span>DEEPER · 22</span>
+            </div>
+
+            <p id="depth-help" class="micro-note">
+              Equal depth on all three axes. Increasing depth reduces J
+              and narrows the localized basis orbitals.
+            </p>
+          </div>
+
+          <div class="control-group">
+            <div class="control-heading">
+              <label for="chemical-control">
+                Chemical potential μ / U
+              </label>
+
+              <output id="chemical-setting" for="chemical-control">
+                0.40
+              </output>
+            </div>
+
+            <input
+              id="chemical-control"
+              type="range"
+              min="0.05"
+              max="2.95"
+              step="0.01"
+              value="0.4"
+              aria-describedby="chemical-help"
+              data-engine-control
+              disabled
+            >
+
+            <p id="chemical-help" class="micro-note">
+              Controls the equilibrium filling. A depth sweep at fixed
+              μ / U does not hold total atom number fixed.
+            </p>
+          </div>
+
+          <dl class="telemetry-grid">
+            <div>
+              <dt>Tunneling J / E<sub>R</sub></dt>
+              <dd id="hopping-value">—</dd>
+            </div>
+            <div>
+              <dt>Interaction U / E<sub>R</sub></dt>
+              <dd id="interaction-value">—</dd>
+            </div>
+            <div>
+              <dt>Competition U / J</dt>
+              <dd id="ratio-value">—</dd>
+            </div>
+            <div>
+              <dt>Chemical potential μ / U</dt>
+              <dd id="chemical-value">—</dd>
+            </div>
+            <div>
+              <dt>Mean occupation ⟨n⟩</dt>
+              <dd id="occupation-value">—</dd>
+            </div>
+            <div>
+              <dt>Number uncertainty Δn</dt>
+              <dd id="fluctuation-value">—</dd>
+            </div>
+            <div>
+              <dt>Order amplitude |ψ|</dt>
+              <dd id="order-value">—</dd>
+            </div>
+            <div>
+              <dt>Full band 12J / E<sub>R</sub></dt>
+              <dd id="bandwidth-value">—</dd>
+            </div>
+          </dl>
+
+          <p class="micro-note">
+            E<sub>R</sub> is the recoil energy. J and U use deep-lattice
+            estimates with a<sub>s</sub> / a = 0.02.
+          </p>
+        </section>
+
+        <details class="instrument-section disclosure" open>
+          <summary>
+            Representative site
+            <span id="selected-site-value">(0, 0, 0)</span>
+          </summary>
+
+          <div class="select-grid">
+            <div>
+              <label for="site-select">Inspection target</label>
+
+              <select id="site-select" data-engine-control disabled>
+                <option value="center">Center (0, 0, 0)</option>
+                <option value="neighbor">Neighbor (1, 0, 0)</option>
+                <option value="upper">Upper (0, 1, 0)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="view-select">Field display</label>
+
+              <select id="view-select" data-engine-control disabled>
+                <option value="coherence">Coherence + density</option>
+                <option value="density">Density only</option>
+                <option value="potential">Potential slice</option>
+              </select>
+            </div>
+          </div>
+
+          <figure class="chart-frame">
+            <figcaption>
+              <span>SITE NUMBER DISTRIBUTION</span>
+              <span>P(n)</span>
+            </figcaption>
+
+            <canvas
+              id="occupation-chart"
+              width="560"
+              height="240"
+              role="img"
+              aria-label="Calculated site occupation probabilities from zero to twelve bosons"
+              aria-describedby="occupation-summary"
+            >
+              Occupation probabilities are summarized below.
+            </canvas>
+          </figure>
+
+          <p id="occupation-summary" class="micro-note">
+            Probabilities will appear after the state calculation.
+          </p>
+
+          <p class="micro-note">
+            All bulk sites share this distribution. The selected cloud is
+            a density glyph, not a counted collection of classical particles.
+          </p>
+
+          <dl class="inline-readouts">
+            <div>
+              <dt>Basis tail P(12)</dt>
+              <dd id="cutoff-weight-value">—</dd>
+            </div>
+            <div>
+              <dt>Self-consistency residual</dt>
+              <dd id="solver-residual-value">—</dd>
+            </div>
+          </dl>
+        </details>
+
+        <details class="instrument-section disclosure">
+          <summary>
+            Momentum &amp; phase diagram
+            <span>DIAGNOSTICS</span>
+          </summary>
+
+          <figure class="chart-frame">
+            <figcaption>
+              <span>MOMENTUM SLICE</span>
+              <span>k<sub>z</sub> = 0</span>
+            </figcaption>
+
+            <canvas
+              id="momentum-chart"
+              width="560"
+              height="360"
+              role="img"
+              aria-label="Momentum distribution in the k z equals zero plane"
+              aria-describedby="momentum-summary"
+            >
+              The coherent fraction and momentum description are available
+              as text.
+            </canvas>
+
+            <p id="momentum-summary" class="micro-note">
+              Finite-array momentum diagnostic · shared logarithmic
+              intensity scale.
+            </p>
+          </figure>
+
+          <figure class="chart-frame">
+            <figcaption>
+              <span>MEAN-FIELD MOTT LOBES</span>
+              <span>z = 6</span>
+            </figcaption>
+
+            <canvas
+              id="phase-chart"
+              width="560"
+              height="380"
+              role="img"
+              aria-label="Bose–Hubbard phase diagram with J over U horizontal and chemical potential over U vertical"
+              aria-describedby="phase-summary"
+            >
+              The current regime and energy ratio are listed in the main
+              readouts.
+            </canvas>
+
+            <p id="phase-summary" class="micro-note">
+              Horizontal: J / U · vertical: μ / U. The marker follows the
+              same parameters as the lattice.
+            </p>
+          </figure>
+
+          <p class="micro-note">
+            These are mathematical diagnostics. The momentum view is a
+            k<sub>z</sub> = 0 slice, not a column-integrated time-of-flight
+            image.
+          </p>
+        </details>
+
+        <section
+          class="instrument-section"
+          aria-labelledby="journey-heading"
+        >
+          <div class="section-heading">
+            <h2 id="journey-heading">Inspection sequence</h2>
+            <span id="stage-counter">01 / 13</span>
+          </div>
+
+          <nav
+            id="journey-stages"
+            class="journey-stages"
+            aria-label="Choose a tour chapter"
+          >
+            <button type="button" data-chapter="0" data-engine-control disabled>
+              <span>01</span>Optical lattice
+            </button>
+            <button type="button" data-chapter="1" data-engine-control disabled>
+              <span>02</span>Potential formation
+            </button>
+            <button type="button" data-chapter="2" data-engine-control disabled>
+              <span>03</span>Site inspection
+            </button>
+            <button type="button" data-chapter="3" data-engine-control disabled>
+              <span>04</span>Superfluid
+            </button>
+            <button type="button" data-chapter="4" data-engine-control disabled>
+              <span>05</span>Tunneling
+            </button>
+            <button type="button" data-chapter="5" data-engine-control disabled>
+              <span>06</span>On-site interaction
+            </button>
+            <button type="button" data-chapter="6" data-engine-control disabled>
+              <span>07</span>Lattice ramp
+            </button>
+            <button type="button" data-chapter="7" data-engine-control disabled>
+              <span>08</span>Quantum transition
+            </button>
+            <button type="button" data-chapter="8" data-engine-control disabled>
+              <span>09</span>Mott insulator
+            </button>
+            <button type="button" data-chapter="9" data-engine-control disabled>
+              <span>10</span>Momentum space
+            </button>
+            <button type="button" data-chapter="10" data-engine-control disabled>
+              <span>11</span>Bose–Hubbard model
+            </button>
+            <button type="button" data-chapter="11" data-engine-control disabled>
+              <span>12</span>Phase diagram
+            </button>
+            <button type="button" data-chapter="12" data-engine-control disabled>
+              <span>13</span>Full system
+            </button>
+          </nav>
+
+          <div
+            id="journey-progress"
+            class="journey-progress"
+            role="progressbar"
+            aria-label="Guided tour progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="flight-progress"></span>
+          </div>
+
+          <div class="tour-meta">
+            <span>GUIDED EQUILIBRIUM SCAN</span>
+            <time id="tour-time">00:00</time>
+          </div>
+
+          <p class="micro-note">
+            The tour prepares labeled parameter examples. Changing a
+            control enters manual inspection.
+          </p>
+        </section>
+
+        <details class="instrument-section disclosure">
+          <summary>Reference objects <span>06</span></summary>
+
+          <div class="inspection-grid">
+            <button type="button" data-inspect="site" data-engine-control disabled>
+              Lattice site
+            </button>
+            <button type="button" data-inspect="wannier" data-engine-control disabled>
+              Wannier basis
+            </button>
+            <button type="button" data-inspect="tunneling" data-engine-control disabled>
+              Tunneling link
+            </button>
+            <button type="button" data-inspect="interaction" data-engine-control disabled>
+              Interaction energy
+            </button>
+            <button type="button" data-inspect="superfluid" data-engine-control disabled>
+              Superfluid
+            </button>
+            <button type="button" data-inspect="mott" data-engine-control disabled>
+              Mott state
+            </button>
+          </div>
+
+          <p class="micro-note">
+            Independent teaching examples accompany the live lattice.
+          </p>
+        </details>
+
+        <details
+          id="model-scope"
+          class="instrument-section disclosure"
+        >
+          <summary>Equations &amp; model scope <span>READ</span></summary>
+
+          <p>
+            The displayed 7 × 7 × 7 array is a window into a homogeneous
+            cubic bulk model with six neighbors per site. It is not a
+            finite lattice calculation with open boundaries.
+          </p>
+
+          <p>
+            A zero-temperature single-site Gutzwiller calculation gives
+            P(n), ⟨n⟩, Δn, and ψ = ⟨a⟩ in the occupation basis n = 0…12.
+            The basis-tail weight and self-consistency residual are reported
+            above.
+          </p>
+
+          <div class="equation">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="Number variance equals mean squared occupation minus squared mean occupation"
+            >
+              <mrow>
+                <msup>
+                  <mrow><mo>(</mo><mi>Δ</mi><mi>n</mi><mo>)</mo></mrow>
+                  <mn>2</mn>
+                </msup>
+                <mo>=</mo>
+                <mo>⟨</mo><msup><mi>n</mi><mn>2</mn></msup><mo>⟩</mo>
+                <mo>−</mo>
+                <msup>
+                  <mrow><mo>⟨</mo><mi>n</mi><mo>⟩</mo></mrow>
+                  <mn>2</mn>
+                </msup>
+              </mrow>
+            </math>
+          </div>
+
+          <p>
+            The parameter ramp visits equilibrium approximations. It does
+            not solve real-time loading, heating, or many-body transition
+            dynamics. The homogeneous equilibrium state carries no net
+            bond current.
+          </p>
+
+          <p>
+            Single-site mean field predicts number states in its Mott
+            lobes and omits finite-J virtual particle–hole fluctuations.
+            Its phase boundaries are approximate; dimensionality, filling,
+            geometry, and correlations matter.
+          </p>
+
+          <p>
+            When ψ = 0, order-parameter phase is undefined. Mott clouds
+            therefore use a neutral density color rather than invented
+            random phases. Coherence links display correlations, not
+            particle paths.
+          </p>
+
+          <div class="equation">
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="J over recoil energy approximately equals four over square root pi times s to the three quarters times exponential minus two square root s"
+            >
+              <mrow>
+                <mfrac>
+                  <mi>J</mi>
+                  <msub><mi>E</mi><mi>R</mi></msub>
+                </mfrac>
+                <mo>≈</mo>
+                <mfrac><mn>4</mn><msqrt><mi>π</mi></msqrt></mfrac>
+                <msup>
+                  <mi>s</mi>
+                  <mfrac><mn>3</mn><mn>4</mn></mfrac>
+                </msup>
+                <msup>
+                  <mi>e</mi>
+                  <mrow><mo>−</mo><mn>2</mn><msqrt><mi>s</mi></msqrt></mrow>
+                </msup>
+              </mrow>
+            </math>
+
+            <math
+              xmlns="http://www.w3.org/1998/Math/MathML"
+              display="block"
+              aria-label="U over recoil energy approximately equals square root eight over pi times pi times scattering length over lattice spacing times s to the three quarters"
+            >
+              <mrow>
+                <mfrac>
+                  <mi>U</mi>
+                  <msub><mi>E</mi><mi>R</mi></msub>
+                </mfrac>
+                <mo>≈</mo>
+                <msqrt><mfrac><mn>8</mn><mi>π</mi></mfrac></msqrt>
+                <mi>π</mi>
+                <mfrac>
+                  <msub><mi>a</mi><mi>s</mi></msub>
+                  <mi>a</mi>
+                </mfrac>
+                <msup>
+                  <mi>s</mi>
+                  <mfrac><mn>3</mn><mn>4</mn></mfrac>
+                </msup>
+              </mrow>
+            </math>
+          </div>
+
+          <p>
+            Here s = V₀ / E<sub>R</sub>, a is lattice spacing,
+            a<sub>s</sub> / a = 0.02, and
+            E<sub>R</sub> = ℏ²π² / (2ma²). These are deep-lattice
+            estimates, not an experimental calibration.
+          </p>
+
+          <p>
+            Clouds use Gaussian Wannier-like shapes with length
+            ℓ / a = 1 / (πs<sup>1/4</sup>). Their display size is magnified.
+            Optical oscillations, potential-surface height, and the
+            independent two-site tunneling clock are explanatory displays.
+          </p>
+
+          <p>
+            The lowest-band Γ→X cut spans 4J; the full cubic bandwidth is
+            12J. The momentum diagnostic uses the finite displayed array
+            and the same mean-field coherent fraction, with a Gaussian
+            orbital envelope.
+          </p>
+
+          <div class="source-links">
+            <a
+              href="https://arxiv.org/abs/cond-mat/9805329"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Jaksch et al. · optical-lattice Bose–Hubbard model ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/cond-mat/0011108"
+              target="_blank"
+              rel="noopener noreferrer"
+            >van Oosten et al. · mean-field quantum phases ↗</a>
+
+            <a
+              href="https://arxiv.org/abs/cond-mat/0211314"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Zwerger · transition and approximation limits ↗</a>
+          </div>
+        </details>
+      </div>
+
+      <footer class="panel-footer">
+        <span class="status-led" aria-hidden="true"></span>
+        <span id="solver-status">Waiting for solver</span>
+        <span id="display-status">WEBGL</span>
+      </footer>
+    </aside>
+
+    <nav
+      id="flight-controls"
+      class="flight-controls"
+      aria-label="View and playback controls"
+    >
+      <button
+        id="hud-toggle"
+        type="button"
+        aria-controls="sidebar-ui scene-caption reference-legend"
+        aria-pressed="false"
+        title="Toggle the interface (H)"
+        data-engine-control
+        disabled
+      >
+        <span id="hud-label">Hide HUD</span>
+        <kbd>H</kbd>
+      </button>
+
+      <button
+        id="pause-toggle"
+        type="button"
+        aria-pressed="false"
+        title="Pause or play the tour and teaching animations (Space)"
+        data-engine-control
+        disabled
+      >
+        <span id="pause-label">Pause</span>
+        <kbd>SPACE</kbd>
+      </button>
+
+      <button
+        id="resume-flight"
+        type="button"
+        title="Smoothly return to automatic flight (R)"
+        data-engine-control
+        disabled
+      >
+        <span>Resume drone</span>
+        <kbd>R</kbd>
+      </button>
+    </nav>
+
+    <section
+      id="scene-caption"
+      class="scene-caption hud-region"
+      aria-labelledby="scene-title"
+    >
+      <div class="caption-eyebrow">
+        <span id="chapter-value">01 / OPTICAL LATTICE</span>
+        <span class="caption-rule" aria-hidden="true"></span>
+        <span>QUANTUM MATTER</span>
+      </div>
+
+      <h2 id="scene-title">A landscape made of light.</h2>
+
+      <p id="scene-description">
+        Interfering laser fields create a periodic potential. Bosonic
+        matter occupies quantum states within its wells, with tunneling
+        and interaction energies competing across the lattice.
+      </p>
+
+      <p id="scene-model-note" class="caption-model-note">
+        An equilibrium mean-field reference. The luminous structure is a
+        potential landscape, not a material crystal.
+      </p>
+    </section>
+
+    <aside
+      id="reference-legend"
+      class="reference-legend hud-region"
+      aria-label="Lattice display key"
+    >
+      <div class="legend-heading">
+        <span>FIELD KEY</span>
+        <span id="legend-view-value">COHERENCE + DENSITY</span>
+      </div>
+
+      <p>
+        <i class="key-cloud" aria-hidden="true"></i>
+        Clouds · site density envelopes
+      </p>
+
+      <p>
+        <i class="key-link" aria-hidden="true"></i>
+        Links · coherent coupling
+      </p>
+
+      <p>
+        <i class="key-well" aria-hidden="true"></i>
+        Contours · periodic potential
+      </p>
+
+      <p id="legend-phase-note" class="legend-note">
+        Uniform phase is chosen in the superfluid. Mott order-parameter
+        phase is undefined.
+      </p>
+    </aside>
+
+    <section
+      id="render-notice"
+      class="render-notice"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div class="notice-card">
+        <div class="notice-orbit" aria-hidden="true"><span></span></div>
+        <p class="notice-eyebrow">RAW CODE VISUALIZING NATURE</p>
+
+        <h2 id="notice-title">Preparing the optical lattice</h2>
+
+        <p id="notice-message">
+          Loading the renderer and calculating the first reference state.
+        </p>
+
+        <p id="notice-detail">
+          An internet connection is required to load the Three.js libraries.
+        </p>
+
+        <button
+          id="notice-reload"
+          class="quiet-button"
+          type="button"
+          hidden
+        >Reload visualization</button>
+
+        <noscript>
+          <p class="noscript-message">
+            Enable JavaScript and reload to run this visualization.
+          </p>
+        </noscript>
+      </div>
+    </section>
+
+    <p
+      id="accessibility-status"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+  </main>
+
+  <template id="potential-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">02 / LIGHT CREATES THE LANDSCAPE</p>
+        <h3>Interference, then confinement</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Potential equals V zero times the sum of sine squared pi r alpha over lattice spacing"
+          >
+            <mrow>
+              <mi>V</mi><mo>(</mo><mi mathvariant="bold">r</mi><mo>)</mo>
+              <mo>=</mo>
+              <msub><mi>V</mi><mn>0</mn></msub>
+              <munder>
+                <mo>∑</mo>
+                <mrow>
+                  <mi>α</mi><mo>=</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>z</mi>
+                </mrow>
+              </munder>
+              <msup><mi mathvariant="normal">sin</mi><mn>2</mn></msup>
+              <mo>(</mo>
+              <mfrac>
+                <mrow><mi>π</mi><msub><mi>r</mi><mi>α</mi></msub></mrow>
+                <mi>a</mi>
+              </mfrac>
+              <mo>)</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Counter-propagating light creates standing waves. Their optical
+          dipole potential supplies regularly spaced minima for atoms.
+        </p>
+
+        <p class="card-note">
+          For a red-detuned lattice this positive potential is measured
+          relative to its minimum; intensity maxima are trapping minima.
+          Laser pairs are treated as independent axes.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="site-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">03 / REPRESENTATIVE BULK SITE</p>
+        <h3>Occupation is a distribution</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Site occupation operator equals creation times annihilation; number probability equals squared coefficient"
+          >
+            <mrow>
+              <msub><mi>n</mi><mi>i</mi></msub>
+              <mo>=</mo>
+              <msubsup><mi>a</mi><mi>i</mi><mo>†</mo></msubsup>
+              <msub><mi>a</mi><mi>i</mi></msub>
+              <mo>,</mo><mspace width=".6em"/>
+              <mi>P</mi><mo>(</mo><mi>n</mi><mo>)</mo>
+              <mo>=</mo>
+              <msup>
+                <mrow><mo>|</mo><msub><mi>c</mi><mi>n</mi></msub><mo>|</mo></mrow>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The site state combines number states. Its mean occupation and
+          uncertainty come from the calculated probabilities.
+        </p>
+
+        <p class="card-note">
+          Every bulk site has the same distribution in this homogeneous
+          model. A bright cloud is not a count of individual atoms.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="wannier-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card">
+        <p class="card-kicker">REFERENCE / LOCALIZED BASIS</p>
+        <h3>A local basis for extended physics</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The field operator is expanded in localized Wannier orbitals and site annihilation operators"
+          >
+            <mrow>
+              <mi mathvariant="normal">Ψ</mi>
+              <mo>(</mo><mi mathvariant="bold">r</mi><mo>)</mo>
+              <mo>≈</mo>
+              <munder><mo>∑</mo><mi>i</mi></munder>
+              <msub><mi>w</mi><mi>i</mi></msub>
+              <mo>(</mo><mi mathvariant="bold">r</mi><mo>)</mo>
+              <msub><mi>a</mi><mi>i</mi></msub>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Localized orbitals form the basis of the single-band model.
+          Their overlap permits tunneling between neighboring wells.
+        </p>
+
+        <p class="card-note">
+          Shown as magnified Gaussian Wannier-like envelopes. Local basis
+          orbitals exist in both superfluid and Mott regimes.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="tunneling-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">05 / TWO-SITE REFERENCE</p>
+        <h3>Amplitude crosses a link</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Right-well probability equals sine squared tau, where tau equals J t over h bar"
+          >
+            <mrow>
+              <msub><mi>P</mi><mi>R</mi></msub>
+              <mo>=</mo>
+              <msup><mi mathvariant="normal">sin</mi><mn>2</mn></msup>
+              <mi>τ</mi>
+              <mo>,</mo><mspace width=".4em"/>
+              <mi>τ</mi><mo>=</mo>
+              <mfrac><mrow><mi>J</mi><mi>t</mi></mrow><mi>ℏ</mi></mfrac>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          One boson initially in the left well oscillates coherently
+          between two coupled sites; P_L = 1 − P_R.
+        </p>
+
+        <p class="card-note">
+          Exact isolated two-site teaching example, with a normalized
+          clock. The equilibrium bulk lattice carries no net current.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="interaction-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">06 / ON-SITE REPULSION</p>
+        <h3>Multiple occupation costs energy</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="On-site interaction energy equals U over two times n times n minus one"
+          >
+            <mrow>
+              <msub><mi>E</mi><mtext>int</mtext></msub>
+              <mo>(</mo><mi>n</mi><mo>)</mo>
+              <mo>=</mo>
+              <mfrac><mi>U</mi><mn>2</mn></mfrac>
+              <mi>n</mi><mo>(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo>)</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Each pair on a site contributes U. The reference n = 2 state
+          has interaction energy U; n = 3 has energy 3U.
+        </p>
+
+        <p class="card-note">
+          This number-state example is separate from the live bulk
+          occupation distribution.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="superfluid-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">04 / EXTENDED COHERENCE</p>
+        <h3>A shared quantum phase</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The mean-field order parameter is nonzero"
+          >
+            <mrow>
+              <mi>ψ</mi><mo>=</mo><mo>⟨</mo><mi>a</mi><mo>⟩</mo>
+              <mo>≠</mo><mn>0</mn>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          A common order-parameter phase connects the lattice. Site number
+          remains uncertain even though all sites share the same mean
+          occupation.
+        </p>
+
+        <p class="card-note">
+          The coherent fraction is |ψ|² / ⟨n⟩. Equal phases give zero net
+          current; links visualize coherence.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="mott-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">09 / NUMBER LOCALIZATION</p>
+        <h3>A Mott state in mean field</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Order parameter is zero and one integer number state has unit probability in the mean-field Mott solution"
+          >
+            <mrow>
+              <mi>ψ</mi><mo>=</mo><mn>0</mn>
+              <mo>,</mo><mspace width=".6em"/>
+              <mi>P</mi><mo>(</mo><msub><mi>n</mi><mn>0</mn></msub><mo>)</mo>
+              <mo>=</mo><mn>1</mn>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Inside a Mott lobe, the site mean is pinned to an integer and
+          this approximation suppresses local number variance.
+        </p>
+
+        <p class="card-note">
+          J remains finite. Single-site mean field omits virtual
+          particle–hole fluctuations of the full many-body Mott state.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="band-card-template">
+    <div class="world-anchor" data-accent="blue">
+      <article class="world-card">
+        <p class="card-kicker">LOWEST BAND / QUASI-MOMENTUM</p>
+        <h3>Periodicity changes motion</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Along the x axis, energy above the band minimum is two J times one minus cosine k x a"
+          >
+            <mrow>
+              <mi>ε</mi><mo>(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>)</mo>
+              <mo>−</mo><msub><mi>ε</mi><mtext>min</mtext></msub>
+              <mo>=</mo><mn>2</mn><mi>J</mi>
+              <mo>[</mo><mn>1</mn><mo>−</mo>
+              <mi mathvariant="normal">cos</mi>
+              <mo>(</mo><msub><mi>k</mi><mi>x</mi></msub><mi>a</mi><mo>)</mo>
+              <mo>]</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          The displayed Γ→X cut has k_y = k_z = 0. Its width is 4J;
+          motion along all three cubic axes gives a full bandwidth of 12J.
+        </p>
+
+        <p class="card-note">
+          Nearest-neighbor single-particle band reference, not the
+          interacting excitation spectrum.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="momentum-card-template">
+    <div class="world-anchor" data-accent="violet">
+      <article class="world-card">
+        <p class="card-kicker">10 / DIAGNOSTIC REPRESENTATION</p>
+        <h3>Coherence leaves interference peaks</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Momentum density combines the orbital envelope with the Fourier transform of site correlations"
+          >
+            <mrow>
+              <mi>n</mi><mo>(</mo><mi mathvariant="bold">k</mi><mo>)</mo>
+              <mo>∝</mo>
+              <msup>
+                <mrow>
+                  <mo>|</mo><mover><mi>w</mi><mo>~</mo></mover><mo>|</mo>
+                </mrow>
+                <mn>2</mn>
+              </msup>
+              <munder><mo>∑</mo><mrow><mi>i</mi><mo>,</mo><mi>j</mi></mrow></munder>
+              <msup>
+                <mi>e</mi>
+                <mrow>
+                  <mi>i</mi><mi mathvariant="bold">k</mi><mo>·</mo>
+                  <mo>(</mo>
+                  <msub><mi mathvariant="bold">r</mi><mi>i</mi></msub>
+                  <mo>−</mo>
+                  <msub><mi mathvariant="bold">r</mi><mi>j</mi></msub>
+                  <mo>)</mo>
+                </mrow>
+              </msup>
+              <mo>⟨</mo>
+              <msubsup><mi>a</mi><mi>i</mi><mo>†</mo></msubsup>
+              <msub><mi>a</mi><mi>j</mi></msub>
+              <mo>⟩</mo>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Coherent off-site correlations produce sharp reciprocal-lattice
+          peaks. The mean-field Mott reference retains a broad orbital
+          envelope.
+        </p>
+
+        <p class="card-note">
+          A finite 7³-array k_z = 0 slice, displayed on a shared logarithmic
+          scale. It is not a simulated expansion image.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="hamiltonian-card-template">
+    <div class="world-anchor" data-accent="cyan">
+      <article class="world-card">
+        <p class="card-kicker">11 / THE EFFECTIVE MODEL</p>
+        <h3>Three terms, one competition</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="Bose Hubbard Hamiltonian: minus J hopping over unique neighboring pairs, plus U over two times on-site pairs, minus chemical potential times occupation"
+          >
+            <mtable columnalign="left" rowspacing=".6em">
+              <mtr>
+                <mtd>
+                  <mrow>
+                    <mi>H</mi><mo>=</mo><mo>−</mo><mi>J</mi>
+                    <munder>
+                      <mo>∑</mo>
+                      <mrow><mo>⟨</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo>⟩</mo></mrow>
+                    </munder>
+                    <mo>(</mo>
+                    <msubsup><mi>a</mi><mi>i</mi><mo>†</mo></msubsup>
+                    <msub><mi>a</mi><mi>j</mi></msub>
+                    <mo>+</mo>
+                    <msubsup><mi>a</mi><mi>j</mi><mo>†</mo></msubsup>
+                    <msub><mi>a</mi><mi>i</mi></msub>
+                    <mo>)</mo>
+                  </mrow>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mrow>
+                    <mo>+</mo>
+                    <mfrac><mi>U</mi><mn>2</mn></mfrac>
+                    <munder><mo>∑</mo><mi>i</mi></munder>
+                    <msub><mi>n</mi><mi>i</mi></msub>
+                    <mo>(</mo>
+                    <msub><mi>n</mi><mi>i</mi></msub>
+                    <mo>−</mo><mn>1</mn><mo>)</mo>
+                  </mrow>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mrow>
+                    <mo>−</mo><mi>μ</mi>
+                    <munder><mo>∑</mo><mi>i</mi></munder>
+                    <msub><mi>n</mi><mi>i</mi></msub>
+                  </mrow>
+                </mtd>
+              </mtr>
+            </mtable>
+          </math>
+        </div>
+
+        <p>
+          J couples neighboring sites. U penalizes pairs on the same site.
+          μ controls the equilibrium filling.
+        </p>
+
+        <p class="card-note">
+          Grand-canonical, single-band model. Each undirected neighbor
+          pair is counted once.
+        </p>
+      </article>
+    </div>
+  </template>
+
+  <template id="phase-card-template">
+    <div class="world-anchor" data-accent="gold">
+      <article class="world-card">
+        <p class="card-kicker">12 / THEORETICAL PHASE SPACE</p>
+        <h3>Integer filling occupies lobes</h3>
+
+        <div class="equation">
+          <math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+            display="block"
+            aria-label="The critical J over U equals n minus m times m minus n plus one divided by six times m plus one"
+          >
+            <mrow>
+              <msub>
+                <mrow><mo>(</mo><mfrac><mi>J</mi><mi>U</mi></mfrac><mo>)</mo></mrow>
+                <mi>c</mi>
+              </msub>
+              <mo>=</mo>
+              <mfrac>
+                <mrow>
+                  <mo>(</mo><mi>n</mi><mo>−</mo><mi>m</mi><mo>)</mo>
+                  <mo>(</mo><mi>m</mi><mo>−</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo>)</mo>
+                </mrow>
+                <mrow><mn>6</mn><mo>(</mo><mi>m</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow>
+              </mfrac>
+            </mrow>
+          </math>
+        </div>
+
+        <p>
+          Here m = μ / U and n − 1 &lt; m &lt; n. Below this boundary
+          lies the mean-field Mott lobe with integer n.
+        </p>
+
+        <p class="card-note">
+          Homogeneous cubic mean field, z = 6. These boundaries are not
+          exact experimental transition values.
+        </p>
+      </article>
+    </div>
+  </template>
+</body>
+</html>
